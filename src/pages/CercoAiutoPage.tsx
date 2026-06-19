@@ -124,6 +124,4 @@ function CercoAiutoPage() {
   )
 }
 
-export default CercoAiutoPagegit add .
-git commit -m "Corretto form richiesta per deploy"
-git push
+export default CercoAiutoPage
