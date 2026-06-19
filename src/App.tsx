@@ -3,6 +3,8 @@ import { RequestsProvider } from './context/RequestsContext'
 import HomePage from './pages/HomePage'
 import CercoAiutoPage from './pages/CercoAiutoPage'
 import OffroAiutoPage from './pages/OffroAiutoPage'
+import LoginPage from './pages/LoginPage'
+import RegisterPage from './pages/RegisterPage'
 import './App.css'
 
 function App() {
@@ -13,6 +15,8 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/cerco-aiuto" element={<CercoAiutoPage />} />
           <Route path="/offro-aiuto" element={<OffroAiutoPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/registrazione" element={<RegisterPage />} />
         </Routes>
       </BrowserRouter>
     </RequestsProvider>
