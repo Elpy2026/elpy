@@ -14,10 +14,17 @@ type Verification = {
   created_at: string | null
 }
 
+type FileLinks = {
+  front?: string
+  back?: string
+  selfie?: string
+}
+
 function AdminVerifichePage() {
   const [verifiche, setVerifiche] = useState<Verification[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [fileLinks, setFileLinks] = useState<Record<string, FileLinks>>({})
 
   async function loadVerifiche() {
     setLoading(true)
@@ -32,6 +39,38 @@ function AdminVerifichePage() {
       setError(error.message)
     } else {
       setVerifiche(data ?? [])
+
+      const links: Record<string, FileLinks> = {}
+
+      for (const verifica of data ?? []) {
+        links[verifica.id] = {}
+
+        if (verifica.document_front_url) {
+          const { data: signed } = await supabase.storage
+            .from('identity-documents')
+            .createSignedUrl(verifica.document_front_url, 60 * 10)
+
+          if (signed?.signedUrl) links[verifica.id].front = signed.signedUrl
+        }
+
+        if (verifica.document_back_url) {
+          const { data: signed } = await supabase.storage
+            .from('identity-documents')
+            .createSignedUrl(verifica.document_back_url, 60 * 10)
+
+          if (signed?.signedUrl) links[verifica.id].back = signed.signedUrl
+        }
+
+        if (verifica.selfie_url) {
+          const { data: signed } = await supabase.storage
+            .from('identity-documents')
+            .createSignedUrl(verifica.selfie_url, 60 * 10)
+
+          if (signed?.signedUrl) links[verifica.id].selfie = signed.signedUrl
+        }
+      }
+
+      setFileLinks(links)
     }
 
     setLoading(false)
@@ -85,11 +124,6 @@ function AdminVerifichePage() {
     await loadVerifiche()
   }
 
-  function getSignedUrl(path: string | null) {
-    if (!path) return null
-    return path
-  }
-
   useEffect(() => {
     void loadVerifiche()
   }, [])
@@ -125,19 +159,19 @@ function AdminVerifichePage() {
                   <p><strong>Creata il:</strong> {verifica.created_at}</p>
 
                   <div className="form-actions">
-                    {getSignedUrl(verifica.document_front_url) && (
-                      <a className="btn btn--secondary" href="#" onClick={(e) => e.preventDefault()}>
-                        Documento fronte salvato
+                    {fileLinks[verifica.id]?.front && (
+                      <a className="btn btn--secondary" href={fileLinks[verifica.id].front} target="_blank" rel="noreferrer">
+                        Apri documento fronte
                       </a>
                     )}
-                    {getSignedUrl(verifica.document_back_url) && (
-                      <a className="btn btn--secondary" href="#" onClick={(e) => e.preventDefault()}>
-                        Documento retro salvato
+                    {fileLinks[verifica.id]?.back && (
+                      <a className="btn btn--secondary" href={fileLinks[verifica.id].back} target="_blank" rel="noreferrer">
+                        Apri documento retro
                       </a>
                     )}
-                    {getSignedUrl(verifica.selfie_url) && (
-                      <a className="btn btn--secondary" href="#" onClick={(e) => e.preventDefault()}>
-                        Selfie salvato
+                    {fileLinks[verifica.id]?.selfie && (
+                      <a className="btn btn--secondary" href={fileLinks[verifica.id].selfie} target="_blank" rel="noreferrer">
+                        Apri selfie
                       </a>
                     )}
                   </div>
