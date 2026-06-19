@@ -1,16 +1,39 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { supabase } from '../lib/supabase'
 
 function Header() {
   const { user, signOut } = useAuth()
+  const [verified, setVerified] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  useEffect(() => {
+    async function loadProfile() {
+      if (!user) {
+        setVerified(false)
+        setIsAdmin(false)
+        return
+      }
+
+      const { data } = await supabase
+        .from('profiles')
+        .select('verified, is_admin')
+        .eq('id', user.id)
+        .single()
+
+      setVerified(Boolean(data?.verified))
+      setIsAdmin(Boolean(data?.is_admin))
+    }
+
+    void loadProfile()
+  }, [user])
 
   return (
     <header className="header">
       <div className="container header__inner">
         <Link to="/" className="logo" aria-label="ELPY — Home">
-          <span className="logo__mark" aria-hidden="true">
-            E
-          </span>
+          <span className="logo__mark" aria-hidden="true">E</span>
           <span className="logo__text">ELPY</span>
         </Link>
 
@@ -22,12 +45,15 @@ function Header() {
 
           {user ? (
             <>
-              <Link to="/verifica-identita">Verifica identità</Link>
+              {verified ? (
+                <span className="btn btn--secondary">✓ Verificato</span>
+              ) : (
+                <Link to="/verifica-identita">Verifica identità</Link>
+              )}
 
-              <button
-                className="btn btn--secondary"
-                onClick={() => void signOut()}
-              >
+              {isAdmin && <Link to="/admin/verifiche">Admin</Link>}
+
+              <button className="btn btn--secondary" onClick={() => void signOut()}>
                 Esci
               </button>
             </>
@@ -44,4 +70,3 @@ function Header() {
 }
 
 export default Header
-
