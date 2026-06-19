@@ -8,6 +8,7 @@ import RegisterPage from './pages/RegisterPage'
 import IdentityVerificationPage from './pages/IdentityVerificationPage'
 import AdminVerifichePage from './pages/AdminVerifichePage'
 import AdminRoute from './components/AdminRoute'
+import VerifiedRoute from './components/VerifiedRoute'
 import './App.css'
 
 function App() {
@@ -16,8 +17,8 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/cerco-aiuto" element={<CercoAiutoPage />} />
-          <Route path="/offro-aiuto" element={<OffroAiutoPage />} />
+          <Route path="/cerco-aiuto" element={<VerifiedRoute><CercoAiutoPage /></VerifiedRoute>} />
+          <Route path="/offro-aiuto" element={<VerifiedRoute><OffroAiutoPage /></VerifiedRoute>} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/registrazione" element={<RegisterPage />} />
           <Route path="/verifica-identita" element={<IdentityVerificationPage />} />
