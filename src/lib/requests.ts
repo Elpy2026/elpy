@@ -69,14 +69,11 @@ export async function insertRequest(
     data: { user },
   } = await supabase.auth.getUser()
 
-  console.log('USER CHE PUBBLICA', user)
-
   const row = {
     ...mapFormToRow(data),
+    seeker_id: user?.id ?? null,
     user_id: user?.id ?? null,
   }
-
-  console.log('RIGA DA SALVARE', row)
 
   const { error } = await supabase
     .from('requests')
