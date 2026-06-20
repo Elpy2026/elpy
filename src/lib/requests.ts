@@ -65,6 +65,24 @@ export async function fetchAllRequests(): Promise<{
 export async function insertRequest(
   data: NewHelpRequest,
 ): Promise<{ error: string | null }> {
-  const { error } = await supabase.from('requests').insert(mapFormToRow(data))
-  return { error: error?.message ?? null }
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  console.log('USER CHE PUBBLICA', user)
+
+  const row = {
+    ...mapFormToRow(data),
+    user_id: user?.id ?? null,
+  }
+
+  console.log('RIGA DA SALVARE', row)
+
+  const { error } = await supabase
+    .from('requests')
+    .insert(row)
+
+  return {
+    error: error?.message ?? null,
+  }
 }
