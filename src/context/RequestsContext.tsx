@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { fetchAllRequests } from '../lib/requests'
+import { acceptHelpRequest, fetchAllRequests } from '../lib/requests'
 import type { HelpRequest } from '../types/request'
 
 interface RequestsContextValue {
@@ -15,7 +15,7 @@ interface RequestsContextValue {
   openCount: number
   acceptedCount: number
   refreshRequests: () => Promise<void>
-  acceptRequest: (id: string) => void
+  acceptRequest: (id: string) => Promise<{ error: string | null }>
 }
 
 const RequestsContext = createContext<RequestsContextValue | null>(null)
@@ -34,13 +34,18 @@ export function RequestsProvider({ children }: { children: ReactNode }) {
     void refreshRequests()
   }, [refreshRequests])
 
-  const acceptRequest = useCallback((id: string) => {
-    setRequests((current) =>
-      current.map((request) =>
-        request.id === id ? { ...request, stato: 'accettata' } : request,
-      ),
-    )
-  }, [])
+  const acceptRequest = useCallback(
+    async (id: string): Promise<{ error: string | null }> => {
+      const result = await acceptHelpRequest(id)
+
+      if (!result.error) {
+        await refreshRequests()
+      }
+
+      return result
+    },
+    [refreshRequests],
+  )
 
   const openCount = useMemo(
     () => requests.filter((request) => request.stato === 'aperta').length,
