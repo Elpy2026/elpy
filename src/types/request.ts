@@ -1,4 +1,4 @@
-export type RequestStatus = 'aperta' | 'accettata'
+export type RequestStatus = 'aperta' | 'accettata' | 'completata'
 
 export interface HelpRequest {
   id: string

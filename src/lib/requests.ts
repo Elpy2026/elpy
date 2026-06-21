@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { HelpRequest, NewHelpRequest } from '../types/request'
+import type { HelpRequest, NewHelpRequest, RequestStatus } from '../types/request'
 
 export interface RequestRow {
   id: string
@@ -16,12 +16,19 @@ export interface RequestRow {
   helper_id?: string | null
 }
 
-export function mapRowToHelpRequest(row: RequestRow): HelpRequest {
-  const stato =
-    row.status === 'accettata' || row.status === 'accepted'
-      ? 'accettata'
-      : 'aperta'
+function mapStatus(status?: string | null): RequestStatus {
+  if (status === 'accettata' || status === 'accepted') {
+    return 'accettata'
+  }
 
+  if (status === 'completata' || status === 'completed') {
+    return 'completata'
+  }
+
+  return 'aperta'
+}
+
+export function mapRowToHelpRequest(row: RequestRow): HelpRequest {
   return {
     id: row.id,
     categoria: row.category,
@@ -30,7 +37,7 @@ export function mapRowToHelpRequest(row: RequestRow): HelpRequest {
     citta: row.city,
     data: row.request_date,
     compenso: String(row.reward),
-    stato,
+    stato: mapStatus(row.status),
     createdAt: row.created_at ?? new Date().toISOString(),
   }
 }
