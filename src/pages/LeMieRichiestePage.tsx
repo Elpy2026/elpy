@@ -42,6 +42,7 @@ function LeMieRichiestePage() {
   const [helpers, setHelpers] = useState<Record<string, HelperProfile>>({})
   const [loading, setLoading] = useState(true)
   const [acceptingApplicationId, setAcceptingApplicationId] = useState('')
+  const [completingRequestId, setCompletingRequestId] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
@@ -171,6 +172,28 @@ function LeMieRichiestePage() {
 
     setMessage('Candidatura accettata con successo.')
     setAcceptingApplicationId('')
+    await loadMyRequests()
+  }
+
+  async function handleCompleteRequest(requestId: string) {
+    setError('')
+    setMessage('')
+    setCompletingRequestId(requestId)
+
+    const { error } = await supabase
+      .from('requests')
+      .update({ status: 'completata' })
+      .eq('id', requestId)
+      .eq('status', 'accettata')
+
+    if (error) {
+      setError(error.message)
+      setCompletingRequestId('')
+      return
+    }
+
+    setMessage('Richiesta completata con successo. Ora puoi lasciare una recensione.')
+    setCompletingRequestId('')
     await loadMyRequests()
   }
 
@@ -345,6 +368,21 @@ function LeMieRichiestePage() {
                             </div>
                           </div>
                         )}
+
+                      {request.status === 'accettata' && (
+                        <div className="form-actions">
+                          <button
+                            type="button"
+                            className="btn btn--primary"
+                            onClick={() => void handleCompleteRequest(request.id)}
+                            disabled={completingRequestId === request.id}
+                          >
+                            {completingRequestId === request.id
+                              ? 'Completamento…'
+                              : 'Segna come completata'}
+                          </button>
+                        </div>
+                      )}
 
                       {request.status === 'completata' && (
                         <div className="form-actions">
