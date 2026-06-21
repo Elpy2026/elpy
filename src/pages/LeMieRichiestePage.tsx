@@ -142,13 +142,28 @@ function LeMieRichiestePage() {
                         </div>
                       </dl>
 
-                      {request.status === 'accettata' && (
-                        <div className="alert alert--success">
-                          <strong>Accettata da:</strong>{' '}
-                          {helper?.full_name ?? 'Helper verificato'}
-                          {helper?.verified && ' · Identità verificata'}
-                        </div>
-                      )}
+                      {(request.status === 'accettata' ||
+                        request.status === 'completata') &&
+                        request.helper_id && (
+                          <div className="alert alert--success">
+                            <p>
+                              <strong>
+                                {request.status === 'completata'
+                                  ? 'Completata da:'
+                                  : 'Accettata da:'}
+                              </strong>{' '}
+                              {helper?.full_name ?? 'Helper verificato'}
+                              {helper?.verified && ' · Identità verificata'}
+                            </p>
+
+                            <Link
+                              to={`/profilo-helper/${request.helper_id}`}
+                              className="btn btn--secondary"
+                            >
+                              Vedi profilo helper
+                            </Link>
+                          </div>
+                        )}
 
                       {request.status === 'completata' && (
                         <div className="form-actions">
