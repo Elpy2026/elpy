@@ -9,6 +9,9 @@ type Profile = {
   full_name: string | null
   role: string | null
   verified: boolean | null
+  city: string | null
+  bio: string | null
+  avatar_url: string | null
 }
 
 type ReviewStats = {
@@ -41,7 +44,7 @@ function ProfiloHelperPage() {
 
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('id, full_name, role, verified')
+        .select('id, full_name, role, verified, city, bio, avatar_url')
         .eq('id', helperId)
         .single()
 
@@ -88,21 +91,57 @@ function ProfiloHelperPage() {
               <>
                 <div className="page-header">
                   <p className="hero__badge">Profilo helper</p>
+
+                  {profile.avatar_url && (
+                    <img
+                      src={profile.avatar_url}
+                      alt={profile.full_name ?? 'Foto helper'}
+                      style={{
+                        width: 120,
+                        height: 120,
+                        borderRadius: '999px',
+                        objectFit: 'cover',
+                        margin: '0 auto 24px',
+                        display: 'block',
+                      }}
+                    />
+                  )}
+
                   <h1 className="page-title">
                     {profile.full_name ?? 'Helper ELPY'}
                   </h1>
+
                   <p className="page-subtitle">
                     {profile.verified
                       ? 'Identità verificata'
                       : 'Identità non ancora verificata'}
+                    {profile.city ? ` · ${profile.city}` : ''}
                   </p>
                 </div>
 
                 <div className="request-card">
+                  <h2 className="request-card__title">Informazioni</h2>
+
+                  {profile.bio ? (
+                    <p>{profile.bio}</p>
+                  ) : (
+                    <p>Questo helper non ha ancora aggiunto una bio.</p>
+                  )}
+
+                  {profile.city && (
+                    <p>
+                      <strong>Città:</strong> {profile.city}
+                    </p>
+                  )}
+                </div>
+
+                <div className="request-card">
                   <h2 className="request-card__title">Reputazione</h2>
+
                   {stats ? (
                     <p>
-                      ⭐ {stats.average_rating ?? 0} · {stats.review_count}{' '}                recensioni ricevute
+                      ⭐ {stats.average_rating ?? 0} · {stats.review_count}{' '}
+                      recensioni ricevute
                     </p>
                   ) : (
                     <p>Nessuna recensione ricevuta.</p>
@@ -129,7 +168,7 @@ function ProfiloHelperPage() {
                 <div className="page-footer-actions">
                   <Link to="/offro-aiuto" className="btn btn--secondary">
                     Torna alle richieste
-                </Link>
+                  </Link>
                 </div>
               </>
             )}
