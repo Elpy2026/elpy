@@ -1007,3 +1007,98 @@
     font-size: 2.25rem;
   }
 }
+
+.header__account {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+.header__auth {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header__auth a:not(.btn) {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.account-menu {
+  position: relative;
+}
+
+.account-menu__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.875rem;
+  background: #fff;
+  color: var(--text-heading);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+}
+
+.account-menu__name {
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-menu__dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  z-index: 200;
+  min-width: 14rem;
+  padding: 0.5rem;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+}
+
+.account-menu__dropdown a,
+.account-menu__dropdown button,
+.account-menu__status {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  padding: 0.75rem 0.875rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-heading);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  text-decoration: none;
+  background: transparent;
+  border: 0;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.account-menu__dropdown a:hover,
+.account-menu__dropdown button:hover {
+  background: var(--green-50);
+  color: var(--green-700);
+}
+
+.account-menu__status {
+  color: var(--green-700);
+  cursor: default;
+}
+
+.account-menu__divider {
+  height: 1px;
+  background: var(--border-light);
+  margin: 0.375rem 0;
+}
