@@ -24,11 +24,13 @@ function AdminVerifichePage() {
   const [verifiche, setVerifiche] = useState<Verification[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const [fileLinks, setFileLinks] = useState<Record<string, FileLinks>>({})
 
   async function loadVerifiche() {
     setLoading(true)
     setError('')
+    setSuccess('')
 
     const { data, error } = await supabase
       .from('identity_verifications')
@@ -76,7 +78,28 @@ function AdminVerifichePage() {
     setLoading(false)
   }
 
+  async function verificaProfilo(userId: string) {
+    setError('')
+    setSuccess('')
+
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({ verified: true })
+      .eq('id', userId)
+
+    if (profileError) {
+      setError(profileError.message)
+      return false
+    }
+
+    setSuccess('Profilo utente verificato correttamente.')
+    return true
+  }
+
   async function approva(verifica: Verification) {
+    setError('')
+    setSuccess('')
+
     const { error: verificationError } = await supabase
       .from('identity_verifications')
       .update({
@@ -90,15 +113,17 @@ function AdminVerifichePage() {
       return
     }
 
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .update({ verified: true })
-      .eq('id', verifica.user_id)
+    const ok = await verificaProfilo(verifica.user_id)
 
-    if (profileError) {
-      setError(profileError.message)
-      return
-    }
+    if (!ok) return
+
+    await loadVerifiche()
+  }
+
+  async function forzaVerificaProfilo(verifica: Verification) {
+    const ok = await verificaProfilo(verifica.user_id)
+
+    if (!ok) return
 
     await loadVerifiche()
   }
@@ -106,6 +131,9 @@ function AdminVerifichePage() {
   async function rifiuta(verifica: Verification) {
     const motivo = window.prompt('Motivo del rifiuto:')
     if (!motivo) return
+
+    setError('')
+    setSuccess('')
 
     const { error } = await supabase
       .from('identity_verifications')
@@ -121,6 +149,7 @@ function AdminVerifichePage() {
       return
     }
 
+    setSuccess('Verifica rifiutata.')
     await loadVerifiche()
   }
 
@@ -145,6 +174,7 @@ function AdminVerifichePage() {
 
             {loading && <p>Caricamento verifiche…</p>}
             {error && <div className="alert alert--error">{error}</div>}
+            {success && <div className="alert alert--success">{success}</div>}
 
             {!loading && verifiche.length === 0 && (
               <p>Nessuna verifica trovata.</p>
@@ -154,35 +184,74 @@ function AdminVerifichePage() {
               {verifiche.map((verifica) => (
                 <article className="request-card" key={verifica.id}>
                   <h2>Verifica utente</h2>
-                  <p><strong>User ID:</strong> {verifica.user_id}</p>
-                  <p><strong>Stato:</strong> {verifica.status}</p>
-                  <p><strong>Creata il:</strong> {verifica.created_at}</p>
+                  <p>
+                    <strong>User ID:</strong> {verifica.user_id}
+                  </p>
+                  <p>
+                    <strong>Stato:</strong> {verifica.status}
+                  </p>
+                  <p>
+                    <strong>Creata il:</strong> {verifica.created_at}
+                  </p>
 
                   <div className="form-actions">
                     {fileLinks[verifica.id]?.front && (
-                      <a className="btn btn--secondary" href={fileLinks[verifica.id].front} target="_blank" rel="noreferrer">
+                      <a
+                        className="btn btn--secondary"
+                        href={fileLinks[verifica.id].front}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
                         Apri documento fronte
                       </a>
                     )}
+
                     {fileLinks[verifica.id]?.back && (
-                      <a className="btn btn--secondary" href={fileLinks[verifica.id].back} target="_blank" rel="noreferrer">
+                      <a
+                        className="btn btn--secondary"
+                        href={fileLinks[verifica.id].back}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
                         Apri documento retro
                       </a>
                     )}
+
                     {fileLinks[verifica.id]?.selfie && (
-                      <a className="btn btn--secondary" href={fileLinks[verifica.id].selfie} target="_blank" rel="noreferrer">
+                      <a
+                        className="btn btn--secondary"
+                        href={fileLinks[verifica.id].selfie}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
                         Apri selfie
                       </a>
                     )}
                   </div>
 
-                  {verifica.status === 'pending' && (
+                  {verifica.status === 'pending' ? (
                     <div className="form-actions">
-                      <button className="btn btn--primary" onClick={() => approva(verifica)}>
+                      <button
+                        className="btn btn--primary"
+                        onClick={() => void approva(verifica)}
+                      >
                         Approva
                       </button>
-                      <button className="btn btn--secondary" onClick={() => rifiuta(verifica)}>
+
+                      <button
+                        className="btn btn--secondary"
+                        onClick={() => void rifiuta(verifica)}
+                      >
                         Rifiuta
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="form-actions">
+                      <button
+                        className="btn btn--primary"
+                        onClick={() => void forzaVerificaProfilo(verifica)}
+                      >
+                        Forza verifica profilo
                       </button>
                     </div>
                   )}
