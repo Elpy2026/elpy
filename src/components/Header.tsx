@@ -45,6 +45,10 @@ function Header() {
 
           {user ? (
             <>
+              <Link to="/profilo">Il mio profilo</Link>
+              <Link to="/le-mie-richieste">Le mie richieste</Link>
+              <Link to="/le-mie-attivita">Le mie attività</Link>
+
               {verified ? (
                 <span className="btn btn--secondary">✓ Verificato</span>
               ) : (
