@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext'
 type HelperProfile = {
   id: string
   full_name: string | null
+  phone: string | null
   verified: boolean | null
 }
 
@@ -61,7 +62,7 @@ function LeMieRichiestePage() {
       if (helperIds.length > 0) {
         const { data: profilesData } = await supabase
           .from('profiles')
-          .select('id, full_name, verified')
+          .select('id, full_name, phone, verified')
           .in('id', helperIds)
 
         const profilesMap: Record<string, HelperProfile> = {}
@@ -156,12 +157,34 @@ function LeMieRichiestePage() {
                               {helper?.verified && ' · Identità verificata'}
                             </p>
 
-                            <Link
-                              to={`/profilo-helper/${request.helper_id}`}
-                              className="btn btn--secondary"
-                            >
-                              Vedi profilo helper
-                            </Link>
+                            {helper?.phone ? (
+                              <p>
+                                <strong>Telefono helper:</strong>{' '}
+                                <a href={`tel:${helper.phone}`}>{helper.phone}</a>
+                              </p>
+                            ) : (
+                              <p>Telefono helper non disponibile.</p>
+                            )}
+
+                            <div className="form-actions">
+                              <Link
+                                to={`/profilo-helper/${request.helper_id}`}
+                                className="btn btn--secondary"
+                              >
+                                Vedi profilo helper
+                              </Link>
+
+                              {helper?.phone && (
+                                <a
+                                  className="btn btn--primary"
+                                  href={`https://wa.me/${helper.phone.replace(/\D/g, '')}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  Contatta su WhatsApp
+                                </a>
+                              )}
+                            </div>
                           </div>
                         )}
 
