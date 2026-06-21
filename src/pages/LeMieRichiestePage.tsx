@@ -33,6 +33,25 @@ type MyRequest = {
   created_at: string | null
   seeker_id: string | null
   helper_id: string | null
+  payment_status: string | null
+  paid_at: string | null
+  platform_fee: number | string | null
+  helper_amount: number | string | null
+}
+
+const PLATFORM_FEE_PERCENTAGE = 15
+
+function calculatePaymentAmounts(reward: number | string) {
+  const amount = Number(reward)
+  const safeAmount = Number.isNaN(amount) ? 0 : amount
+  const platformFee = Number((safeAmount * PLATFORM_FEE_PERCENTAGE / 100).toFixed(2))
+  const helperAmount = Number((safeAmount - platformFee).toFixed(2))
+
+  return {
+    total: safeAmount,
+    platformFee,
+    helperAmount,
+  }
 }
 
 function LeMieRichiestePage() {
@@ -43,6 +62,7 @@ function LeMieRichiestePage() {
   const [loading, setLoading] = useState(true)
   const [acceptingApplicationId, setAcceptingApplicationId] = useState('')
   const [completingRequestId, setCompletingRequestId] = useState('')
+  const [payingRequestId, setPayingRequestId] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
@@ -143,6 +163,7 @@ function LeMieRichiestePage() {
       .update({
         status: 'accettata',
         helper_id: application.helper_id,
+        payment_status: 'not_required',
       })
       .eq('id', application.request_id)
       .eq('status', 'aperta')
@@ -182,7 +203,10 @@ function LeMieRichiestePage() {
 
     const { error } = await supabase
       .from('requests')
-      .update({ status: 'completata' })
+      .update({
+        status: 'completata',
+        payment_status: 'pending',
+      })
       .eq('id', requestId)
       .eq('status', 'accettata')
 
@@ -192,8 +216,39 @@ function LeMieRichiestePage() {
       return
     }
 
-    setMessage('Richiesta completata con successo. Ora puoi lasciare una recensione.')
+    setMessage('Richiesta completata. Ora puoi procedere con il pagamento.')
     setCompletingRequestId('')
+    await loadMyRequests()
+  }
+
+  async function handleMockPayment(request: MyRequest) {
+    setError('')
+    setMessage('')
+    setPayingRequestId(request.id)
+
+    const amounts = calculatePaymentAmounts(request.reward)
+
+    const { error } = await supabase
+      .from('requests')
+      .update({
+        payment_status: 'paid',
+        paid_at: new Date().toISOString(),
+        platform_fee: amounts.platformFee,
+        helper_amount: amounts.helperAmount,
+      })
+      .eq('id', request.id)
+      .eq('status', 'completata')
+
+    if (error) {
+      setError(error.message)
+      setPayingRequestId('')
+      return
+    }
+
+    setMessage(
+      `Pagamento registrato. Commissione ELPY: €${amounts.platformFee}. Netto helper: €${amounts.helperAmount}.`,
+    )
+    setPayingRequestId('')
     await loadMyRequests()
   }
 
@@ -230,6 +285,8 @@ function LeMieRichiestePage() {
                 {requests.map((request) => {
                   const helper = request.helper_id ? helpers[request.helper_id] : null
                   const requestApplications = applications[request.id] ?? []
+                  const amounts = calculatePaymentAmounts(request.reward)
+                  const paymentStatus = request.payment_status ?? 'not_required'
 
                   return (
                     <li key={request.id} className="request-card">
@@ -354,12 +411,13 @@ function LeMieRichiestePage() {
                               >
                                 Vedi profilo helper
                               </Link>
+
                               <Link
-  to={`/chat/${request.id}`}
-  className="btn btn--primary"
->
-  Apri chat
-</Link>
+                                to={`/chat/${request.id}`}
+                                className="btn btn--primary"
+                              >
+                                Apri chat
+                              </Link>
 
                               {helper?.phone && (
                                 <a
@@ -391,6 +449,51 @@ function LeMieRichiestePage() {
                       )}
 
                       {request.status === 'completata' && (
+                        <div className="request-card">
+                          <h3>Pagamento</h3>
+
+                          <p>
+                            <strong>Stato pagamento:</strong>{' '}
+                            {paymentStatus === 'paid'
+                              ? 'pagato'
+                              : 'in attesa di pagamento'}
+                          </p>
+
+                          <p>
+                            <strong>Totale:</strong> €{amounts.total}
+                          </p>
+
+                          <p>
+                            <strong>Commissione ELPY ({PLATFORM_FEE_PERCENTAGE}%):</strong>{' '}
+                            €{amounts.platformFee}
+                          </p>
+
+                          <p>
+                            <strong>Netto helper:</strong> €{amounts.helperAmount}
+                          </p>
+
+                          {paymentStatus !== 'paid' ? (
+                            <div className="form-actions">
+                              <button
+                                type="button"
+                                className="btn btn--primary"
+                                onClick={() => void handleMockPayment(request)}
+                                disabled={payingRequestId === request.id}
+                              >
+                                {payingRequestId === request.id
+                                  ? 'Pagamento…'
+                                  : 'Paga richiesta'}
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="alert alert--success">
+                              Pagamento registrato correttamente.
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {request.status === 'completata' && paymentStatus === 'paid' && (
                         <div className="form-actions">
                           <Link
                             to={`/recensione/${request.id}`}
