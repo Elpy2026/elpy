@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { supabase } from '../lib/supabase'
+import { completeHelpRequest } from '../lib/requests'
 import { useAuth } from '../context/AuthContext'
 
 type HelperRequest = {
@@ -23,32 +24,55 @@ function LeMieAttivitaPage() {
   const { user } = useAuth()
   const [requests, setRequests] = useState<HelperRequest[]>([])
   const [loading, setLoading] = useState(true)
+  const [completingId, setCompletingId] = useState('')
+  const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    async function loadMyAcceptedRequests() {
-      if (!user) {
-        setLoading(false)
-        return
-      }
-
-      const { data, error } = await supabase
-        .from('requests')
-        .select('*')
-        .eq('helper_id', user.id)
-        .order('created_at', { ascending: false })
-
-      if (error) {
-        setError(error.message)
-      } else {
-        setRequests(data ?? [])
-      }
-
+  const loadMyAcceptedRequests = useCallback(async () => {
+    if (!user) {
       setLoading(false)
+      return
     }
 
-    void loadMyAcceptedRequests()
+    setLoading(true)
+    setError('')
+
+    const { data, error } = await supabase
+      .from('requests')
+      .select('*')
+      .eq('helper_id', user.id)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      setError(error.message)
+    } else {
+      setRequests(data ?? [])
+    }
+
+    setLoading(false)
   }, [user])
+
+  useEffect(() => {
+    void loadMyAcceptedRequests()
+  }, [loadMyAcceptedRequests])
+
+  async function handleComplete(requestId: string) {
+    setMessage('')
+    setError('')
+    setCompletingId(requestId)
+
+    const result = await completeHelpRequest(requestId)
+
+    if (result.error) {
+      setError(result.error)
+      setCompletingId('')
+      return
+    }
+
+    setMessage('Richiesta completata con successo.')
+    await loadMyAcceptedRequests()
+    setCompletingId('')
+  }
 
   return (
     <div className="landing">
@@ -65,12 +89,13 @@ function LeMieAttivitaPage() {
               </p>
             </div>
 
+            {message && <div className="alert alert--success">{message}</div>}
             {loading && <p>Caricamento attività…</p>}
             {error && <div className="alert alert--error">{error}</div>}
 
             {!loading && requests.length === 0 && (
               <div className="empty-state">
-            <p>Non hai ancora accettato richieste.</p>
+                <p>Non hai ancora accettato richieste.</p>
                 <Link to="/offro-aiuto" className="btn btn--primary">
                   Vedi richieste disponibili
                 </Link>
@@ -111,6 +136,29 @@ function LeMieAttivitaPage() {
                         </dd>
                       </div>
                     </dl>
+
+                    {request.status === 'accettata' && (
+                      <button
+                        type="button"
+                        className="btn btn--primary request-card__btn"
+                        onClick={() => void handleComplete(request.id)}
+                        disabled={completingId === request.id}
+                      >
+                        {completingId === request.id
+                          ? 'Completamento…'
+                          : 'Completa richiesta'}
+                      </button>
+                    )}
+
+                    {request.status === 'completata' && (
+                      <button
+                        type="button"
+                        className="btn btn--secondary request-card__btn"
+                        disabled
+                      >
+                        Richiesta completata
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>
