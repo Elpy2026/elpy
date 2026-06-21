@@ -8,14 +8,16 @@ function Header() {
   const [verified, setVerified] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [fullName, setFullName] = useState('')
+  const [pendingApplicationsCount, setPendingApplicationsCount] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
-    async function loadProfile() {
+    async function loadProfileAndNotifications() {
       if (!user) {
         setVerified(false)
         setIsAdmin(false)
         setFullName('')
+        setPendingApplicationsCount(0)
         return
       }
 
@@ -28,9 +30,30 @@ function Header() {
       setFullName(data?.full_name ?? user.email ?? 'Account')
       setVerified(Boolean(data?.verified))
       setIsAdmin(Boolean(data?.is_admin))
+
+      const { data: myRequests } = await supabase
+        .from('requests')
+        .select('id')
+        .eq('seeker_id', user.id)
+        .eq('status', 'aperta')
+
+      const requestIds = (myRequests ?? []).map((request) => request.id)
+
+      if (requestIds.length === 0) {
+        setPendingApplicationsCount(0)
+        return
+      }
+
+      const { count } = await supabase
+        .from('request_applications')
+        .select('id', { count: 'exact', head: true })
+        .in('request_id', requestIds)
+        .eq('status', 'pending')
+
+      setPendingApplicationsCount(count ?? 0)
     }
 
-    void loadProfile()
+    void loadProfileAndNotifications()
   }, [user])
 
   async function handleSignOut() {
@@ -59,32 +82,71 @@ function Header() {
                 type="button"
                 className="account-menu__button"
                 onClick={() => setMenuOpen((current) => !current)}
+                aria-expanded={menuOpen}
               >
-                <span>👤</span>
-                <span className="account-menu__name">{fullName || 'Account'}</span>
-            <span>▾</span>
+                <span className="account-menu__avatar">👤</span>
+                <span className="account-menu__name">
+                  {fullName || 'Account'}
+                </span>
+                {pendingApplicationsCount > 0 && (
+                  <span className="account-menu__badge">
+                    {pendingApplicationsCount}
+                  </span>
+                )}
+                <span aria-hidden="true">▾</span>
               </button>
 
               {menuOpen && (
                 <div className="account-menu__dropdown">
-                  <Link to="/profilo" onClick={() => setMenuOpen(false)}>Il mio profilo</Link>
-                  <Link to="/le-mie-richieste" onClick={() => setMenuOpen(false)}>Le mie richieste</Link>
-                  <Link to="/le-mie-attivita" onClick={() => setMenuOpen(false)}>Le mie attività</Link>
+                  <Link to="/profilo" onClick={() => setMenuOpen(false)}>
+                    Il mio profilo
+                  </Link>
+
+                  <Link
+                    to="/le-mie-richieste"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Le mie richieste
+                    {pendingApplicationsCount > 0 && (
+                      <span className="account-menu__inline-badge">
+                        {pendingApplicationsCount}
+                      </span>
+                    )}
+                  </Link>
+
+                  <Link
+                    to="/le-mie-attivita"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Le mie attività
+                  </Link>
 
                   <div className="account-menu__divider" />
 
                   {verified ? (
-                    <span className="account-menu__status">✓ Identità verificata</span>
+                    <span className="account-menu__status">
+                      ✓ Identità verificata
+                    </span>
                   ) : (
-                    <Link to="/verifica-identita" onClick={() => setMenuOpen(false)}>Verifica identità</Link>
+                    <Link
+                      to="/verifica-identita"
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      Verifica identità
+                    </Link>
                   )}
 
                   {isAdmin && (
                     <>
                       <div className="account-menu__divider" />
-                      <Link to="/admin/verifiche" onClick={() => setMenuOpen(false)}>Admin</Link>
+                      <Link
+                        to="/admin/verifiche"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        Admin
+                      </Link>
                     </>
-           )}
+                  )}
 
                   <div className="account-menu__divider" />
 
@@ -97,7 +159,9 @@ function Header() {
           ) : (
             <div className="header__auth">
               <Link to="/login">Accedi</Link>
-              <Link to="/registrazione" className="btn btn--primary">Registrati</Link>
+              <Link to="/registrazione" className="btn btn--primary">
+                Registrati
+              </Link>
             </div>
           )}
         </div>
