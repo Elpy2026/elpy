@@ -102,6 +102,10 @@ function Header() {
                     Il mio profilo
                   </Link>
 
+                  <Link to="/messaggi" onClick={() => setMenuOpen(false)}>
+                    Messaggi
+                  </Link>
+
                   <Link to="/notifiche" onClick={() => setMenuOpen(false)}>
                     Notifiche
                     {pendingApplicationsCount > 0 && (

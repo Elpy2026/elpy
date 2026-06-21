@@ -14,6 +14,7 @@ import ProfiloPage from './pages/ProfiloPage'
 import ProfiloHelperPage from './pages/ProfiloHelperPage'
 import NotifichePage from './pages/NotifichePage'
 import ChatPage from './pages/ChatPage'
+import MessaggiPage from './pages/MessaggiPage'
 import AdminVerifichePage from './pages/AdminVerifichePage'
 
 import AdminRoute from './components/AdminRoute'
@@ -65,6 +66,15 @@ function App() {
           />
 
           <Route
+            path="/messaggi"
+            element={
+              <VerifiedRoute>
+                <MessaggiPage />
+              </VerifiedRoute>
+            }
+          />
+
+          <Route
             path="/le-mie-richieste"
             element={
               <VerifiedRoute>
@@ -111,6 +121,7 @@ function App() {
 
           <Route path="/login" element={<LoginPage />} />
           <Route path="/registrazione" element={<RegisterPage />} />
+
           <Route
             path="/verifica-identita"
             element={<IdentityVerificationPage />}
