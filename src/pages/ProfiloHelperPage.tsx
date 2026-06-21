@@ -36,6 +36,7 @@ function ProfiloHelperPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [stats, setStats] = useState<ReviewStats | null>(null)
   const [reviews, setReviews] = useState<Review[]>([])
+  const [completedJobs, setCompletedJobs] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -76,6 +77,14 @@ function ProfiloHelperPage() {
         .order('created_at', { ascending: false })
 
       setReviews(reviewsData ?? [])
+
+      const { count } = await supabase
+        .from('requests')
+        .select('id', { count: 'exact', head: true })
+        .eq('helper_id', helperId)
+        .eq('status', 'completata')
+
+      setCompletedJobs(count ?? 0)
       setLoading(false)
     }
 
@@ -97,20 +106,23 @@ function ProfiloHelperPage() {
                 <div className="page-header">
                   <p className="hero__badge">Profilo helper</p>
 
-                  {profile.avatar_url && (
-                    <img
-                      src={profile.avatar_url}
-                      alt={profile.full_name ?? 'Foto helper'}
-                      style={{
-                        width: 120,
-                        height: 120,
-                        borderRadius: '999px',
-                        objectFit: 'cover',
-                        margin: '0 auto 24px',
-                        display: 'block',
-                      }}
-                    />
-                  )}
+                  <img
+                    src={
+                      profile.avatar_url ||
+                      'https://ui-avatars.com/api/?name=Helper+ELPY&background=22a06b&color=fff'
+                    }
+                    alt={profile.full_name ?? 'Foto helper'}
+                    style={{
+                      width: 132,
+                      height: 132,
+                      borderRadius: '999px',
+                      objectFit: 'cover',
+                      margin: '0 auto 24px',
+                      display: 'block',
+                      border: '4px solid #fff',
+                      boxShadow: 'var(--shadow-md)',
+                    }}
+                  />
 
                   <h1 className="page-title">
                     {profile.full_name ?? 'Helper ELPY'}
@@ -118,9 +130,50 @@ function ProfiloHelperPage() {
 
                   <p className="page-subtitle">
                     {profile.verified
-                      ? 'Identità verificata'
+                      ? '✓ Identità verificata'
                       : 'Identità non ancora verificata'}
                     {profile.city ? ` · ${profile.city}` : ''}
+                  </p>
+                </div>
+
+                <div className="dashboard__grid">
+                  <div className="dashboard__card dashboard__card--accepted">
+                    <p className="dashboard__label">Valutazione</p>
+                    <p className="dashboard__value">
+                      {stats?.average_rating ?? 0}
+                    </p>
+                  </div>
+
+                  <div className="dashboard__card">
+                    <p className="dashboard__label">Recensioni</p>
+                    <p className="dashboard__value">
+                      {stats?.review_count ?? 0}
+                    </p>
+                  </div>
+
+                  <div className="dashboard__card">
+                    <p className="dashboard__label">Lavori completati</p>
+                    <p className="dashboard__value">{completedJobs}</p>
+                  </div>
+
+                  <div className="dashboard__card dashboard__card--accepted">
+                    <p className="dashboard__label">Verifica</p>
+                    <p className="dashboard__value">
+                      {profile.verified ? '✓' : '—'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="request-card">
+                  <h2 className="request-card__title">Reputazione</h2>
+
+                  <p style={{ fontSize: '1.6rem', margin: '0 0 0.5rem' }}>
+                    {renderStars(stats?.average_rating)}
+                  </p>
+
+                  <p>
+                    {stats?.average_rating ?? 0}/5 · {stats?.review_count ?? 0}{' '}
+                    recensioni ricevute
                   </p>
                 </div>
 
@@ -138,23 +191,11 @@ function ProfiloHelperPage() {
                       <strong>Città:</strong> {profile.city}
                     </p>
                   )}
-                </div>
 
-                <div className="request-card">
-                  <h2 className="request-card__title">Reputazione</h2>
-
-                  {stats ? (
-                    <>
-                      <p style={{ fontSize: '1.5rem', margin: '0 0 0.5rem' }}>
-                        {renderStars(stats.average_rating)}
-                      </p>
-                      <p>
-                        {stats.average_rating ?? 0}/5 · {stats.review_count}{' '}
-                        recensioni ricevute
-                      </p>
-                    </>
-                  ) : (
-                    <p>Nessuna recensione ricevuta.</p>
+                  {profile.verified && (
+                    <p>
+                      <strong>Identità:</strong> verificata da ELPY
+                    </p>
                   )}
                 </div>
 
@@ -170,7 +211,12 @@ function ProfiloHelperPage() {
                           <p style={{ fontSize: '1.25rem', margin: '0 0 0.5rem' }}>
                             {renderStars(review.rating)}
                           </p>
+
                           <p>{review.comment || 'Nessun commento.'}</p>
+
+                          <small style={{ color: 'var(--text-muted)' }}>
+                            {new Date(review.created_at).toLocaleDateString('it-IT')}
+                          </small>
                         </li>
                       ))}
                     </ul>
@@ -180,6 +226,13 @@ function ProfiloHelperPage() {
                 <div className="page-footer-actions">
                   <Link to="/offro-aiuto" className="btn btn--secondary">
                     Torna alle richieste
+                  </Link>
+
+                  <Link
+                    to={`/segnala-utente?userId=${profile.id}`}
+                    className="btn btn--secondary"
+                  >
+                    Segnala utente
                   </Link>
                 </div>
               </>

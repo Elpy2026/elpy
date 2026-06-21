@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
@@ -17,8 +17,51 @@ function OffroAiutoPage() {
   const { requests, acceptRequest } = useRequests()
   const [applicationMessages, setApplicationMessages] = useState<Record<string, string>>({})
   const [submittingApplicationId, setSubmittingApplicationId] = useState('')
+  const [cityFilter, setCityFilter] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('')
+  const [minRewardFilter, setMinRewardFilter] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+
+  const availableCategories = useMemo(() => {
+    return Array.from(new Set(requests.map((request) => request.categoria))).sort()
+  }, [requests])
+
+  const filteredRequests = useMemo(() => {
+    return requests
+      .filter((request) => {
+        const matchesCity = cityFilter
+          ? request.citta.toLowerCase().includes(cityFilter.toLowerCase())
+          : true
+
+        const matchesCategory = categoryFilter
+          ? request.categoria === categoryFilter
+          : true
+
+        const rewardValue = Number(request.compenso)
+        const minRewardValue = Number(minRewardFilter)
+
+        const matchesReward = minRewardFilter
+          ? !Number.isNaN(rewardValue) &&
+            !Number.isNaN(minRewardValue) &&
+            rewardValue >= minRewardValue
+          : true
+
+        return matchesCity && matchesCategory && matchesReward
+      })
+      .sort((a, b) => {
+        const firstDate = new Date(a.data + 'T00:00:00').getTime()
+        const secondDate = new Date(b.data + 'T00:00:00').getTime()
+
+        return secondDate - firstDate
+      })
+  }, [requests, cityFilter, categoryFilter, minRewardFilter])
+
+  function resetFilters() {
+    setCityFilter('')
+    setCategoryFilter('')
+    setMinRewardFilter('')
+  }
 
   function handleApplicationMessageChange(requestId: string, value: string) {
     setApplicationMessages((current) => ({
@@ -84,17 +127,62 @@ function OffroAiutoPage() {
               </p>
             </div>
 
-            {message && (
-              <div className="alert alert--success">
-                {message}
-              </div>
-            )}
+            {message && <div className="alert alert--success">{message}</div>}
+            {error && <div className="alert alert--error">{error}</div>}
 
-            {error && (
-              <div className="alert alert--error">
-                {error}
+            <div className="request-card">
+              <h2 className="request-card__title">Filtra richieste</h2>
+
+              <div className="form-field">
+                <label htmlFor="cityFilter">Città</label>
+                <input
+                  id="cityFilter"
+                  type="text"
+                  value={cityFilter}
+                  onChange={(event) => setCityFilter(event.target.value)}
+                  placeholder="Es. Agrigento"
+                />
               </div>
-            )}
+
+              <div className="form-field">
+                <label htmlFor="categoryFilter">Categoria</label>
+                <select
+                  id="categoryFilter"
+                  value={categoryFilter}
+                  onChange={(event) => setCategoryFilter(event.target.value)}
+                >
+                  <option value="">Tutte le categorie</option>
+
+                  {availableCategories.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="minRewardFilter">Compenso minimo</label>
+                <input
+                  id="minRewardFilter"
+                  type="number"
+                  min="0"
+                  value={minRewardFilter}
+                  onChange={(event) => setMinRewardFilter(event.target.value)}
+                  placeholder="Es. 20"
+                />
+              </div>
+
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="btn btn--secondary"
+                  onClick={resetFilters}
+                >
+                  Cancella filtri
+                </button>
+              </div>
+            </div>
 
             {requests.length === 0 ? (
               <div className="empty-state">
@@ -104,9 +192,21 @@ function OffroAiutoPage() {
                   Pubblica la prima richiesta
                 </Link>
               </div>
+            ) : filteredRequests.length === 0 ? (
+              <div className="empty-state">
+                <p>Nessuna richiesta corrisponde ai filtri selezionati.</p>
+
+                <button
+                  type="button"
+                  className="btn btn--secondary"
+                  onClick={resetFilters}
+                >
+                  Cancella filtri
+                </button>
+              </div>
             ) : (
               <ul className="requests-list">
-                {requests.map((request) => (
+                {filteredRequests.map((request) => (
                   <li key={request.id} className="request-card">
                     <div className="request-card__header">
                       <span className="request-card__category">
@@ -114,25 +214,17 @@ function OffroAiutoPage() {
                       </span>
 
                       {request.stato === 'accettata' && (
-                        <span className="badge badge--accepted">
-                          Accettata
-                        </span>
+                        <span className="badge badge--accepted">Accettata</span>
                       )}
 
                       {request.stato === 'completata' && (
-                        <span className="badge badge--accepted">
-                          Completata
-                        </span>
+                        <span className="badge badge--accepted">Completata</span>
                       )}
                     </div>
 
-                    <h2 className="request-card__title">
-                      {request.titolo}
-                    </h2>
+                    <h2 className="request-card__title">{request.titolo}</h2>
 
-                    <p className="request-card__desc">
-                      {request.descrizione}
-                    </p>
+                    <p className="request-card__desc">{request.descrizione}</p>
 
                     <dl className="request-card__meta">
                       <div>
@@ -159,6 +251,7 @@ function OffroAiutoPage() {
                           <label htmlFor={`application-${request.id}`}>
                             Messaggio candidatura
                           </label>
+
                           <textarea
                             id={`application-${request.id}`}
                             value={applicationMessages[request.id] ?? ''}

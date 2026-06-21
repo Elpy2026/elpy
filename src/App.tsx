@@ -15,6 +15,7 @@ import ProfiloHelperPage from './pages/ProfiloHelperPage'
 import NotifichePage from './pages/NotifichePage'
 import ChatPage from './pages/ChatPage'
 import MessaggiPage from './pages/MessaggiPage'
+import SegnalaUtentePage from './pages/SegnalaUtentePage'
 import AdminVerifichePage from './pages/AdminVerifichePage'
 
 import AdminRoute from './components/AdminRoute'
@@ -70,6 +71,15 @@ function App() {
             element={
               <VerifiedRoute>
                 <MessaggiPage />
+              </VerifiedRoute>
+            }
+          />
+
+          <Route
+            path="/segnala-utente"
+            element={
+              <VerifiedRoute>
+                <SegnalaUtentePage />
               </VerifiedRoute>
             }
           />
