@@ -354,6 +354,12 @@ function LeMieRichiestePage() {
                               >
                                 Vedi profilo helper
                               </Link>
+                              <Link
+  to={`/chat/${request.id}`}
+  className="btn btn--primary"
+>
+  Apri chat
+</Link>
 
                               {helper?.phone && (
                                 <a
