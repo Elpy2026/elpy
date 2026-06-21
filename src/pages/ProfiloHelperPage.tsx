@@ -26,6 +26,11 @@ type Review = {
   created_at: string
 }
 
+function renderStars(rating: number | null | undefined) {
+  const value = Math.round(rating ?? 0)
+  return '★'.repeat(value) + '☆'.repeat(5 - value)
+}
+
 function ProfiloHelperPage() {
   const { helperId } = useParams()
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -139,10 +144,15 @@ function ProfiloHelperPage() {
                   <h2 className="request-card__title">Reputazione</h2>
 
                   {stats ? (
-                    <p>
-                      ⭐ {stats.average_rating ?? 0} · {stats.review_count}{' '}
-                      recensioni ricevute
-                    </p>
+                    <>
+                      <p style={{ fontSize: '1.5rem', margin: '0 0 0.5rem' }}>
+                        {renderStars(stats.average_rating)}
+                      </p>
+                      <p>
+                        {stats.average_rating ?? 0}/5 · {stats.review_count}{' '}
+                        recensioni ricevute
+                      </p>
+                    </>
                   ) : (
                     <p>Nessuna recensione ricevuta.</p>
                   )}
@@ -157,7 +167,9 @@ function ProfiloHelperPage() {
                     <ul className="requests-list">
                       {reviews.map((review) => (
                         <li key={review.id} className="request-card">
-                          <p>⭐ {review.rating}</p>
+                          <p style={{ fontSize: '1.25rem', margin: '0 0 0.5rem' }}>
+                            {renderStars(review.rating)}
+                          </p>
                           <p>{review.comment || 'Nessun commento.'}</p>
                         </li>
                       ))}
