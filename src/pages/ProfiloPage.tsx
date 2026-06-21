@@ -12,6 +12,8 @@ function ProfiloPage() {
   const [bio, setBio] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [verified, setVerified] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -50,7 +52,6 @@ function ProfiloPage() {
 
   function handleAvatarChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
-
     if (!file) return
 
     if (!file.type.startsWith('image/')) {
@@ -75,12 +76,9 @@ function ProfiloPage() {
         upsert: true,
       })
 
-    if (uploadError) {
-      throw uploadError
-    }
+    if (uploadError) throw uploadError
 
     const { data } = supabase.storage.from('avatars').getPublicUrl(filePath)
-
     return data.publicUrl
   }
 
@@ -97,6 +95,22 @@ function ProfiloPage() {
     setError('')
 
     try {
+      if (newPassword || confirmPassword) {
+        if (newPassword.length < 6) {
+          throw new Error('La nuova password deve contenere almeno 6 caratteri.')
+        }
+
+        if (newPassword !== confirmPassword) {
+          throw new Error('Le password non coincidono.')
+        }
+
+        const { error: passwordError } = await supabase.auth.updateUser({
+          password: newPassword,
+        })
+
+        if (passwordError) throw passwordError
+      }
+
       const finalAvatarUrl = await uploadAvatar()
 
       const { error } = await supabase
@@ -114,6 +128,8 @@ function ProfiloPage() {
 
       setAvatarUrl(finalAvatarUrl ?? '')
       setAvatarFile(null)
+      setNewPassword('')
+      setConfirmPassword('')
       setMessage('Profilo aggiornato con successo.')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Errore durante il salvataggio.')
@@ -217,6 +233,34 @@ function ProfiloPage() {
                     />
                   </div>
                 )}
+
+                <div className="request-card">
+                  <h2 className="request-card__title">Cambia password</h2>
+
+                  <div className="form-field">
+                    <label htmlFor="newPassword">Nuova password</label>
+                    <input
+                      id="newPassword"
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Nuova password"
+                      disabled={saving}
+                    />
+                  </div>
+
+                  <div className="form-field">
+                    <label htmlFor="confirmPassword">Conferma password</label>
+                    <input
+                      id="confirmPassword"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Ripeti password"
+                      disabled={saving}
+                    />
+                  </div>
+                </div>
 
                 <div className="alert alert--success">
                   Stato identità: {verified ? 'verificata' : 'non ancora verificata'}
