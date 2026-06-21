@@ -102,16 +102,20 @@ function Header() {
                     Il mio profilo
                   </Link>
 
-                  <Link
-                    to="/le-mie-richieste"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Le mie richieste
+                  <Link to="/notifiche" onClick={() => setMenuOpen(false)}>
+                    Notifiche
                     {pendingApplicationsCount > 0 && (
                       <span className="account-menu__inline-badge">
                         {pendingApplicationsCount}
                       </span>
                     )}
+                  </Link>
+
+                  <Link
+                    to="/le-mie-richieste"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Le mie richieste
                   </Link>
 
                   <Link
