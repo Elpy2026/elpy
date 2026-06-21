@@ -12,6 +12,15 @@ type HelperProfile = {
   verified: boolean | null
 }
 
+type Application = {
+  id: string
+  request_id: string
+  helper_id: string
+  message: string | null
+  status: string
+  created_at: string | null
+}
+
 type MyRequest = {
   id: string
   category: string
@@ -29,56 +38,141 @@ type MyRequest = {
 function LeMieRichiestePage() {
   const { user } = useAuth()
   const [requests, setRequests] = useState<MyRequest[]>([])
+  const [applications, setApplications] = useState<Record<string, Application[]>>({})
   const [helpers, setHelpers] = useState<Record<string, HelperProfile>>({})
   const [loading, setLoading] = useState(true)
+  const [acceptingApplicationId, setAcceptingApplicationId] = useState('')
+  const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    async function loadMyRequests() {
-      if (!user) {
-        setLoading(false)
-        return
-      }
-
-      const { data, error } = await supabase
-        .from('requests')
-        .select('*')
-        .eq('seeker_id', user.id)
-        .order('created_at', { ascending: false })
-
-      if (error) {
-        setError(error.message)
-        setLoading(false)
-        return
-      }
-
-      const myRequests = data ?? []
-      setRequests(myRequests)
-
-      const helperIds = myRequests
-        .map((request) => request.helper_id)
-        .filter((id): id is string => Boolean(id))
-
-      if (helperIds.length > 0) {
-        const { data: profilesData } = await supabase
-          .from('profiles')
-          .select('id, full_name, phone, verified')
-          .in('id', helperIds)
-
-        const profilesMap: Record<string, HelperProfile> = {}
-
-        for (const profile of profilesData ?? []) {
-          profilesMap[profile.id] = profile
-        }
-
-        setHelpers(profilesMap)
-      }
-
+  async function loadMyRequests() {
+    if (!user) {
       setLoading(false)
+      return
     }
 
+    setLoading(true)
+    setError('')
+    setMessage('')
+
+    const { data, error } = await supabase
+      .from('requests')
+      .select('*')
+      .eq('seeker_id', user.id)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      setError(error.message)
+      setLoading(false)
+      return
+    }
+
+    const myRequests = data ?? []
+    setRequests(myRequests)
+
+    const requestIds = myRequests.map((request) => request.id)
+
+    const helperIdsFromRequests = myRequests
+      .map((request) => request.helper_id)
+      .filter((id): id is string => Boolean(id))
+
+    let helperIdsFromApplications: string[] = []
+
+    if (requestIds.length > 0) {
+      const { data: applicationsData, error: applicationsError } = await supabase
+        .from('request_applications')
+        .select('*')
+        .in('request_id', requestIds)
+        .order('created_at', { ascending: false })
+
+      if (applicationsError) {
+        setError(applicationsError.message)
+      } else {
+        const grouped: Record<string, Application[]> = {}
+
+        for (const application of applicationsData ?? []) {
+          if (!grouped[application.request_id]) {
+            grouped[application.request_id] = []
+          }
+
+          grouped[application.request_id].push(application)
+        }
+
+        setApplications(grouped)
+
+        helperIdsFromApplications = (applicationsData ?? [])
+          .map((application) => application.helper_id)
+          .filter((id): id is string => Boolean(id))
+      }
+    }
+
+    const helperIds = Array.from(
+      new Set([...helperIdsFromRequests, ...helperIdsFromApplications]),
+    )
+
+    if (helperIds.length > 0) {
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, full_name, phone, verified')
+        .in('id', helperIds)
+
+      const profilesMap: Record<string, HelperProfile> = {}
+
+      for (const profile of profilesData ?? []) {
+        profilesMap[profile.id] = profile
+      }
+
+      setHelpers(profilesMap)
+    }
+
+    setLoading(false)
+  }
+
+  useEffect(() => {
     void loadMyRequests()
   }, [user])
+
+  async function handleAcceptApplication(application: Application) {
+    setError('')
+    setMessage('')
+    setAcceptingApplicationId(application.id)
+
+    const { error: requestError } = await supabase
+      .from('requests')
+      .update({
+        status: 'accettata',
+        helper_id: application.helper_id,
+      })
+      .eq('id', application.request_id)
+      .eq('status', 'aperta')
+
+    if (requestError) {
+      setError(requestError.message)
+      setAcceptingApplicationId('')
+      return
+    }
+
+    const { error: acceptedError } = await supabase
+      .from('request_applications')
+      .update({ status: 'accepted' })
+      .eq('id', application.id)
+
+    if (acceptedError) {
+      setError(acceptedError.message)
+      setAcceptingApplicationId('')
+      return
+    }
+
+    await supabase
+      .from('request_applications')
+      .update({ status: 'rejected' })
+      .eq('request_id', application.request_id)
+      .neq('id', application.id)
+
+    setMessage('Candidatura accettata con successo.')
+    setAcceptingApplicationId('')
+    await loadMyRequests()
+  }
 
   return (
     <div className="landing">
@@ -95,6 +189,7 @@ function LeMieRichiestePage() {
               </p>
             </div>
 
+            {message && <div className="alert alert--success">{message}</div>}
             {loading && <p>Caricamento richieste…</p>}
             {error && <div className="alert alert--error">{error}</div>}
 
@@ -111,6 +206,7 @@ function LeMieRichiestePage() {
               <ul className="requests-list">
                 {requests.map((request) => {
                   const helper = request.helper_id ? helpers[request.helper_id] : null
+                  const requestApplications = applications[request.id] ?? []
 
                   return (
                     <li key={request.id} className="request-card">
@@ -142,6 +238,68 @@ function LeMieRichiestePage() {
                           </dd>
                         </div>
                       </dl>
+
+                      {request.status === 'aperta' && (
+                        <div className="request-card">
+                          <h3>Candidature ricevute</h3>
+
+                          {requestApplications.length === 0 ? (
+                            <p>Nessuna candidatura ricevuta.</p>
+                          ) : (
+                            <ul className="requests-list">
+                              {requestApplications.map((application) => {
+                                const applicant = helpers[application.helper_id]
+
+                                return (
+                                  <li key={application.id} className="request-card">
+                                    <p>
+                                      <strong>Helper:</strong>{' '}
+                                      {applicant?.full_name ?? 'Helper ELPY'}
+                                      {applicant?.verified && ' · Identità verificata'}
+                                    </p>
+
+                                    <p>
+                                      <strong>Messaggio:</strong>{' '}
+                                      {application.message || 'Nessun messaggio.'}
+                                    </p>
+
+                                    <p>
+                                      <strong>Stato candidatura:</strong>{' '}
+                                      {application.status}
+                                    </p>
+
+                                    <div className="form-actions">
+                                      <Link
+                                        to={`/profilo-helper/${application.helper_id}`}
+                                        className="btn btn--secondary"
+                                      >
+                                        Vedi profilo helper
+                                      </Link>
+
+                                      {application.status === 'pending' && (
+                                        <button
+                                          type="button"
+                                          className="btn btn--primary"
+                                          onClick={() =>
+                                            void handleAcceptApplication(application)
+                                          }
+                                          disabled={
+                                            acceptingApplicationId === application.id
+                                          }
+                                        >
+                                          {acceptingApplicationId === application.id
+                                            ? 'Accettazione…'
+                                            : 'Accetta candidatura'}
+                                        </button>
+                                      )}
+                                    </div>
+                                  </li>
+                                )
+                              })}
+                            </ul>
+                          )}
+                        </div>
+                      )}
 
                       {(request.status === 'accettata' ||
                         request.status === 'completata') &&
