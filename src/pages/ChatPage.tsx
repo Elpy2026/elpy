@@ -20,6 +20,7 @@ type Message = {
   sender_id: string
   content: string
   created_at: string
+  read_at: string | null
 }
 
 function formatMessageTime(value: string) {
@@ -41,20 +42,38 @@ function ChatPage() {
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
 
-  const loadMessages = useCallback(async (activeConversationId: string) => {
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('conversation_id', activeConversationId)
-      .order('created_at', { ascending: true })
+  const markMessagesAsRead = useCallback(
+    async (activeConversationId: string) => {
+      if (!user) return
 
-    if (error) {
-      setError(error.message)
-      return
-    }
+      await supabase
+        .from('messages')
+        .update({ read_at: new Date().toISOString() })
+        .eq('conversation_id', activeConversationId)
+        .neq('sender_id', user.id)
+        .is('read_at', null)
+    },
+    [user],
+  )
 
-    setMessages(data ?? [])
-  }, [])
+  const loadMessages = useCallback(
+    async (activeConversationId: string) => {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('conversation_id', activeConversationId)
+        .order('created_at', { ascending: true })
+
+      if (error) {
+        setError(error.message)
+        return
+      }
+
+      setMessages(data ?? [])
+      await markMessagesAsRead(activeConversationId)
+    },
+    [markMessagesAsRead],
+  )
 
   useEffect(() => {
     async function loadChat() {
@@ -142,13 +161,11 @@ function ChatPage() {
 
     const content = newMessage.trim()
 
-    const { error } = await supabase
-      .from('messages')
-      .insert({
-        conversation_id: conversationId,
-        sender_id: user.id,
-        content,
-      })
+    const { error } = await supabase.from('messages').insert({
+      conversation_id: conversationId,
+      sender_id: user.id,
+      content,
+    })
 
     if (error) {
       setError(error.message)
@@ -213,6 +230,7 @@ function ChatPage() {
                             <p style={{ margin: '0.35rem 0' }}>{message.content}</p>
                             <small style={{ color: 'var(--text-muted)' }}>
                               {formatMessageTime(message.created_at)}
+                              {isMine && message.read_at ? ' · letto' : ''}
                             </small>
                           </div>
                         )
