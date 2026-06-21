@@ -18,7 +18,9 @@ export interface RequestRow {
 
 export function mapRowToHelpRequest(row: RequestRow): HelpRequest {
   const stato =
-    row.status === 'accettata' || row.status === 'accepted' ? 'accettata' : 'aperta'
+    row.status === 'accettata' || row.status === 'accepted'
+      ? 'accettata'
+      : 'aperta'
 
   return {
     id: row.id,
@@ -104,6 +106,30 @@ export async function acceptHelpRequest(
     })
     .eq('id', requestId)
     .eq('status', 'aperta')
+
+  return {
+    error: error?.message ?? null,
+  }
+}
+
+export async function completeHelpRequest(
+  requestId: string,
+): Promise<{ error: string | null }> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Devi accedere per completare una richiesta.' }
+  }
+
+  const { error } = await supabase
+    .from('requests')
+    .update({
+      status: 'completata',
+    })
+    .eq('id', requestId)
+    .eq('status', 'accettata')
 
   return {
     error: error?.message ?? null,
