@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useParams } from 'react-router-dom'
 import Header from '../components/Header'
@@ -22,6 +22,13 @@ type Message = {
   created_at: string
 }
 
+function formatMessageTime(value: string) {
+  return new Date(value).toLocaleTimeString('it-IT', {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 function ChatPage() {
   const { requestId } = useParams()
   const { user } = useAuth()
@@ -31,94 +38,127 @@ function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(true)
+  const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    async function loadChat() {
-      if (!requestId) return
-
-      const { data: requestData } = await supabase
-        .from('requests')
-        .select('*')
-        .eq('id', requestId)
-        .single()
-
-      if (!requestData) {
-        setLoading(false)
-        return
-      }
-
-      setRequest(requestData)
-
-      let { data: conversation } = await supabase
-        .from('conversations')
-        .select('*')
-        .eq('request_id', requestId)
-        .maybeSingle()
-
-      if (!conversation) {
-        const { data: newConversation } = await supabase
-          .from('conversations')
-          .insert({
-            request_id: requestId,
-            seeker_id: requestData.seeker_id,
-            helper_id: requestData.helper_id,
-          })
-          .select()
-          .single()
-
-        conversation = newConversation
-      }
-
-      if (!conversation) {
-        setLoading(false)
-        return
-      }
-
-      setConversationId(conversation.id)
-
-      const { data: messagesData } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('conversation_id', conversation.id)
-        .order('created_at', { ascending: true })
-
-      setMessages(messagesData ?? [])
-      setLoading(false)
-    }
-
-    void loadChat()
-  }, [requestId])
-
-  async function handleSendMessage(event: FormEvent) {
-    event.preventDefault()
-
-    if (!user || !conversationId || !newMessage.trim()) {
-      return
-    }
-
-    const { error } = await supabase
+  const loadMessages = useCallback(async (activeConversationId: string) => {
+    const { data, error } = await supabase
       .from('messages')
-      .insert({
-        conversation_id: conversationId,
-        sender_id: user.id,
-        content: newMessage.trim(),
-      })
+      .select('*')
+      .eq('conversation_id', activeConversationId)
+      .order('created_at', { ascending: true })
 
     if (error) {
       setError(error.message)
       return
     }
 
-    const message: Message = {
-      id: crypto.randomUUID(),
-      sender_id: user.id,
-      content: newMessage.trim(),
-      created_at: new Date().toISOString(),
+    setMessages(data ?? [])
+  }, [])
+
+  useEffect(() => {
+    async function loadChat() {
+      if (!requestId) {
+        setLoading(false)
+        return
+      }
+
+      setLoading(true)
+      setError('')
+
+      const { data: requestData, error: requestError } = await supabase
+        .from('requests')
+        .select('id, title, description, status, seeker_id, helper_id')
+        .eq('id', requestId)
+        .single()
+
+      if (requestError || !requestData) {
+        setError(requestError?.message ?? 'Richiesta non trovata.')
+        setLoading(false)
+        return
+      }
+
+      setRequest(requestData)
+
+      let { data: conversation, error: conversationError } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('request_id', requestId)
+        .maybeSingle()
+
+      if (conversationError) {
+        setError(conversationError.message)
+        setLoading(false)
+        return
+      }
+
+      if (!conversation) {
+        const { data: newConversation, error: createError } = await supabase
+          .from('conversations')
+          .insert({
+            request_id: requestId,
+            seeker_id: requestData.seeker_id,
+            helper_id: requestData.helper_id,
+          })
+          .select('id')
+          .single()
+
+        if (createError || !newConversation) {
+          setError(createError?.message ?? 'Impossibile creare la conversazione.')
+          setLoading(false)
+          return
+        }
+
+        conversation = newConversation
+      }
+
+      setConversationId(conversation.id)
+      await loadMessages(conversation.id)
+      setLoading(false)
     }
 
-    setMessages((prev) => [...prev, message])
+    void loadChat()
+  }, [requestId, loadMessages])
+
+  useEffect(() => {
+    if (!conversationId) return
+
+    const interval = window.setInterval(() => {
+      void loadMessages(conversationId)
+    }, 3000)
+
+    return () => window.clearInterval(interval)
+  }, [conversationId, loadMessages])
+
+  async function handleSendMessage(event: FormEvent) {
+    event.preventDefault()
+
+    if (!user || !conversationId || !newMessage.trim() || sending) {
+      return
+    }
+
+    setSending(true)
+    setError('')
+
+    const content = newMessage.trim()
+
+    const { error } = await supabase
+      .from('messages')
+      .insert({
+        conversation_id: conversationId,
+        sender_id: user.id,
+        content,
+      })
+
+    if (error) {
+      setError(error.message)
+      setSending(false)
+      return
+    }
+
     setNewMessage('')
+    await loadMessages(conversationId)
+    setSending(false)
   }
 
   return (
@@ -139,55 +179,64 @@ function ChatPage() {
             {!loading && request && (
               <>
                 <div className="request-card">
-                  <h2 className="request-card__title">
-                    {request.title}
-                  </h2>
-
+                  <h2 className="request-card__title">{request.title}</h2>
                   <p>{request.description}</p>
+                  <p>
+                    <strong>Stato:</strong> {request.status}
+                  </p>
                 </div>
 
                 <div className="request-card">
-                  <h2 className="request-card__title">
-                    Conversazione
-                  </h2>
+                  <h2 className="request-card__title">Conversazione</h2>
 
-                  {messages.map((message) => (
-                    <div
-                      key={message.id}
-                      style={{
-                        padding: '12px',
-                        marginBottom: '10px',
-                        border: '1px solid #ddd',
-                        borderRadius: '8px',
-                      }}
-                    >
-                      <strong>
-                        {message.sender_id === user?.id
-                          ? 'Tu'
-                          : 'Altro utente'}
-                      </strong>
+                  {messages.length === 0 ? (
+                    <p>Nessun messaggio ancora. Inizia tu la conversazione.</p>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {messages.map((message) => {
+                        const isMine = message.sender_id === user?.id
 
-                      <p>{message.content}</p>
+                        return (
+                          <div
+                            key={message.id}
+                            style={{
+                              alignSelf: isMine ? 'flex-end' : 'flex-start',
+                              maxWidth: '85%',
+                              padding: '0.75rem 1rem',
+                              borderRadius: 14,
+                              background: isMine ? 'var(--green-50)' : '#fff',
+                              border: '1px solid var(--border)',
+                              boxShadow: 'var(--shadow-sm)',
+                            }}
+                          >
+                            <strong>{isMine ? 'Tu' : 'Altro utente'}</strong>
+                            <p style={{ margin: '0.35rem 0' }}>{message.content}</p>
+                            <small style={{ color: 'var(--text-muted)' }}>
+                              {formatMessageTime(message.created_at)}
+                            </small>
+                          </div>
+                        )
+                      })}
                     </div>
-                  ))}
+                  )}
 
-                  <form onSubmit={handleSendMessage}>
+                  <form onSubmit={handleSendMessage} style={{ marginTop: '1.25rem' }}>
                     <div className="form-field">
                       <textarea
                         value={newMessage}
-                        onChange={(e) =>
-                          setNewMessage(e.target.value)
-                        }
+                        onChange={(e) => setNewMessage(e.target.value)}
                         rows={4}
                         placeholder="Scrivi un messaggio..."
+                        disabled={sending}
                       />
                     </div>
 
                     <button
                       type="submit"
                       className="btn btn--primary"
+                      disabled={sending || !newMessage.trim()}
                     >
-                      Invia messaggio
+                      {sending ? 'Invio…' : 'Invia messaggio'}
                     </button>
                   </form>
                 </div>
