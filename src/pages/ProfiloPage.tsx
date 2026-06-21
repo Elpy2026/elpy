@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { supabase } from '../lib/supabase'
@@ -11,6 +11,7 @@ function ProfiloPage() {
   const [city, setCity] = useState('')
   const [bio, setBio] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [verified, setVerified] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -47,6 +48,42 @@ function ProfiloPage() {
     void loadProfile()
   }, [user])
 
+  function handleAvatarChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      setError('Seleziona un file immagine valido.')
+      return
+    }
+
+    setAvatarFile(file)
+    setAvatarUrl(URL.createObjectURL(file))
+  }
+
+  async function uploadAvatar(): Promise<string | null> {
+    if (!user || !avatarFile) return avatarUrl || null
+
+    const fileExt = avatarFile.name.split('.').pop()
+    const filePath = `${user.id}/avatar-${Date.now()}.${fileExt}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, avatarFile, {
+        cacheControl: '3600',
+        upsert: true,
+      })
+
+    if (uploadError) {
+      throw uploadError
+    }
+
+    const { data } = supabase.storage.from('avatars').getPublicUrl(filePath)
+
+    return data.publicUrl
+  }
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
 
@@ -59,24 +96,30 @@ function ProfiloPage() {
     setMessage('')
     setError('')
 
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        full_name: fullName,
-        phone: phone || null,
-        city: city || null,
-        bio: bio || null,
-        avatar_url: avatarUrl || null,
-      })
-      .eq('id', user.id)
+    try {
+      const finalAvatarUrl = await uploadAvatar()
 
-    if (error) {
-      setError(error.message)
-    } else {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: fullName,
+          phone: phone || null,
+          city: city || null,
+          bio: bio || null,
+          avatar_url: finalAvatarUrl || null,
+        })
+        .eq('id', user.id)
+
+      if (error) throw error
+
+      setAvatarUrl(finalAvatarUrl ?? '')
+      setAvatarFile(null)
       setMessage('Profilo aggiornato con successo.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Errore durante il salvataggio.')
+    } finally {
+      setSaving(false)
     }
-
-    setSaving(false)
   }
 
   return (
@@ -103,7 +146,7 @@ function ProfiloPage() {
                 <div className="form-field">
                   <label htmlFor="fullName">Nome e cognome</label>
                   <input
-                  id="fullName"
+                    id="fullName"
                     type="text"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
@@ -149,13 +192,12 @@ function ProfiloPage() {
                 </div>
 
                 <div className="form-field">
-                  <label htmlFor="avatarUrl">URL foto profilo</label>
+                  <label htmlFor="avatarFile">Foto profilo</label>
                   <input
-                    id="avatarUrl"
-                    type="url"
-                    value={avatarUrl}
-                    onChange={(e) => setAvatarUrl(e.target.value)}
-                    placeholder="https://..."
+                    id="avatarFile"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
                     disabled={saving}
                   />
                 </div>
@@ -177,21 +219,16 @@ function ProfiloPage() {
                 )}
 
                 <div className="alert alert--success">
-                  Stato identità:{' '}
-                  {verified ? 'verificata' : 'non ancora verificata'}
+                  Stato identità: {verified ? 'verificata' : 'non ancora verificata'}
                 </div>
 
                 <div className="form-actions">
-                  <button
-                    className="btn btn--primary"
-                    type="submit"
-                    disabled={saving}
-                  >
+                  <button className="btn btn--primary" type="submit" disabled={saving}>
                     {saving ? 'Salvataggio…' : 'Salva profilo'}
                   </button>
                 </div>
               </form>
-         )}
+            )}
           </div>
         </section>
       </main>
