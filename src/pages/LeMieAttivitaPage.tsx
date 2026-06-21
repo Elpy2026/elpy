@@ -20,6 +20,13 @@ type HelperRequest = {
   helper_id: string | null
 }
 
+type SeekerProfile = {
+  id: string
+  full_name: string | null
+  phone: string | null
+  verified: boolean | null
+}
+
 type ReviewStats = {
   review_count: number
   average_rating: number | null
@@ -28,6 +35,7 @@ type ReviewStats = {
 function LeMieAttivitaPage() {
   const { user } = useAuth()
   const [requests, setRequests] = useState<HelperRequest[]>([])
+  const [seekers, setSeekers] = useState<Record<string, SeekerProfile>>({})
   const [stats, setStats] = useState<ReviewStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [completingId, setCompletingId] = useState('')
@@ -52,7 +60,27 @@ function LeMieAttivitaPage() {
     if (error) {
       setError(error.message)
     } else {
-      setRequests(data ?? [])
+      const myRequests = data ?? []
+      setRequests(myRequests)
+
+      const seekerIds = myRequests
+        .map((request) => request.seeker_id)
+        .filter((id): id is string => Boolean(id))
+
+      if (seekerIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, full_name, phone, verified')
+          .in('id', seekerIds)
+
+        const profilesMap: Record<string, SeekerProfile> = {}
+
+        for (const profile of profilesData ?? []) {
+          profilesMap[profile.id] = profile
+        }
+
+        setSeekers(profilesMap)
+      }
     }
 
     const { data: statsData } = await supabase
@@ -130,63 +158,107 @@ function LeMieAttivitaPage() {
 
             {requests.length > 0 && (
               <ul className="requests-list">
-                {requests.map((request) => (
-                  <li key={request.id} className="request-card">
-                    <div className="request-card__header">
-                      <span className="request-card__category">
-                        {request.category}
-                      </span>
-                      <span className="badge badge--accepted">
-                        {request.status ?? 'accettata'}
-                      </span>
-                    </div>
+                {requests.map((request) => {
+                  const seeker = request.seeker_id ? seekers[request.seeker_id] : null
 
-                    <h2 className="request-card__title">{request.title}</h2>
-                    <p className="request-card__desc">{request.description}</p>
-
-                    <dl className="request-card__meta">
-                      <div>
-                        <dt>Città</dt>
-                        <dd>{request.city}</dd>
+                  return (
+                    <li key={request.id} className="request-card">
+                      <div className="request-card__header">
+                        <span className="request-card__category">
+                          {request.category}
+                        </span>
+                        <span className="badge badge--accepted">
+                          {request.status ?? 'accettata'}
+                        </span>
                       </div>
 
-                      <div>
-                        <dt>Data</dt>
-                        <dd>{request.request_date}</dd>
-                      </div>
+                      <h2 className="request-card__title">{request.title}</h2>
+                      <p className="request-card__desc">{request.description}</p>
 
-                      <div>
-                        <dt>Compenso</dt>
-                        <dd className="request-card__compenso">
-                          €{request.reward}
-                        </dd>
-                      </div>
-                    </dl>
+                      <dl className="request-card__meta">
+                        <div>
+                          <dt>Città</dt>
+                          <dd>{request.city}</dd>
+                        </div>
 
-                    {request.status === 'accettata' && (
-                      <button
-                        type="button"
-                        className="btn btn--primary request-card__btn"
-                        onClick={() => void handleComplete(request.id)}
-                        disabled={completingId === request.id}
-                      >
-                        {completingId === request.id
-                          ? 'Completamento…'
-                          : 'Completa richiesta'}
-                      </button>
-                    )}
+                        <div>
+                          <dt>Data</dt>
+                          <dd>{request.request_date}</dd>
+                        </div>
 
-                    {request.status === 'completata' && (
-                      <button
-                        type="button"
-                        className="btn btn--secondary request-card__btn"
-                        disabled
-                      >
-                        Richiesta completata
-                      </button>
-                    )}
-                  </li>
-                ))}
+                        <div>
+                          <dt>Compenso</dt>
+                          <dd className="request-card__compenso">
+                            €{request.reward}
+                          </dd>
+                        </div>
+                      </dl>
+
+                      {(request.status === 'accettata' ||
+                        request.status === 'completata') && (
+                        <div className="alert alert--success">
+                          <p>
+                            <strong>Richiedente:</strong>{' '}
+                            {seeker?.full_name ?? 'Utente ELPY'}
+                            {seeker?.verified && ' · Identità verificata'}
+                          </p>
+
+                          {seeker?.phone ? (
+                            <p>
+                              <strong>Telefono richiedente:</strong>{' '}
+                              <a href={`tel:${seeker.phone}`}>{seeker.phone}</a>
+                            </p>
+                          ) : (
+                            <p>Telefono richiedente non disponibile.</p>
+                          )}
+
+                          {seeker?.phone && (
+                            <div className="form-actions">
+                              <a
+                                className="btn btn--secondary"
+                                href={`tel:${seeker.phone}`}
+                              >
+                                Chiama
+                              </a>
+
+                              <a
+                                className="btn btn--primary"
+                                href={`https://wa.me/${seeker.phone.replace(/\D/g, '')}`}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                Contatta su WhatsApp
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {request.status === 'accettata' && (
+                        <button
+                          type="button"
+                          className="btn btn--primary request-card__btn"
+                          onClick={() => void handleComplete(request.id)}
+                          disabled={completingId === request.id}
+                        >
+                          {completingId === request.id
+                            ? 'Completamento…'
+                            : 'Completa richiesta'}
+                        </button>
+                      )}
+
+                      {request.status === 'completata' && (
+                        <button
+                          type="button"
+                          className="btn btn--secondary request-card__btn"
+                          disabled
+                        >
+                          Richiesta completata
+                        </button>
+                      )}
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </div>
