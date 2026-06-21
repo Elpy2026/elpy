@@ -13,7 +13,13 @@ interface AuthContextValue {
   user: User | null
   session: Session | null
   loading: boolean
-  signUp: (email: string, password: string, fullName: string, role: 'seeker' | 'helper') => Promise<void>
+  signUp: (
+    email: string,
+    password: string,
+    fullName: string,
+    role: 'seeker' | 'helper',
+    phone: string,
+  ) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
 }
@@ -30,29 +36,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false)
     })
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession)
-      setLoading(false)
-    })
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, newSession) => {
+        setSession(newSession)
+        setLoading(false)
+      },
+    )
 
     return () => listener.subscription.unsubscribe()
   }, [])
 
-  async function signUp(email: string, password: string, fullName: string, role: 'seeker' | 'helper') {
+  async function signUp(
+    email: string,
+    password: string,
+    fullName: string,
+    role: 'seeker' | 'helper',
+    phone: string,
+  ) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName, role } },
+      options: {
+        data: {
+          full_name: fullName,
+          role,
+          phone,
+        },
+      },
     })
 
     if (error) throw error
 
     const userId = data.user?.id
+
     if (userId) {
-      const { error: profileError } = await supabase.from('profiles').insert({
+      const { error: profileError } = await supabase.from('profiles').upsert({
         id: userId,
         full_name: fullName,
         role,
+        phone: phone || null,
+        verified: false,
+        is_admin: false,
       })
 
       if (profileError) throw profileError

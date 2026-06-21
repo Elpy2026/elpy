@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { useRequests } from '../context/RequestsContext'
+import { createApplication } from '../lib/applications'
 
 function formatDate(dateStr: string) {
   return new Date(dateStr + 'T00:00:00').toLocaleDateString('it-IT', {
@@ -14,8 +15,41 @@ function formatDate(dateStr: string) {
 
 function OffroAiutoPage() {
   const { requests, acceptRequest } = useRequests()
+  const [applicationMessages, setApplicationMessages] = useState<Record<string, string>>({})
+  const [submittingApplicationId, setSubmittingApplicationId] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+
+  function handleApplicationMessageChange(requestId: string, value: string) {
+    setApplicationMessages((current) => ({
+      ...current,
+      [requestId]: value,
+    }))
+  }
+
+  async function handleApplication(requestId: string) {
+    setMessage('')
+    setError('')
+    setSubmittingApplicationId(requestId)
+
+    const result = await createApplication({
+      requestId,
+      message: applicationMessages[requestId] ?? '',
+    })
+
+    if (result.error) {
+      setError(result.error)
+      setSubmittingApplicationId('')
+      return
+    }
+
+    setMessage('Candidatura inviata con successo.')
+    setApplicationMessages((current) => ({
+      ...current,
+      [requestId]: '',
+    }))
+    setSubmittingApplicationId('')
+  }
 
   async function handleAccept(id: string) {
     setMessage('')
@@ -46,7 +80,7 @@ function OffroAiutoPage() {
               </h1>
 
               <p className="page-subtitle">
-                Sfoglia le richieste pubblicate e accetta quella che preferisci.
+                Sfoglia le richieste pubblicate e candidati per aiutare.
               </p>
             </div>
 
@@ -84,6 +118,12 @@ function OffroAiutoPage() {
                           Accettata
                         </span>
                       )}
+
+                      {request.stato === 'completata' && (
+                        <span className="badge badge--accepted">
+                          Completata
+                        </span>
+                      )}
                     </div>
 
                     <h2 className="request-card__title">
@@ -114,20 +154,54 @@ function OffroAiutoPage() {
                     </dl>
 
                     {request.stato === 'aperta' ? (
-                      <button
-                        type="button"
-                        className="btn btn--primary request-card__btn"
-                        onClick={() => void handleAccept(request.id)}
-                      >
-                        Accetta richiesta
-                      </button>
+                      <div className="request-form">
+                        <div className="form-field">
+                          <label htmlFor={`application-${request.id}`}>
+                            Messaggio candidatura
+                          </label>
+                          <textarea
+                            id={`application-${request.id}`}
+                            value={applicationMessages[request.id] ?? ''}
+                            onChange={(event) =>
+                              handleApplicationMessageChange(
+                                request.id,
+                                event.target.value,
+                              )
+                            }
+                            rows={3}
+                            placeholder="Scrivi perché puoi aiutare..."
+                            disabled={submittingApplicationId === request.id}
+                          />
+                        </div>
+
+                        <div className="form-actions">
+                          <button
+                            type="button"
+                            className="btn btn--primary request-card__btn"
+                            onClick={() => void handleApplication(request.id)}
+                            disabled={submittingApplicationId === request.id}
+                          >
+                            {submittingApplicationId === request.id
+                              ? 'Invio candidatura…'
+                              : 'Candidati'}
+                          </button>
+
+                          <button
+                            type="button"
+                            className="btn btn--secondary request-card__btn"
+                            onClick={() => void handleAccept(request.id)}
+                          >
+                            Accetta subito
+                          </button>
+                        </div>
+                      </div>
                     ) : (
                       <button
                         type="button"
                         className="btn btn--secondary request-card__btn"
                         disabled
                       >
-                        Richiesta accettata
+                        Richiesta non più disponibile
                       </button>
                     )}
                   </li>

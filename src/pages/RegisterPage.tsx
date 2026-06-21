@@ -23,7 +23,7 @@ function RegisterPage() {
     setMessage('')
 
     try {
-      await signUp(email, password, fullName, role)
+      await signUp(email, password, fullName, role, phone)
       setMessage('Registrazione completata. Controlla la tua email per confermare l’account.')
       setTimeout(() => navigate('/login'), 1800)
     } catch (err) {
@@ -36,6 +36,7 @@ function RegisterPage() {
   return (
     <div className="landing">
       <Header />
+
       <main className="page-main">
         <section className="section page-section">
           <div className="container page-container">
@@ -51,7 +52,7 @@ function RegisterPage() {
             {error && <div className="alert alert--error">{error}</div>}
 
             <form className="request-form" onSubmit={handleSubmit}>
-              <div className="form-ld">
+              <div className="form-field">
                 <label htmlFor="fullName">Nome e cognome</label>
                 <input
                   id="fullName"
@@ -82,6 +83,7 @@ function RegisterPage() {
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
+                  placeholder="Es. 3331234567"
                   disabled={loading}
                 />
               </div>
@@ -116,6 +118,7 @@ function RegisterPage() {
                 <button className="btn btn--primary" type="submit" disabled={loading}>
                   {loading ? 'Registrazione in corso…' : 'Registrati'}
                 </button>
+
                 <Link className="btn btn--secondary" to="/login">
                   Ho già un account
                 </Link>
@@ -124,6 +127,7 @@ function RegisterPage() {
           </div>
         </section>
       </main>
+
       <Footer />
     </div>
   )
