@@ -20,9 +20,15 @@ type HelperRequest = {
   helper_id: string | null
 }
 
+type ReviewStats = {
+  review_count: number
+  average_rating: number | null
+}
+
 function LeMieAttivitaPage() {
   const { user } = useAuth()
   const [requests, setRequests] = useState<HelperRequest[]>([])
+  const [stats, setStats] = useState<ReviewStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [completingId, setCompletingId] = useState('')
   const [message, setMessage] = useState('')
@@ -48,6 +54,14 @@ function LeMieAttivitaPage() {
     } else {
       setRequests(data ?? [])
     }
+
+    const { data: statsData } = await supabase
+      .from('user_review_stats')
+      .select('review_count, average_rating')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    setStats(statsData ?? null)
 
     setLoading(false)
   }, [user])
@@ -87,6 +101,18 @@ function LeMieAttivitaPage() {
               <p className="page-subtitle">
                 Qui trovi le richieste che hai accettato e che stai svolgendo.
               </p>
+            </div>
+
+            <div className="request-card">
+              <h2 className="request-card__title">La tua reputazione</h2>
+              {stats ? (
+                <p>
+                  ⭐ {stats.average_rating ?? 0} · {stats.review_count}{' '}
+                  recensioni ricevute
+                </p>
+              ) : (
+                <p>Non hai ancora recensioni.</p>
+              )}
             </div>
 
             {message && <div className="alert alert--success">{message}</div>}
