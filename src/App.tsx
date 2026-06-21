@@ -7,6 +7,7 @@ import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import IdentityVerificationPage from './pages/IdentityVerificationPage'
 import LeMieRichiestePage from './pages/LeMieRichiestePage'
+import LeMieAttivitaPage from './pages/LeMieAttivitaPage'
 import AdminVerifichePage from './pages/AdminVerifichePage'
 import AdminRoute from './components/AdminRoute'
 import VerifiedRoute from './components/VerifiedRoute'
@@ -24,6 +25,7 @@ function App() {
           <Route path="/registrazione" element={<RegisterPage />} />
           <Route path="/verifica-identita" element={<IdentityVerificationPage />} />
           <Route path="/le-mie-richieste" element={<LeMieRichiestePage />} />
+          <Route path="/le-mie-attivita" element={<VerifiedRoute><LeMieAttivitaPage /></VerifiedRoute>} />
           <Route path="/admin/verifiche" element={<AdminRoute><AdminVerifichePage /></AdminRoute>} />
         </Routes>
       </BrowserRouter>
