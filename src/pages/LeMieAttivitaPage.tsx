@@ -212,25 +212,32 @@ function LeMieAttivitaPage() {
                             <p>Telefono richiedente non disponibile.</p>
                           )}
 
-                          {seeker?.phone && (
-                            <div className="form-actions">
-                              <a
-                                className="btn btn--secondary"
-                                href={`tel:${seeker.phone}`}
-                              >
-                                Chiama
-                              </a>
+{seeker?.phone && (
+  <div className="form-actions">
+    <a
+      className="btn btn--secondary"
+      href={`tel:${seeker.phone}`}
+    >
+      Chiama
+    </a>
 
-                              <a
-                                className="btn btn--primary"
-                                href={`https://wa.me/${seeker.phone.replace(/\D/g, '')}`}
-                                target="_blank"
-                                rel="noreferrer"
-                              >
-                                Contatta su WhatsApp
-                              </a>
-                            </div>
-                          )}
+    <a
+      className="btn btn--primary"
+      href={`https://wa.me/${seeker.phone.replace(/\D/g, '')}`}
+      target="_blank"
+      rel="noreferrer"
+    >
+      Contatta su WhatsApp
+    </a>
+
+    <Link
+      to={`/chat/${request.id}`}
+      className="btn btn--secondary"
+    >
+      Apri chat
+    </Link>
+  </div>
+)}
                         </div>
                       )}
 
