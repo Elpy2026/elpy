@@ -149,6 +149,17 @@ function LeMieRichiestePage() {
                           {helper?.verified && ' · Identità verificata'}
                         </div>
                       )}
+
+                      {request.status === 'completata' && (
+                        <div className="form-actions">
+                          <Link
+                            to={`/recensione/${request.id}`}
+                            className="btn btn--primary"
+                          >
+                            Lascia recensione
+                          </Link>
+                        </div>
+                      )}
                     </li>
                   )
                 })}
