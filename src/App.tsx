@@ -17,6 +17,8 @@ import ChatPage from './pages/ChatPage'
 import MessaggiPage from './pages/MessaggiPage'
 import SegnalaUtentePage from './pages/SegnalaUtentePage'
 import AdminVerifichePage from './pages/AdminVerifichePage'
+import AdminSegnalazioniPage from './pages/AdminSegnalazioniPage'
+import AdminDashboardPage from './pages/AdminDashboardPage'
 
 import AdminRoute from './components/AdminRoute'
 import VerifiedRoute from './components/VerifiedRoute'
@@ -138,10 +140,28 @@ function App() {
           />
 
           <Route
+            path="/admin/dashboard"
+            element={
+              <AdminRoute>
+                <AdminDashboardPage />
+              </AdminRoute>
+            }
+          />
+
+          <Route
             path="/admin/verifiche"
             element={
               <AdminRoute>
                 <AdminVerifichePage />
+              </AdminRoute>
+            }
+          />
+
+          <Route
+            path="/admin/segnalazioni"
+            element={
+              <AdminRoute>
+                <AdminSegnalazioniPage />
               </AdminRoute>
             }
           />

@@ -180,11 +180,26 @@ function Header() {
                   {isAdmin && (
                     <>
                       <div className="account-menu__divider" />
+
+                      <Link
+                        to="/admin/dashboard"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        Admin dashboard
+                      </Link>
+
                       <Link
                         to="/admin/verifiche"
                         onClick={() => setMenuOpen(false)}
                       >
-                        Admin
+                        Admin verifiche
+                      </Link>
+
+                      <Link
+                        to="/admin/segnalazioni"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        Admin segnalazioni
                       </Link>
                     </>
                   )}
