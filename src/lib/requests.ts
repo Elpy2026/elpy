@@ -11,6 +11,9 @@ export interface RequestRow {
   reward: number | string
   status?: string | null
   created_at?: string | null
+  seeker_id?: string | null
+  user_id?: string | null
+  helper_id?: string | null
 }
 
 export function mapRowToHelpRequest(row: RequestRow): HelpRequest {
@@ -75,9 +78,32 @@ export async function insertRequest(
     user_id: user?.id ?? null,
   }
 
+  const { error } = await supabase.from('requests').insert(row)
+
+  return {
+    error: error?.message ?? null,
+  }
+}
+
+export async function acceptHelpRequest(
+  requestId: string,
+): Promise<{ error: string | null }> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Devi accedere per accettare una richiesta.' }
+  }
+
   const { error } = await supabase
     .from('requests')
-    .insert(row)
+    .update({
+      status: 'accettata',
+      helper_id: user.id,
+    })
+    .eq('id', requestId)
+    .eq('status', 'aperta')
 
   return {
     error: error?.message ?? null,
