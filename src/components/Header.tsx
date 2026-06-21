@@ -9,6 +9,7 @@ function Header() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [fullName, setFullName] = useState('')
   const [pendingApplicationsCount, setPendingApplicationsCount] = useState(0)
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
@@ -18,6 +19,7 @@ function Header() {
         setIsAdmin(false)
         setFullName('')
         setPendingApplicationsCount(0)
+        setUnreadMessagesCount(0)
         return
       }
 
@@ -41,16 +43,38 @@ function Header() {
 
       if (requestIds.length === 0) {
         setPendingApplicationsCount(0)
+      } else {
+        const { count } = await supabase
+          .from('request_applications')
+          .select('id', { count: 'exact', head: true })
+          .in('request_id', requestIds)
+          .eq('status', 'pending')
+
+        setPendingApplicationsCount(count ?? 0)
+      }
+
+      const { data: conversationsData } = await supabase
+        .from('conversations')
+        .select('id')
+        .or(`seeker_id.eq.${user.id},helper_id.eq.${user.id}`)
+
+      const conversationIds = (conversationsData ?? []).map(
+        (conversation) => conversation.id,
+      )
+
+      if (conversationIds.length === 0) {
+        setUnreadMessagesCount(0)
         return
       }
 
-      const { count } = await supabase
-        .from('request_applications')
+      const { count: unreadCount } = await supabase
+        .from('messages')
         .select('id', { count: 'exact', head: true })
-        .in('request_id', requestIds)
-        .eq('status', 'pending')
+        .in('conversation_id', conversationIds)
+        .neq('sender_id', user.id)
+        .is('read_at', null)
 
-      setPendingApplicationsCount(count ?? 0)
+      setUnreadMessagesCount(unreadCount ?? 0)
     }
 
     void loadProfileAndNotifications()
@@ -60,6 +84,8 @@ function Header() {
     setMenuOpen(false)
     await signOut()
   }
+
+  const totalAccountBadge = pendingApplicationsCount + unreadMessagesCount
 
   return (
     <header className="header">
@@ -88,11 +114,13 @@ function Header() {
                 <span className="account-menu__name">
                   {fullName || 'Account'}
                 </span>
-                {pendingApplicationsCount > 0 && (
+
+                {totalAccountBadge > 0 && (
                   <span className="account-menu__badge">
-                    {pendingApplicationsCount}
+                    {totalAccountBadge}
                   </span>
                 )}
+
                 <span aria-hidden="true">▾</span>
               </button>
 
@@ -104,6 +132,11 @@ function Header() {
 
                   <Link to="/messaggi" onClick={() => setMenuOpen(false)}>
                     Messaggi
+                    {unreadMessagesCount > 0 && (
+                      <span className="account-menu__inline-badge">
+                        {unreadMessagesCount}
+                      </span>
+                    )}
                   </Link>
 
                   <Link to="/notifiche" onClick={() => setMenuOpen(false)}>

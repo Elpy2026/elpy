@@ -10,19 +10,8 @@ type Conversation = {
   request_id: string
 }
 
-type RequestInfo = {
-  id: string
-  title: string
-}
-
-type MessageInfo = {
-  content: string
-  created_at: string
-}
-
 function MessaggiPage() {
   const { user } = useAuth()
-
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [conversations, setConversations] = useState<
@@ -32,6 +21,7 @@ function MessaggiPage() {
       requestTitle: string
       lastMessage: string
       lastDate: string
+      unreadCount: number
     }>
   >([])
 
@@ -48,7 +38,7 @@ function MessaggiPage() {
       const { data: conversationsData, error: conversationsError } =
         await supabase
           .from('conversations')
-          .select('*')
+          .select('id, request_id')
           .or(`seeker_id.eq.${user.id},helper_id.eq.${user.id}`)
 
       if (conversationsError) {
@@ -59,40 +49,39 @@ function MessaggiPage() {
 
       const result = []
 
-      for (const conversation of (conversationsData ??
-        []) as Conversation[]) {
+      for (const conversation of (conversationsData ?? []) as Conversation[]) {
         const { data: requestData } = await supabase
           .from('requests')
-          .select('id,title')
+          .select('title')
           .eq('id', conversation.request_id)
           .maybeSingle()
 
         const { data: lastMessage } = await supabase
           .from('messages')
-          .select('content,created_at')
+          .select('content, created_at')
           .eq('conversation_id', conversation.id)
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle()
 
+        const { count } = await supabase
+          .from('messages')
+          .select('id', { count: 'exact', head: true })
+          .eq('conversation_id', conversation.id)
+          .neq('sender_id', user.id)
+          .is('read_at', null)
+
         result.push({
           conversationId: conversation.id,
           requestId: conversation.request_id,
-          requestTitle:
-            (requestData as RequestInfo | null)?.title ??
-            'Richiesta',
-          lastMessage:
-            (lastMessage as MessageInfo | null)?.content ??
-            'Nessun messaggio',
-          lastDate:
-            (lastMessage as MessageInfo | null)?.created_at ??
-            '',
+          requestTitle: requestData?.title ?? 'Richiesta',
+          lastMessage: lastMessage?.content ?? 'Nessun messaggio',
+          lastDate: lastMessage?.created_at ?? '',
+          unreadCount: count ?? 0,
         })
       }
 
-      result.sort((a, b) =>
-        b.lastDate.localeCompare(a.lastDate),
-      )
+      result.sort((a, b) => b.lastDate.localeCompare(a.lastDate))
 
       setConversations(result)
       setLoading(false)
@@ -110,71 +99,54 @@ function MessaggiPage() {
           <div className="container page-container">
             <div className="page-header">
               <p className="hero__badge">Messaggi</p>
-
-              <h1 className="page-title">
-                Le tue conversazioni
-              </h1>
-
+              <h1 className="page-title">Le tue conversazioni</h1>
               <p className="page-subtitle">
                 Tutte le chat attive in un unico posto.
               </p>
             </div>
 
             {loading && <p>Caricamento conversazioni...</p>}
+            {error && <div className="alert alert--error">{error}</div>}
 
-            {error && (
-              <div className="alert alert--error">
-                {error}
+            {!loading && conversations.length === 0 && (
+              <div className="empty-state">
+                <p>Non hai ancora conversazioni.</p>
               </div>
             )}
 
-            {!loading &&
-              conversations.length === 0 && (
-                <div className="empty-state">
-                  <p>
-                    Non hai ancora conversazioni.
-                  </p>
-                </div>
-              )}
+            {!loading && conversations.length > 0 && (
+              <ul className="requests-list">
+                {conversations.map((conversation) => (
+                  <li key={conversation.conversationId} className="request-card">
+                    <div className="request-card__header">
+                      <h2 className="request-card__title">
+                        {conversation.requestTitle}
+                      </h2>
 
-            {!loading &&
-              conversations.length > 0 && (
-                <ul className="requests-list">
-                  {conversations.map(
-                    (conversation) => (
-                      <li
-                        key={conversation.conversationId}
-                        className="request-card"
+                      {conversation.unreadCount > 0 && (
+                        <span className="account-menu__badge">
+                          {conversation.unreadCount}
+                        </span>
+                      )}
+                    </div>
+
+                    <p>
+                      <strong>Ultimo messaggio:</strong>{' '}
+                      {conversation.lastMessage}
+                    </p>
+
+                    <div className="form-actions">
+                      <Link
+                        to={`/chat/${conversation.requestId}`}
+                        className="btn btn--primary"
                       >
-                        <h2 className="request-card__title">
-                          {
-                            conversation.requestTitle
-                          }
-                        </h2>
-
-                        <p>
-                          Ultimo messaggio:
-                        </p>
-
-                        <p>
-                          {
-                            conversation.lastMessage
-                          }
-                        </p>
-
-                        <div className="form-actions">
-                          <Link
-                            to={`/chat/${conversation.requestId}`}
-                            className="btn btn--primary"
-                          >
-                            Apri chat
-                          </Link>
-                        </div>
-                      </li>
-                    ),
-                  )}
-                </ul>
-              )}
+                        Apri chat
+                      </Link>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </section>
       </main>
