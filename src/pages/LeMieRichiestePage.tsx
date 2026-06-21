@@ -5,6 +5,12 @@ import Footer from '../components/Footer'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
+type HelperProfile = {
+  id: string
+  full_name: string | null
+  verified: boolean | null
+}
+
 type MyRequest = {
   id: string
   category: string
@@ -16,12 +22,13 @@ type MyRequest = {
   status: string | null
   created_at: string | null
   seeker_id: string | null
-  user_id: string | null
+  helper_id: string | null
 }
 
 function LeMieRichiestePage() {
   const { user } = useAuth()
   const [requests, setRequests] = useState<MyRequest[]>([])
+  const [helpers, setHelpers] = useState<Record<string, HelperProfile>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -40,8 +47,30 @@ function LeMieRichiestePage() {
 
       if (error) {
         setError(error.message)
-      } else {
-        setRequests(data ?? [])
+        setLoading(false)
+        return
+      }
+
+      const myRequests = data ?? []
+      setRequests(myRequests)
+
+      const helperIds = myRequests
+        .map((request) => request.helper_id)
+        .filter((id): id is string => Boolean(id))
+
+      if (helperIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, full_name, verified')
+          .in('id', helperIds)
+
+        const profilesMap: Record<string, HelperProfile> = {}
+
+        for (const profile of profilesData ?? []) {
+          profilesMap[profile.id] = profile
+        }
+
+        setHelpers(profilesMap)
       }
 
       setLoading(false)
@@ -79,38 +108,50 @@ function LeMieRichiestePage() {
 
             {requests.length > 0 && (
               <ul className="requests-list">
-                {requests.map((request) => (
-                  <li key={request.id} className="request-card">
-                    <div className="request-card__header">
-                      <span className="request-card__category">
-                        {request.category}
-                      </span>
-                      <span className="badge badge--accepted">
-                        {request.status ?? 'aperta'}
-                      </span>
-                    </div>
+                {requests.map((request) => {
+                  const helper = request.helper_id ? helpers[request.helper_id] : null
 
-                    <h2 className="request-card__title">{request.title}</h2>
-                    <p className="request-card__desc">{request.description}</p>
+                  return (
+                    <li key={request.id} className="request-card">
+                      <div className="request-card__header">
+                        <span className="request-card__category">
+                          {request.category}
+                        </span>
+                        <span className="badge badge--accepted">
+                          {request.status ?? 'aperta'}
+                        </span>
+                      </div>
 
-                    <dl className="request-card__meta">
-                      <div>
-                        <dt>Città</dt>
-                        <dd>{request.city}</dd>
-                      </div>
-                      <div>
-                        <dt>Data</dt>
-                        <dd>{request.request_date}</dd>
-                      </div>
-                      <div>
-                        <dt>Compenso</dt>
-                        <dd className="request-card__compenso">
-                          €{request.reward}
-                        </dd>
-                      </div>
-                    </dl>
-                  </li>
-                ))}
+                      <h2 className="request-card__title">{request.title}</h2>
+                      <p className="request-card__desc">{request.description}</p>
+
+                      <dl className="request-card__meta">
+                        <div>
+                          <dt>Città</dt>
+                          <dd>{request.city}</dd>
+                        </div>
+                        <div>
+                          <dt>Data</dt>
+                          <dd>{request.request_date}</dd>
+                        </div>
+                        <div>
+                          <dt>Compenso</dt>
+                          <dd className="request-card__compenso">
+                            €{request.reward}
+                          </dd>
+                        </div>
+                      </dl>
+
+                      {request.status === 'accettata' && (
+                        <div className="alert alert--success">
+                          <strong>Accettata da:</strong>{' '}
+                          {helper?.full_name ?? 'Helper verificato'}
+                          {helper?.verified && ' · Identità verificata'}
+                        </div>
+                      )}
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </div>
