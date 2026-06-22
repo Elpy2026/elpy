@@ -194,6 +194,15 @@ function LeMieRichiestePage() {
       .from('request_applications')
       .update({ status: 'accepted' })
       .eq('id', application.id)
+      await supabase
+  .from('notifications')
+  .insert({
+    user_id: application.helper_id,
+    title: 'Candidatura accettata',
+    message: 'La tua candidatura è stata accettata.',
+    type: 'application_accepted',
+    read: false,
+  })
 
     if (acceptedError) {
       setError(acceptedError.message)
