@@ -80,6 +80,10 @@ export async function createReview(
   })
 
   if (error) {
+    if (error.code === '23505') {
+      return { error: 'Hai già lasciato una recensione per questa richiesta.' }
+    }
+  
     return { error: error.message }
   }
 
