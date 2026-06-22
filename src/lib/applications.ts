@@ -44,6 +44,16 @@ export async function createApplication(
     return { error: 'Ti sei già candidato a questa richiesta.' }
   }
 
+  const { data: requestData, error: requestError } = await supabase
+    .from('requests')
+    .select('id, title, seeker_id')
+    .eq('id', application.requestId)
+    .single()
+
+  if (requestError || !requestData) {
+    return { error: requestError?.message ?? 'Richiesta non trovata.' }
+  }
+
   const { error } = await supabase.from('request_applications').insert({
     request_id: application.requestId,
     helper_id: user.id,
@@ -51,7 +61,19 @@ export async function createApplication(
     status: 'pending',
   })
 
+  if (error) {
+    return { error: error.message }
+  }
+
+  await supabase.from('notifications').insert({
+    user_id: requestData.seeker_id,
+    type: 'application_received',
+    title: 'Nuova candidatura ricevuta',
+    body: `Hai ricevuto una candidatura per "${requestData.title}".`,
+    link: '/notifiche',
+  })
+
   return {
-    error: error?.message ?? null,
+    error: null,
   }
 }

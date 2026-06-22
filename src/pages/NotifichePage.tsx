@@ -1,145 +1,110 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
-type NotificationApplication = {
+type Notification = {
   id: string
-  request_id: string
-  helper_id: string
-  message: string | null
-  status: string
+  user_id: string
+  type: string
+  title: string
+  body: string
+  link: string | null
+  is_read: boolean
   created_at: string | null
-  request_title?: string
-  helper_name?: string | null
-  helper_city?: string | null
-  helper_verified?: boolean | null
-  helper_average_rating?: number | null
-  helper_review_count?: number
+}
+
+function formatDate(value: string | null) {
+  if (!value) return 'Data non disponibile'
+
+  return new Date(value).toLocaleDateString('it-IT', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 
 function NotifichePage() {
   const { user } = useAuth()
-  const [applications, setApplications] = useState<NotificationApplication[]>([])
+  const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
+  const [markingId, setMarkingId] = useState('')
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    async function loadNotifications() {
-      if (!user) {
-        setLoading(false)
-        return
-      }
-
-      const { data: requestsData, error: requestsError } = await supabase
-        .from('requests')
-        .select('id, title')
-        .eq('seeker_id', user.id)
-        .eq('status', 'aperta')
-
-      if (requestsError) {
-        setError(requestsError.message)
-        setLoading(false)
-        return
-      }
-
-      const requestIds = (requestsData ?? []).map((request) => request.id)
-
-      if (requestIds.length === 0) {
-        setApplications([])
-        setLoading(false)
-        return
-      }
-
-      const titlesMap = new Map(
-        (requestsData ?? []).map((request) => [request.id, request.title]),
-      )
-
-      const { data: applicationsData, error: applicationsError } = await supabase
-        .from('request_applications')
-        .select('id, request_id, helper_id, message, status, created_at')
-        .in('request_id', requestIds)
-        .eq('status', 'pending')
-        .order('created_at', { ascending: false })
-
-      if (applicationsError) {
-        setError(applicationsError.message)
-        setLoading(false)
-        return
-      }
-
-      const helperIds = Array.from(
-        new Set((applicationsData ?? []).map((application) => application.helper_id)),
-      )
-
-      const helpersMap = new Map<
-        string,
-        {
-          full_name: string | null
-          city: string | null
-          verified: boolean | null
-        }
-      >()
-
-      const statsMap = new Map<
-        string,
-        {
-          average_rating: number | null
-          review_count: number
-        }
-      >()
-
-      if (helperIds.length > 0) {
-        const { data: helpersData } = await supabase
-          .from('profiles')
-          .select('id, full_name, city, verified')
-          .in('id', helperIds)
-
-        for (const helper of helpersData ?? []) {
-          helpersMap.set(helper.id, {
-            full_name: helper.full_name,
-            city: helper.city,
-            verified: helper.verified,
-          })
-        }
-
-        const { data: statsData } = await supabase
-          .from('user_review_stats')
-          .select('user_id, average_rating, review_count')
-          .in('user_id', helperIds)
-
-        for (const stat of statsData ?? []) {
-          statsMap.set(stat.user_id, {
-            average_rating: stat.average_rating,
-            review_count: stat.review_count,
-          })
-        }
-      }
-
-      setApplications(
-        (applicationsData ?? []).map((application) => {
-          const helper = helpersMap.get(application.helper_id)
-          const stat = statsMap.get(application.helper_id)
-
-          return {
-            ...application,
-            request_title: titlesMap.get(application.request_id) ?? 'Richiesta',
-            helper_name: helper?.full_name ?? 'Helper ELPY',
-            helper_city: helper?.city ?? null,
-            helper_verified: helper?.verified ?? false,
-            helper_average_rating: stat?.average_rating ?? null,
-            helper_review_count: stat?.review_count ?? 0,
-          }
-        }),
-      )
-
+  const loadNotifications = useCallback(async () => {
+    if (!user) {
       setLoading(false)
+      return
     }
 
-    void loadNotifications()
+    setLoading(true)
+    setError('')
+
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      setError(error.message)
+      setLoading(false)
+      return
+    }
+
+    setNotifications(data ?? [])
+    setLoading(false)
   }, [user])
+
+  useEffect(() => {
+    void loadNotifications()
+  }, [loadNotifications])
+
+  async function handleMarkAsRead(notificationId: string) {
+    setError('')
+    setMarkingId(notificationId)
+
+    const { error } = await supabase
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('id', notificationId)
+      .eq('user_id', user?.id)
+
+    if (error) {
+      setError(error.message)
+      setMarkingId('')
+      return
+    }
+
+    setMarkingId('')
+    await loadNotifications()
+  }
+
+  async function handleMarkAllAsRead() {
+    if (!user) return
+
+    setError('')
+
+    const { error } = await supabase
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('user_id', user.id)
+      .eq('is_read', false)
+
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    await loadNotifications()
+  }
+
+  const unreadCount = notifications.filter((notification) => !notification.is_read)
+    .length
 
   return (
     <div className="landing">
@@ -152,77 +117,108 @@ function NotifichePage() {
               <p className="hero__badge">Notifiche</p>
               <h1 className="page-title">Le tue notifiche</h1>
               <p className="page-subtitle">
-                Qui trovi le nuove candidature ricevute sulle tue richieste.
+                Qui trovi aggiornamenti su candidature, messaggi, penali e richieste.
               </p>
             </div>
 
-            {loading && <p>Caricamento notifiche…</p>}
             {error && <div className="alert alert--error">{error}</div>}
+            {loading && <p>Caricamento notifiche…</p>}
 
-            {!loading && applications.length === 0 && (
+            {!loading && notifications.length === 0 && (
               <div className="empty-state">
-                <p>Non hai nuove candidature da gestire.</p>
-                <Link to="/cerco-aiuto" className="btn btn--primary">
-                  Pubblica una richiesta
+                <p>Non hai notifiche.</p>
+                <Link to="/" className="btn btn--primary">
+                  Torna alla home
                 </Link>
               </div>
             )}
 
-            {applications.length > 0 && (
-              <ul className="requests-list">
-                {applications.map((application) => (
-                  <li key={application.id} className="request-card">
-                    <div className="request-card__header">
-                      <span className="request-card__category">
-                        Nuova candidatura
-                      </span>
+            {!loading && notifications.length > 0 && (
+              <>
+                <div className="request-card">
+                  <h2 className="request-card__title">Riepilogo</h2>
+
+                  {unreadCount > 0 ? (
+                    <div className="alert alert--error">
+                      Hai {unreadCount} notifiche non lette.
                     </div>
+                  ) : (
+                    <div className="alert alert--success">
+                      Hai letto tutte le notifiche.
+                    </div>
+                  )}
 
-                    <h2 className="request-card__title">
-                      {application.helper_name} vuole aiutarti
-                    </h2>
-
-                    <p>
-                      <strong>Richiesta:</strong> {application.request_title}
-                    </p>
-
-                    {application.helper_verified && (
-                      <p>✓ Identità verificata</p>
-                    )}
-
-                    {application.helper_city && (
-                      <p>
-                        <strong>Città helper:</strong> {application.helper_city}
-                      </p>
-                    )}
-
-                    <p>
-                      <strong>Reputazione:</strong>{' '}
-                      {application.helper_average_rating
-                        ? `${application.helper_average_rating}/5 (${application.helper_review_count} recensioni)`
-                        : 'Nessuna recensione'}
-                    </p>
-
-                    <p>
-                      <strong>Messaggio:</strong>{' '}
-                      {application.message || 'Nessun messaggio.'}
-                    </p>
-
+                  {unreadCount > 0 && (
                     <div className="form-actions">
-                      <Link to="/le-mie-richieste" className="btn btn--primary">
-                        Gestisci candidatura
-                      </Link>
-
-                      <Link
-                        to={`/profilo-helper/${application.helper_id}`}
+                      <button
+                        type="button"
                         className="btn btn--secondary"
+                        onClick={() => void handleMarkAllAsRead()}
                       >
-                        Vedi profilo helper
-                      </Link>
+                        Segna tutte come lette
+                      </button>
                     </div>
-                  </li>
-                ))}
-              </ul>
+                  )}
+                </div>
+
+                <ul className="requests-list">
+                  {notifications.map((notification) => (
+                    <li key={notification.id} className="request-card">
+                      <div className="request-card__header">
+                        <span className="request-card__category">
+                          {notification.type}
+                        </span>
+
+                        <span className="badge badge--accepted">
+                          {notification.is_read ? 'letta' : 'nuova'}
+                        </span>
+                      </div>
+
+                      <h2 className="request-card__title">
+                        {notification.title}
+                      </h2>
+
+                      <p className="request-card__desc">{notification.body}</p>
+
+                      <dl className="request-card__meta">
+                        <div>
+                          <dt>Data</dt>
+                          <dd>{formatDate(notification.created_at)}</dd>
+                        </div>
+
+                        <div>
+                          <dt>Stato</dt>
+                          <dd>{notification.is_read ? 'letta' : 'non letta'}</dd>
+                        </div>
+                      </dl>
+
+                      <div className="form-actions">
+                        {notification.link && (
+                          <Link
+                            to={notification.link}
+                            className="btn btn--primary"
+                          >
+                            Apri
+                          </Link>
+                        )}
+
+                        {!notification.is_read && (
+                          <button
+                            type="button"
+                            className="btn btn--secondary"
+                            onClick={() => void handleMarkAsRead(notification.id)}
+                            disabled={markingId === notification.id}
+                          >
+                            {markingId === notification.id
+                              ? 'Aggiornamento…'
+                              : 'Segna come letta'}
+                          </button>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </>
             )}
           </div>
         </section>

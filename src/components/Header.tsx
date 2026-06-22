@@ -8,7 +8,7 @@ function Header() {
   const [verified, setVerified] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [fullName, setFullName] = useState('')
-  const [pendingApplicationsCount, setPendingApplicationsCount] = useState(0)
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0)
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -18,7 +18,7 @@ function Header() {
         setVerified(false)
         setIsAdmin(false)
         setFullName('')
-        setPendingApplicationsCount(0)
+        setUnreadNotificationsCount(0)
         setUnreadMessagesCount(0)
         return
       }
@@ -33,25 +33,13 @@ function Header() {
       setVerified(Boolean(data?.verified))
       setIsAdmin(Boolean(data?.is_admin))
 
-      const { data: myRequests } = await supabase
-        .from('requests')
-        .select('id')
-        .eq('seeker_id', user.id)
-        .eq('status', 'aperta')
+      const { count: notificationsCount } = await supabase
+        .from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('is_read', false)
 
-      const requestIds = (myRequests ?? []).map((request) => request.id)
-
-      if (requestIds.length === 0) {
-        setPendingApplicationsCount(0)
-      } else {
-        const { count } = await supabase
-          .from('request_applications')
-          .select('id', { count: 'exact', head: true })
-          .in('request_id', requestIds)
-          .eq('status', 'pending')
-
-        setPendingApplicationsCount(count ?? 0)
-      }
+      setUnreadNotificationsCount(notificationsCount ?? 0)
 
       const { data: conversationsData } = await supabase
         .from('conversations')
@@ -85,7 +73,7 @@ function Header() {
     await signOut()
   }
 
-  const totalAccountBadge = pendingApplicationsCount + unreadMessagesCount
+  const totalAccountBadge = unreadNotificationsCount + unreadMessagesCount
 
   return (
     <header className="header">
@@ -141,11 +129,18 @@ function Header() {
 
                   <Link to="/notifiche" onClick={() => setMenuOpen(false)}>
                     Notifiche
-                    {pendingApplicationsCount > 0 && (
+                    {unreadNotificationsCount > 0 && (
                       <span className="account-menu__inline-badge">
-                        {pendingApplicationsCount}
+                        {unreadNotificationsCount}
                       </span>
                     )}
+                  </Link>
+
+                  <Link
+                    to="/penali"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Le mie penali
                   </Link>
 
                   <Link
