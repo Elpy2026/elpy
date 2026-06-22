@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { userHasPendingPenalties } from './penalties'
 
 export type NewApplication = {
   requestId: string
@@ -14,6 +15,18 @@ export async function createApplication(
 
   if (!user) {
     return { error: 'Devi accedere per candidarti.' }
+  }
+
+  const penaltyCheck = await userHasPendingPenalties()
+
+  if (penaltyCheck.error) {
+    return { error: penaltyCheck.error }
+  }
+
+  if (penaltyCheck.blocked) {
+    return {
+      error: `Hai penali ELPY pendenti per €${penaltyCheck.total}. Salda prima di candidarti.`,
+    }
   }
 
   const { data: existingApplication, error: existingError } = await supabase

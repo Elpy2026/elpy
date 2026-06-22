@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { userHasPendingPenalties } from './penalties'
 import type { HelpRequest, NewHelpRequest, RequestStatus } from '../types/request'
 
 export interface RequestRow {
@@ -81,10 +82,26 @@ export async function insertRequest(
     data: { user },
   } = await supabase.auth.getUser()
 
+  if (!user) {
+    return { error: 'Devi accedere per pubblicare una richiesta.' }
+  }
+
+  const penaltyCheck = await userHasPendingPenalties()
+
+  if (penaltyCheck.error) {
+    return { error: penaltyCheck.error }
+  }
+
+  if (penaltyCheck.blocked) {
+    return {
+      error: `Hai penali ELPY pendenti per €${penaltyCheck.total}. Salda prima di pubblicare nuove richieste.`,
+    }
+  }
+
   const row = {
     ...mapFormToRow(data),
-    seeker_id: user?.id ?? null,
-    user_id: user?.id ?? null,
+    seeker_id: user.id,
+    user_id: user.id,
   }
 
   const { error } = await supabase.from('requests').insert(row)
@@ -105,11 +122,24 @@ export async function acceptHelpRequest(
     return { error: 'Devi accedere per accettare una richiesta.' }
   }
 
+  const penaltyCheck = await userHasPendingPenalties()
+
+  if (penaltyCheck.error) {
+    return { error: penaltyCheck.error }
+  }
+
+  if (penaltyCheck.blocked) {
+    return {
+      error: `Hai penali ELPY pendenti per €${penaltyCheck.total}. Salda prima di accettare richieste.`,
+    }
+  }
+
   const { error } = await supabase
     .from('requests')
     .update({
       status: 'accettata',
       helper_id: user.id,
+      accepted_at: new Date().toISOString(),
     })
     .eq('id', requestId)
     .eq('status', 'aperta')
