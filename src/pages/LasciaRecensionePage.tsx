@@ -12,6 +12,7 @@ type RequestRow = {
   status: string | null
   seeker_id: string | null
   helper_id: string | null
+  payment_status: string | null
 }
 
 function LasciaRecensionePage() {
@@ -20,6 +21,7 @@ function LasciaRecensionePage() {
   const navigate = useNavigate()
 
   const [request, setRequest] = useState<RequestRow | null>(null)
+  const [alreadyReviewed, setAlreadyReviewed] = useState(false)
   const [rating, setRating] = useState(5)
   const [comment, setComment] = useState('')
   const [loading, setLoading] = useState(true)
@@ -29,29 +31,39 @@ function LasciaRecensionePage() {
 
   useEffect(() => {
     async function loadRequest() {
-      if (!requestId) {
-        setError('Richiesta non trovata.')
+      if (!requestId || !user) {
+        setError('Richiesta non trovata o accesso non effettuato.')
         setLoading(false)
         return
       }
 
       const { data, error } = await supabase
         .from('requests')
-        .select('id, title, status, seeker_id, helper_id')
+        .select('id, title, status, seeker_id, helper_id, payment_status')
         .eq('id', requestId)
         .single()
 
-      if (error) {
-        setError(error.message)
-      } else {
-        setRequest(data)
+      if (error || !data) {
+        setError(error?.message ?? 'Richiesta non trovata.')
+        setLoading(false)
+        return
       }
 
+      setRequest(data)
+
+      const { data: existingReview } = await supabase
+        .from('reviews')
+        .select('id')
+        .eq('request_id', requestId)
+        .eq('reviewer_id', user.id)
+        .maybeSingle()
+
+      setAlreadyReviewed(Boolean(existingReview))
       setLoading(false)
     }
 
     void loadRequest()
-  }, [requestId])
+  }, [requestId, user])
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -61,8 +73,18 @@ function LasciaRecensionePage() {
       return
     }
 
+    if (alreadyReviewed) {
+      setError('Hai già lasciato una recensione per questa richiesta.')
+      return
+    }
+
     if (request.status !== 'completata') {
       setError('Puoi recensire solo una richiesta completata.')
+      return
+    }
+
+    if (request.payment_status !== 'paid') {
+      setError('Puoi recensire solo dopo il pagamento della richiesta.')
       return
     }
 
@@ -92,12 +114,18 @@ function LasciaRecensionePage() {
     }
 
     setSuccess('Recensione inviata con successo.')
+    setAlreadyReviewed(true)
     setSubmitting(false)
 
     setTimeout(() => {
       navigate('/le-mie-richieste')
     }, 1200)
   }
+
+  const cannotReview =
+    alreadyReviewed ||
+    request?.status !== 'completata' ||
+    request?.payment_status !== 'paid'
 
   return (
     <div className="landing">
@@ -110,62 +138,102 @@ function LasciaRecensionePage() {
               <p className="hero__badge">Recensione</p>
               <h1 className="page-title">Lascia una recensione</h1>
               <p className="page-subtitle">
-                Valuta l’esperienza dopo il completamento della richiesta.
+                Valuta l’esperienza dopo il completamento e il pagamento della richiesta.
               </p>
             </div>
 
             {loading && <p>Caricamento…</p>}
-        {error && <div className="alert alert--error">{error}</div>}
+            {error && <div className="alert alert--error">{error}</div>}
             {success && <div className="alert alert--success">{success}</div>}
 
             {!loading && request && (
               <form className="request-form" onSubmit={handleSubmit}>
-                <div className="form-field">
-                  <label>Richiesta</label>
-                  <p>{request.title}</p>
+                <div className="request-card">
+                  <h2 className="request-card__title">{request.title}</h2>
+
+                  <p>
+                    <strong>Stato richiesta:</strong> {request.status}
+                  </p>
+
+                  <p>
+                    <strong>Stato pagamento:</strong>{' '}
+                    {request.payment_status === 'paid'
+                      ? 'pagato'
+                      : 'non ancora pagato'}
+                  </p>
+
+                  {alreadyReviewed && (
+                    <div className="alert alert--success">
+                      Hai già lasciato una recensione per questa richiesta.
+                    </div>
+                  )}
+
+                  {request.status !== 'completata' && (
+                    <div className="alert alert--error">
+                      Questa richiesta non è ancora completata.
+                    </div>
+                  )}
+
+                  {request.payment_status !== 'paid' && (
+                    <div className="alert alert--error">
+                      La recensione sarà disponibile dopo il pagamento.
+                    </div>
+                  )}
                 </div>
 
-                <div className="form-field">
-                  <label htmlFor="rating">Valutazione</label>
-                  <select
-                    id="rating"
-                    value={rating}
-                    onChange={(e) => setRating(Number(e.target.value))}
-                    disabled={submitting}
-                  >
-                    <option value={5}>5 stelle</option>
-                    <option value={4}>4 stelle</option>
-                    <option value={3}>3 stelle</option>
-                    <option value={2}>2 stelle</option>
-                    <option value={1}>1 stella</option>
-                  </select>
-                </div>
+                {!cannotReview && (
+                  <>
+                    <div className="form-field">
+                      <label htmlFor="rating">Valutazione</label>
+                      <select
+                        id="rating"
+                        value={rating}
+                        onChange={(e) => setRating(Number(e.target.value))}
+                        disabled={submitting}
+                      >
+                        <option value={5}>5 stelle</option>
+                        <option value={4}>4 stelle</option>
+                        <option value={3}>3 stelle</option>
+                        <option value={2}>2 stelle</option>
+                        <option value={1}>1 stella</option>
+                      </select>
+                    </div>
 
-                <div className="form-field">
-                  <label htmlFor="comment">Commento</label>
-                  <textarea
-                    id="comment"
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    rows={4}
-                    placeholder="Scrivi un breve commento..."
-                    disabled={submitting}
-                  />
-                </div>
+                    <div className="form-field">
+                      <label htmlFor="comment">Commento</label>
+                      <textarea
+                        id="comment"
+                        value={comment}
+                        onChange={(e) => setComment(e.target.value)}
+                        rows={4}
+                        placeholder="Scrivi un breve commento..."
+                        disabled={submitting}
+                      />
+                    </div>
 
-                <div className="form-actions">
-                  <button
-                    type="submit"
-                    className="btn btn--primary"
-                    disabled={submitting}
-                  >
-                    {submitting ? 'Invio in corso…' : 'Invia recensione'}
-                  </button>
+                    <div className="form-actions">
+                      <button
+                        type="submit"
+                        className="btn btn--primary"
+                        disabled={submitting}
+                      >
+                        {submitting ? 'Invio in corso…' : 'Invia recensione'}
+                      </button>
 
-                  <Link to="/le-mie-richieste" className="btn btn--secondary">
-                    Annulla
-                  </Link>
-                </div>
+                      <Link to="/le-mie-richieste" className="btn btn--secondary">
+                        Annulla
+                      </Link>
+                    </div>
+                  </>
+                )}
+
+                {cannotReview && (
+                  <div className="form-actions">
+                    <Link to="/le-mie-richieste" className="btn btn--primary">
+                      Torna alle mie richieste
+                    </Link>
+                  </div>
+                )}
               </form>
             )}
           </div>
