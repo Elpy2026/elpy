@@ -159,7 +159,10 @@ function PenaliPage() {
                       </h2>
 
                       <p className="request-card__desc">
-                        Motivo: {penalty.reason}
+                      Motivo:{' '}
+{penalty.reason === 'seeker_cancelled_after_acceptance'
+  ? 'Annullamento richiesta dopo accettazione helper'
+  : penalty.reason}
                       </p>
 
                       <dl className="request-card__meta">
