@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { supabase } from '../lib/supabase'
+import { cancelAcceptedRequest } from '../lib/cancellations'
 import { useAuth } from '../context/AuthContext'
 
 type HelperProfile = {
@@ -19,6 +20,8 @@ type Application = {
   message: string | null
   status: string
   created_at: string | null
+  accepted_at: string | null
+  seeker_id: string | null
 }
 
 type MyRequest = {
@@ -31,6 +34,12 @@ type MyRequest = {
   reward: number | string
   status: string | null
   created_at: string | null
+  accepted_at: string | null
+  cancelled_at: string | null
+  cancelled_by: string | null
+  cancellation_reason: string | null
+  cancellation_fee_status: string | null
+  cancellation_fee_amount: number | string | null
   seeker_id: string | null
   helper_id: string | null
   payment_status: string | null
@@ -63,6 +72,7 @@ function LeMieRichiestePage() {
   const [acceptingApplicationId, setAcceptingApplicationId] = useState('')
   const [completingRequestId, setCompletingRequestId] = useState('')
   const [payingRequestId, setPayingRequestId] = useState('')
+  const [cancellingRequestId, setCancellingRequestId] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
@@ -164,6 +174,12 @@ function LeMieRichiestePage() {
         status: 'accettata',
         helper_id: application.helper_id,
         payment_status: 'not_required',
+        accepted_at: new Date().toISOString(),
+        cancelled_at: null,
+        cancelled_by: null,
+        cancellation_reason: null,
+        cancellation_fee_status: 'none',
+        cancellation_fee_amount: 0,
       })
       .eq('id', application.request_id)
       .eq('status', 'aperta')
@@ -193,6 +209,37 @@ function LeMieRichiestePage() {
 
     setMessage('Candidatura accettata con successo.')
     setAcceptingApplicationId('')
+    await loadMyRequests()
+  }
+
+  async function handleCancelRequest(request: MyRequest) {
+    if (!user) return
+
+    setError('')
+    setMessage('')
+    setCancellingRequestId(request.id)
+
+    const result = await cancelAcceptedRequest({
+      requestId: request.id,
+      reward: request.reward,
+      acceptedAt: request.accepted_at,
+      cancelledBy: user.id,
+      reason: 'seeker_cancelled_after_acceptance',
+    })
+
+    if (result.error) {
+      setError(result.error)
+      setCancellingRequestId('')
+      return
+    }
+
+    setMessage(
+      result.feeAmount > 0
+        ? `Accordo annullato. Commissione ELPY registrata: €${result.feeAmount}. La richiesta è tornata aperta.`
+        : 'Accordo annullato entro 15 minuti senza commissione. La richiesta è tornata aperta.',
+    )
+
+    setCancellingRequestId('')
     await loadMyRequests()
   }
 
@@ -319,6 +366,13 @@ function LeMieRichiestePage() {
                         </div>
                       </dl>
 
+                      {request.cancellation_fee_status === 'pending' && (
+                        <div className="alert alert--error">
+                          Commissione ELPY da gestire per annullamento: €
+                          {request.cancellation_fee_amount ?? 0}
+                        </div>
+                      )}
+
                       {request.status === 'aperta' && (
                         <div className="request-card">
                           <h3>Candidature ricevute</h3>
@@ -444,6 +498,17 @@ function LeMieRichiestePage() {
                             {completingRequestId === request.id
                               ? 'Completamento…'
                               : 'Segna come completata'}
+                          </button>
+
+                          <button
+                            type="button"
+                            className="btn btn--secondary"
+                            onClick={() => void handleCancelRequest(request)}
+                            disabled={cancellingRequestId === request.id}
+                          >
+                            {cancellingRequestId === request.id
+                              ? 'Annullamento…'
+                              : 'Annulla accordo'}
                           </button>
                         </div>
                       )}

@@ -4,6 +4,7 @@ import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { supabase } from '../lib/supabase'
 import { completeHelpRequest } from '../lib/requests'
+import { cancelAcceptedRequest } from '../lib/cancellations'
 import { useAuth } from '../context/AuthContext'
 
 type HelperRequest = {
@@ -16,6 +17,7 @@ type HelperRequest = {
   reward: number | string
   status: string | null
   created_at: string | null
+  accepted_at: string | null
   seeker_id: string | null
   helper_id: string | null
 }
@@ -39,6 +41,7 @@ function LeMieAttivitaPage() {
   const [stats, setStats] = useState<ReviewStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [completingId, setCompletingId] = useState('')
+  const [cancellingId, setCancellingId] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
@@ -116,6 +119,37 @@ function LeMieAttivitaPage() {
     setCompletingId('')
   }
 
+  async function handleCancel(request: HelperRequest) {
+    if (!user) return
+
+    setMessage('')
+    setError('')
+    setCancellingId(request.id)
+
+    const result = await cancelAcceptedRequest({
+      requestId: request.id,
+      reward: request.reward,
+      acceptedAt: request.accepted_at,
+      cancelledBy: user.id,
+      reason: 'helper_cancelled_after_acceptance',
+    })
+
+    if (result.error) {
+      setError(result.error)
+      setCancellingId('')
+      return
+    }
+
+    setMessage(
+      result.feeAmount > 0
+        ? `Accordo annullato. Commissione ELPY registrata: €${result.feeAmount}.`
+        : 'Accordo annullato entro 15 minuti senza commissione.',
+    )
+
+    await loadMyAcceptedRequests()
+    setCancellingId('')
+  }
+
   return (
     <div className="landing">
       <Header />
@@ -149,7 +183,7 @@ function LeMieAttivitaPage() {
 
             {!loading && requests.length === 0 && (
               <div className="empty-state">
-                <p>Non hai ancora accettato richieste.</p>
+                <p>Non hai richieste attive al momento.</p>
                 <Link to="/offro-aiuto" className="btn btn--primary">
                   Vedi richieste disponibili
                 </Link>
@@ -212,46 +246,61 @@ function LeMieAttivitaPage() {
                             <p>Telefono richiedente non disponibile.</p>
                           )}
 
-{seeker?.phone && (
-  <div className="form-actions">
-    <a
-      className="btn btn--secondary"
-      href={`tel:${seeker.phone}`}
-    >
-      Chiama
-    </a>
+                          <div className="form-actions">
+                            {seeker?.phone && (
+                              <>
+                                <a
+                                  className="btn btn--secondary"
+                                  href={`tel:${seeker.phone}`}
+                                >
+                                  Chiama
+                                </a>
 
-    <a
-      className="btn btn--primary"
-      href={`https://wa.me/${seeker.phone.replace(/\D/g, '')}`}
-      target="_blank"
-      rel="noreferrer"
-    >
-      Contatta su WhatsApp
-    </a>
+                                <a
+                                  className="btn btn--primary"
+                                  href={`https://wa.me/${seeker.phone.replace(/\D/g, '')}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  Contatta su WhatsApp
+                                </a>
+                              </>
+                            )}
 
-    <Link
-      to={`/chat/${request.id}`}
-      className="btn btn--secondary"
-    >
-      Apri chat
-    </Link>
-  </div>
-)}
+                            <Link
+                              to={`/chat/${request.id}`}
+                              className="btn btn--secondary"
+                            >
+                              Apri chat
+                            </Link>
+                          </div>
                         </div>
                       )}
 
                       {request.status === 'accettata' && (
-                        <button
-                          type="button"
-                          className="btn btn--primary request-card__btn"
-                          onClick={() => void handleComplete(request.id)}
-                          disabled={completingId === request.id}
-                        >
-                          {completingId === request.id
-                            ? 'Completamento…'
-                            : 'Completa richiesta'}
-                        </button>
+                        <div className="form-actions">
+                          <button
+                            type="button"
+                            className="btn btn--primary request-card__btn"
+                            onClick={() => void handleComplete(request.id)}
+                            disabled={completingId === request.id}
+                          >
+                            {completingId === request.id
+                              ? 'Completamento…'
+                              : 'Completa richiesta'}
+                          </button>
+
+                          <button
+                            type="button"
+                            className="btn btn--secondary request-card__btn"
+                            onClick={() => void handleCancel(request)}
+                            disabled={cancellingId === request.id}
+                          >
+                            {cancellingId === request.id
+                              ? 'Annullamento…'
+                              : 'Annulla accordo'}
+                          </button>
+                        </div>
                       )}
 
                       {request.status === 'completata' && (
