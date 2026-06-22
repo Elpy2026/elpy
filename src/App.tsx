@@ -16,6 +16,7 @@ import NotifichePage from './pages/NotifichePage'
 import ChatPage from './pages/ChatPage'
 import MessaggiPage from './pages/MessaggiPage'
 import SegnalaUtentePage from './pages/SegnalaUtentePage'
+import PenaliPage from './pages/PenaliPage'
 import AdminVerifichePage from './pages/AdminVerifichePage'
 import AdminSegnalazioniPage from './pages/AdminSegnalazioniPage'
 import AdminDashboardPage from './pages/AdminDashboardPage'
@@ -55,6 +56,15 @@ function App() {
             element={
               <VerifiedRoute>
                 <ProfiloPage />
+              </VerifiedRoute>
+            }
+          />
+
+          <Route
+            path="/penali"
+            element={
+              <VerifiedRoute>
+                <PenaliPage />
               </VerifiedRoute>
             }
           />
