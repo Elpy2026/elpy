@@ -14,12 +14,14 @@ function formatDate(dateStr: string) {
 }
 
 function OffroAiutoPage() {
-  const { requests, acceptRequest } = useRequests()
+  const { requests } = useRequests()
   const [applicationMessages, setApplicationMessages] = useState<Record<string, string>>({})
   const [submittingApplicationId, setSubmittingApplicationId] = useState('')
   const [cityFilter, setCityFilter] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [minRewardFilter, setMinRewardFilter] = useState('')
+  const [onlyOpen, setOnlyOpen] = useState(true)
+  const [sortBy, setSortBy] = useState('date')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
@@ -47,20 +49,28 @@ function OffroAiutoPage() {
             rewardValue >= minRewardValue
           : true
 
-        return matchesCity && matchesCategory && matchesReward
+        const matchesStatus = onlyOpen ? request.stato === 'aperta' : true
+
+        return matchesCity && matchesCategory && matchesReward && matchesStatus
       })
       .sort((a, b) => {
+        if (sortBy === 'reward') {
+          return Number(b.compenso) - Number(a.compenso)
+        }
+
         const firstDate = new Date(a.data + 'T00:00:00').getTime()
         const secondDate = new Date(b.data + 'T00:00:00').getTime()
 
         return secondDate - firstDate
       })
-  }, [requests, cityFilter, categoryFilter, minRewardFilter])
+  }, [requests, cityFilter, categoryFilter, minRewardFilter, onlyOpen, sortBy])
 
   function resetFilters() {
     setCityFilter('')
     setCategoryFilter('')
     setMinRewardFilter('')
+    setOnlyOpen(true)
+    setSortBy('date')
   }
 
   function handleApplicationMessageChange(requestId: string, value: string) {
@@ -92,20 +102,6 @@ function OffroAiutoPage() {
       [requestId]: '',
     }))
     setSubmittingApplicationId('')
-  }
-
-  async function handleAccept(id: string) {
-    setMessage('')
-    setError('')
-
-    const result = await acceptRequest(id)
-
-    if (result.error) {
-      setError(result.error)
-      return
-    }
-
-    setMessage('Richiesta accettata con successo.')
   }
 
   return (
@@ -173,6 +169,29 @@ function OffroAiutoPage() {
                 />
               </div>
 
+              <div className="form-field">
+                <label htmlFor="sortBy">Ordina per</label>
+                <select
+                  id="sortBy"
+                  value={sortBy}
+                  onChange={(event) => setSortBy(event.target.value)}
+                >
+                  <option value="date">Più recenti</option>
+                  <option value="reward">Compenso più alto</option>
+                </select>
+              </div>
+
+              <div className="form-field">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={onlyOpen}
+                    onChange={(event) => setOnlyOpen(event.target.checked)}
+                  />{' '}
+                  Mostra solo richieste aperte
+                </label>
+              </div>
+
               <div className="form-actions">
                 <button
                   type="button"
@@ -212,6 +231,10 @@ function OffroAiutoPage() {
                       <span className="request-card__category">
                         {request.categoria}
                       </span>
+
+                      {request.stato === 'aperta' && (
+                        <span className="badge badge--accepted">Aperta</span>
+                      )}
 
                       {request.stato === 'accettata' && (
                         <span className="badge badge--accepted">Accettata</span>
@@ -277,14 +300,6 @@ function OffroAiutoPage() {
                             {submittingApplicationId === request.id
                               ? 'Invio candidatura…'
                               : 'Candidati'}
-                          </button>
-
-                          <button
-                            type="button"
-                            className="btn btn--secondary request-card__btn"
-                            onClick={() => void handleAccept(request.id)}
-                          >
-                            Accetta subito
                           </button>
                         </div>
                       </div>

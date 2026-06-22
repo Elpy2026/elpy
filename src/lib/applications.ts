@@ -70,7 +70,8 @@ export async function createApplication(
     type: 'application_received',
     title: 'Nuova candidatura ricevuta',
     body: `Hai ricevuto una candidatura per "${requestData.title}".`,
-    link: '/notifiche',
+    link: '/le-mie-richieste',
+    is_read: false,
   })
 
   return {
