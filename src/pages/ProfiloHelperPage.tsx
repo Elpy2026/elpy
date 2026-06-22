@@ -31,6 +31,32 @@ function renderStars(rating: number | null | undefined) {
   return '★'.repeat(value) + '☆'.repeat(5 - value)
 }
 
+function getReputationBadge(
+  averageRating: number | null | undefined,
+  reviewCount: number,
+  completedJobs: number,
+) {
+  const rating = averageRating ?? 0
+
+  if (rating >= 4.8 && reviewCount >= 10 && completedJobs >= 10) {
+    return 'Top Helper'
+  }
+
+  if (rating >= 4.5 && reviewCount >= 5 && completedJobs >= 5) {
+    return 'Gold Helper'
+  }
+
+  if (rating >= 4 && reviewCount >= 3 && completedJobs >= 3) {
+    return 'Silver Helper'
+  }
+
+  if (reviewCount >= 1 || completedJobs >= 1) {
+    return 'Bronze Helper'
+  }
+
+  return 'Nuovo helper'
+}
+
 function ProfiloHelperPage() {
   const { helperId } = useParams()
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -47,6 +73,9 @@ function ProfiloHelperPage() {
         setLoading(false)
         return
       }
+
+      setLoading(true)
+      setError('')
 
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
@@ -90,6 +119,14 @@ function ProfiloHelperPage() {
 
     void loadProfile()
   }, [helperId])
+
+  const averageRating = stats?.average_rating ?? 0
+  const reviewCount = stats?.review_count ?? 0
+  const reputationBadge = getReputationBadge(
+    averageRating,
+    reviewCount,
+    completedJobs,
+  )
 
   return (
     <div className="landing">
@@ -136,19 +173,43 @@ function ProfiloHelperPage() {
                   </p>
                 </div>
 
+                <div className="request-card">
+                  <div className="request-card__header">
+                    <span className="request-card__category">
+                      {reputationBadge}
+                    </span>
+
+                    {profile.verified && (
+                      <span className="badge badge--accepted">
+                        Verificato
+                      </span>
+                    )}
+                  </div>
+
+                  <h2 className="request-card__title">Reputazione ELPY</h2>
+
+                  <p style={{ fontSize: '1.8rem', margin: '0 0 0.5rem' }}>
+                    {renderStars(averageRating)}
+                  </p>
+
+                  <p>
+                    <strong>{averageRating.toFixed(1)}/5</strong> ·{' '}
+                    {reviewCount} recensioni ricevute · {completedJobs} lavori
+                    completati
+                  </p>
+                </div>
+
                 <div className="dashboard__grid">
                   <div className="dashboard__card dashboard__card--accepted">
                     <p className="dashboard__label">Valutazione</p>
                     <p className="dashboard__value">
-                      {stats?.average_rating ?? 0}
+                      {averageRating.toFixed(1)}
                     </p>
                   </div>
 
                   <div className="dashboard__card">
                     <p className="dashboard__label">Recensioni</p>
-                    <p className="dashboard__value">
-                      {stats?.review_count ?? 0}
-                    </p>
+                    <p className="dashboard__value">{reviewCount}</p>
                   </div>
 
                   <div className="dashboard__card">
@@ -165,19 +226,6 @@ function ProfiloHelperPage() {
                 </div>
 
                 <div className="request-card">
-                  <h2 className="request-card__title">Reputazione</h2>
-
-                  <p style={{ fontSize: '1.6rem', margin: '0 0 0.5rem' }}>
-                    {renderStars(stats?.average_rating)}
-                  </p>
-
-                  <p>
-                    {stats?.average_rating ?? 0}/5 · {stats?.review_count ?? 0}{' '}
-                    recensioni ricevute
-                  </p>
-                </div>
-
-                <div className="request-card">
                   <h2 className="request-card__title">Informazioni</h2>
 
                   {profile.bio ? (
@@ -189,6 +237,12 @@ function ProfiloHelperPage() {
                   {profile.city && (
                     <p>
                       <strong>Città:</strong> {profile.city}
+                    </p>
+                  )}
+
+                  {profile.role && (
+                    <p>
+                      <strong>Ruolo:</strong> {profile.role}
                     </p>
                   )}
 
@@ -208,6 +262,15 @@ function ProfiloHelperPage() {
                     <ul className="requests-list">
                       {reviews.map((review) => (
                         <li key={review.id} className="request-card">
+                          <div className="request-card__header">
+                            <span className="request-card__category">
+                              Recensione
+                            </span>
+                            <span className="badge badge--accepted">
+                              {review.rating}/5
+                            </span>
+                          </div>
+
                           <p style={{ fontSize: '1.25rem', margin: '0 0 0.5rem' }}>
                             {renderStars(review.rating)}
                           </p>
@@ -215,7 +278,14 @@ function ProfiloHelperPage() {
                           <p>{review.comment || 'Nessun commento.'}</p>
 
                           <small style={{ color: 'var(--text-muted)' }}>
-                            {new Date(review.created_at).toLocaleDateString('it-IT')}
+                            {new Date(review.created_at).toLocaleDateString(
+                              'it-IT',
+                              {
+                                day: 'numeric',
+                                month: 'long',
+                                year: 'numeric',
+                              },
+                            )}
                           </small>
                         </li>
                       ))}
