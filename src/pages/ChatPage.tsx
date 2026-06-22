@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useParams } from 'react-router-dom'
 import Header from '../components/Header'
@@ -21,6 +21,7 @@ type Conversation = {
 
 type Message = {
   id: string
+  conversation_id: string
   sender_id: string
   content: string
   created_at: string
@@ -37,6 +38,7 @@ function formatMessageTime(value: string) {
 function ChatPage() {
   const { requestId } = useParams()
   const { user } = useAuth()
+  const messagesEndRef = useRef<HTMLDivElement | null>(null)
 
   const [request, setRequest] = useState<RequestData | null>(null)
   const [conversationId, setConversationId] = useState('')
@@ -45,6 +47,12 @@ function ChatPage() {
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
+
+  function scrollToBottom() {
+    window.setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }, 50)
+  }
 
   const markMessagesAsRead = useCallback(
     async (activeConversationId: string) => {
@@ -75,6 +83,7 @@ function ChatPage() {
 
       setMessages(data ?? [])
       await markMessagesAsRead(activeConversationId)
+      scrollToBottom()
     },
     [markMessagesAsRead],
   )
@@ -149,12 +158,66 @@ function ChatPage() {
   useEffect(() => {
     if (!conversationId) return
 
-    const interval = window.setInterval(() => {
-      void loadMessages(conversationId)
-    }, 3000)
+    const channel = supabase
+      .channel(`messages-${conversationId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload) => {
+          const incomingMessage = payload.new as Message
 
-    return () => window.clearInterval(interval)
-  }, [conversationId, loadMessages])
+          setMessages((current) => {
+            const alreadyExists = current.some(
+              (message) => message.id === incomingMessage.id,
+            )
+
+            if (alreadyExists) {
+              return current
+            }
+
+            return [...current, incomingMessage].sort(
+              (a, b) =>
+                new Date(a.created_at).getTime() -
+                new Date(b.created_at).getTime(),
+            )
+          })
+
+          if (incomingMessage.sender_id !== user?.id) {
+            void markMessagesAsRead(conversationId)
+          }
+
+          scrollToBottom()
+        },
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload) => {
+          const updatedMessage = payload.new as Message
+
+          setMessages((current) =>
+            current.map((message) =>
+              message.id === updatedMessage.id ? updatedMessage : message,
+            ),
+          )
+        },
+      )
+      .subscribe()
+
+    return () => {
+      void supabase.removeChannel(channel)
+    }
+  }, [conversationId, markMessagesAsRead, user?.id])
 
   async function handleSendMessage(event: FormEvent) {
     event.preventDefault()
@@ -167,6 +230,7 @@ function ChatPage() {
     setError('')
 
     const content = newMessage.trim()
+    setNewMessage('')
 
     const { error } = await supabase.from('messages').insert({
       conversation_id: conversationId,
@@ -176,12 +240,11 @@ function ChatPage() {
 
     if (error) {
       setError(error.message)
+      setNewMessage(content)
       setSending(false)
       return
     }
 
-    setNewMessage('')
-    await loadMessages(conversationId)
     setSending(false)
   }
 
@@ -242,6 +305,7 @@ function ChatPage() {
                           </div>
                         )
                       })}
+                      <div ref={messagesEndRef} />
                     </div>
                   )}
 
