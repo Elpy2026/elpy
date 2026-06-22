@@ -15,6 +15,10 @@ type RequestData = {
   helper_id: string
 }
 
+type Conversation = {
+  id: string
+}
+
 type Message = {
   id: string
   sender_id: string
@@ -99,17 +103,20 @@ function ChatPage() {
 
       setRequest(requestData)
 
-      let { data: conversation, error: conversationError } = await supabase
+      const { data: conversationsData, error: conversationError } = await supabase
         .from('conversations')
         .select('id')
         .eq('request_id', requestId)
-        .maybeSingle()
+        .order('created_at', { ascending: true })
+        .limit(1)
 
       if (conversationError) {
         setError(conversationError.message)
         setLoading(false)
         return
       }
+
+      let conversation: Conversation | null = conversationsData?.[0] ?? null
 
       if (!conversation) {
         const { data: newConversation, error: createError } = await supabase
