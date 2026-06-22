@@ -12,6 +12,11 @@ type DashboardStats = {
   completedRequests: number
   reviews: number
   openReports: number
+  pendingPenalties: number
+  pendingPenaltiesAmount: number
+  paidPenalties: number
+  paidPenaltiesAmount: number
+  pendingIdentityVerifications: number
 }
 
 function AdminDashboardPage() {
@@ -23,6 +28,11 @@ function AdminDashboardPage() {
     completedRequests: 0,
     reviews: 0,
     openReports: 0,
+    pendingPenalties: 0,
+    pendingPenaltiesAmount: 0,
+    paidPenalties: 0,
+    paidPenaltiesAmount: 0,
+    pendingIdentityVerifications: 0,
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -40,6 +50,9 @@ function AdminDashboardPage() {
         completedRequestsResult,
         reviewsResult,
         openReportsResult,
+        pendingPenaltiesResult,
+        paidPenaltiesResult,
+        pendingIdentityResult,
       ] = await Promise.all([
         supabase.from('profiles').select('id', { count: 'exact', head: true }),
         supabase
@@ -63,6 +76,18 @@ function AdminDashboardPage() {
           .from('reports')
           .select('id', { count: 'exact', head: true })
           .eq('status', 'open'),
+        supabase
+          .from('penalties')
+          .select('amount')
+          .eq('status', 'pending'),
+        supabase
+          .from('penalties')
+          .select('amount')
+          .eq('status', 'paid'),
+        supabase
+          .from('identity_verifications')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'pending'),
       ])
 
       const firstError =
@@ -72,13 +97,29 @@ function AdminDashboardPage() {
         acceptedRequestsResult.error ||
         completedRequestsResult.error ||
         reviewsResult.error ||
-        openReportsResult.error
+        openReportsResult.error ||
+        pendingPenaltiesResult.error ||
+        paidPenaltiesResult.error ||
+        pendingIdentityResult.error
 
       if (firstError) {
         setError(firstError.message)
         setLoading(false)
         return
       }
+
+      const pendingPenalties = pendingPenaltiesResult.data ?? []
+      const paidPenalties = paidPenaltiesResult.data ?? []
+
+      const pendingPenaltiesAmount = pendingPenalties.reduce(
+        (sum, penalty) => sum + Number(penalty.amount ?? 0),
+        0,
+      )
+
+      const paidPenaltiesAmount = paidPenalties.reduce(
+        (sum, penalty) => sum + Number(penalty.amount ?? 0),
+        0,
+      )
 
       setStats({
         users: usersResult.count ?? 0,
@@ -88,6 +129,11 @@ function AdminDashboardPage() {
         completedRequests: completedRequestsResult.count ?? 0,
         reviews: reviewsResult.count ?? 0,
         openReports: openReportsResult.count ?? 0,
+        pendingPenalties: pendingPenalties.length,
+        pendingPenaltiesAmount,
+        paidPenalties: paidPenalties.length,
+        paidPenaltiesAmount,
+        pendingIdentityVerifications: pendingIdentityResult.count ?? 0,
       })
 
       setLoading(false)
@@ -95,6 +141,9 @@ function AdminDashboardPage() {
 
     void loadStats()
   }, [])
+
+  const totalRequests =
+    stats.openRequests + stats.acceptedRequests + stats.completedRequests
 
   return (
     <div className="landing">
@@ -130,6 +179,11 @@ function AdminDashboardPage() {
                   </div>
 
                   <div className="dashboard__card">
+                    <p className="dashboard__label">Richieste totali</p>
+                    <p className="dashboard__value">{totalRequests}</p>
+                  </div>
+
+                  <div className="dashboard__card">
                     <p className="dashboard__label">Richieste aperte</p>
                     <p className="dashboard__value">{stats.openRequests}</p>
                   </div>
@@ -153,6 +207,32 @@ function AdminDashboardPage() {
                     <p className="dashboard__label">Segnalazioni aperte</p>
                     <p className="dashboard__value">{stats.openReports}</p>
                   </div>
+
+                  <div className="dashboard__card">
+                    <p className="dashboard__label">Verifiche in attesa</p>
+                    <p className="dashboard__value">
+                      {stats.pendingIdentityVerifications}
+                    </p>
+                  </div>
+
+                  <div className="dashboard__card">
+                    <p className="dashboard__label">Penali pending</p>
+                    <p className="dashboard__value">{stats.pendingPenalties}</p>
+                  </div>
+
+                  <div className="dashboard__card">
+                    <p className="dashboard__label">Importo penali pending</p>
+                    <p className="dashboard__value">
+                      €{stats.pendingPenaltiesAmount.toFixed(2)}
+                    </p>
+                  </div>
+
+                  <div className="dashboard__card dashboard__card--accepted">
+                    <p className="dashboard__label">Penali pagate</p>
+                    <p className="dashboard__value">
+                      €{stats.paidPenaltiesAmount.toFixed(2)}
+                    </p>
+                  </div>
                 </div>
 
                 <div className="request-card">
@@ -168,6 +248,14 @@ function AdminDashboardPage() {
                       className="btn btn--secondary"
                     >
                       Segnalazioni
+                    </Link>
+
+                    <Link to="/offro-aiuto" className="btn btn--secondary">
+                      Richieste pubbliche
+                    </Link>
+
+                    <Link to="/penali" className="btn btn--secondary">
+                      Le mie penali
                     </Link>
                   </div>
                 </div>
