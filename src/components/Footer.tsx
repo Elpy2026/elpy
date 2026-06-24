@@ -7,9 +7,12 @@ function Footer() {
     <footer className="footer" id="contatti">
       <div className="container footer__inner">
         <div className="footer__brand">
-          <Link to="/" className="logo logo--footer">
-            <span className="logo__mark">E</span>
-            <span className="logo__text">ELPYO</span>
+          <Link to="/" className="logo logo--image logo--footer" aria-label="ELPYO — Home">
+            <img
+              src="/elpy-logo-header-transparent.png"
+              alt="ELPYO"
+              className="logo__image"
+            />
           </Link>
 
           <p className="footer__tagline">
@@ -49,16 +52,16 @@ function Footer() {
           </div>
 
           <div className="footer__col">
-            <h3 className="footer__heading">Account</h3>
+            <h3 className="footer__heading">Legale</h3>
             <ul>
               <li>
-                <Link to="/login">Accedi</Link>
+                <Link to="/privacy">Privacy Policy</Link>
               </li>
               <li>
-                <Link to="/profilo">Profilo</Link>
+                <Link to="/termini">Termini di Utilizzo</Link>
               </li>
               <li>
-                <Link to="/messaggi">Messaggi</Link>
+                <Link to="/cookie-policy">Cookie Policy</Link>
               </li>
             </ul>
           </div>

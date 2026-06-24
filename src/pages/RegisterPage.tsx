@@ -33,8 +33,11 @@ function RegisterPage() {
 
     try {
       console.log('Marketing consent:', marketingConsent)
-
-      await signUp(email, password, fullName, role, phone)
+      await signUp(email, password, fullName, role, phone, {
+        acceptedTerms,
+        acceptedPrivacy,
+        marketingConsent,
+      })
       setMessage('Registrazione completata. Controlla la tua email per confermare l’account.')
       setTimeout(() => navigate('/login'), 1800)
     } catch (err) {

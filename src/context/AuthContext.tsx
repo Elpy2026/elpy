@@ -9,6 +9,12 @@ import {
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 
+type SignUpConsents = {
+  acceptedTerms: boolean
+  acceptedPrivacy: boolean
+  marketingConsent: boolean
+}
+
 interface AuthContextValue {
   user: User | null
   session: Session | null
@@ -19,6 +25,7 @@ interface AuthContextValue {
     fullName: string,
     role: 'seeker' | 'helper',
     phone: string,
+    consents: SignUpConsents,
   ) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
@@ -52,7 +59,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fullName: string,
     role: 'seeker' | 'helper',
     phone: string,
+    consents: SignUpConsents,
   ) {
+    const now = new Date().toISOString()
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -61,6 +71,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           full_name: fullName,
           role,
           phone,
+          accepted_terms: consents.acceptedTerms,
+          accepted_privacy: consents.acceptedPrivacy,
+          marketing_consent: consents.marketingConsent,
         },
       },
     })
@@ -77,6 +90,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         phone: phone || null,
         verified: false,
         is_admin: false,
+        accepted_terms: consents.acceptedTerms,
+        accepted_privacy: consents.acceptedPrivacy,
+        marketing_consent: consents.marketingConsent,
+        accepted_terms_at: consents.acceptedTerms ? now : null,
+        accepted_privacy_at: consents.acceptedPrivacy ? now : null,
+        marketing_consent_at: consents.marketingConsent ? now : null,
       })
 
       if (profileError) throw profileError
