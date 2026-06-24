@@ -89,7 +89,7 @@ function Header() {
         <nav className="header__nav" aria-label="Navigazione principale">
           <Link to="/cerco-aiuto">Cerco aiuto</Link>
           <Link to="/offro-aiuto">Offro aiuto</Link>
-          <a href="/#come-funziona">Come funziona</a>
+          <Link to="/come-funziona">Come funziona</Link>
         </nav>
 
         <div className="header__account">

@@ -44,7 +44,7 @@ function Hero() {
           />
 
           <div className="hero-final-card__content">
-            <div className="hero-final-card__icon">♡</div>
+            <div className="hero-final-card__icon">🛡️</div>
             <h2>
               Hai bisogno
               <br />
@@ -64,7 +64,7 @@ function Hero() {
           />
 
           <div className="hero-final-card__content">
-            <div className="hero-final-card__icon">☺</div>
+            <div className="hero-final-card__icon">💶</div>
             <h2>
               Vuoi aiutare
               <br />

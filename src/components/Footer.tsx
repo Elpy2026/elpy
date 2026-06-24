@@ -4,18 +4,16 @@ function Footer() {
   const year = new Date().getFullYear()
 
   return (
-    <footer className="footer">
+    <footer className="footer" id="contatti">
       <div className="container footer__inner">
         <div className="footer__brand">
-        <Link to="/" className="logo logo--image logo--footer" aria-label="ELPY — Home">
-        <img
-  src="/elpy-logo-header-transparent.png"
-  alt="ELPY"
-  className="logo__image"
-/>
-</Link>
+          <Link to="/" className="logo logo--footer">
+            <span className="logo__mark">E</span>
+            <span className="logo__text">ELPY</span>
+          </Link>
+
           <p className="footer__tagline">
-            Il marketplace locale che connette chi cerca aiuto con helper verificati.
+            La piattaforma che connette chi ha bisogno con chi ha voglia di dare una mano.
           </p>
         </div>
 
@@ -27,15 +25,16 @@ function Footer() {
                 <a href="/#categorie">Categorie</a>
               </li>
               <li>
-                <a href="/#come-funziona">Come funziona</a>
+                <Link to="/come-funziona">Come funziona</Link>
               </li>
               <li>
                 <a href="/#fiducia">Sicurezza</a>
               </li>
             </ul>
           </div>
+
           <div className="footer__col">
-            <h3 className="footer__heading">Per te</h3>
+            <h3 className="footer__heading">Azioni</h3>
             <ul>
               <li>
                 <Link to="/cerco-aiuto">Cerco aiuto</Link>
@@ -43,19 +42,23 @@ function Footer() {
               <li>
                 <Link to="/offro-aiuto">Offro aiuto</Link>
               </li>
+              <li>
+                <Link to="/registrazione">Registrati</Link>
+              </li>
             </ul>
           </div>
+
           <div className="footer__col">
-            <h3 className="footer__heading">Contatti</h3>
+            <h3 className="footer__heading">Account</h3>
             <ul>
               <li>
-                <a href="mailto:info@elpy.it">info@elpy.it</a>
+                <Link to="/login">Accedi</Link>
               </li>
               <li>
-                <a href="#">Privacy</a>
+                <Link to="/profilo">Profilo</Link>
               </li>
               <li>
-                <a href="#">Termini</a>
+                <Link to="/messaggi">Messaggi</Link>
               </li>
             </ul>
           </div>
@@ -64,7 +67,7 @@ function Footer() {
 
       <div className="footer__bottom">
         <div className="container footer__bottom-inner">
-          <p>&copy; {year} ELPY. Tutti i diritti riservati.</p>
+          <p>© {year} ELPY. Tutti i diritti riservati.</p>
         </div>
       </div>
     </footer>

@@ -36,9 +36,7 @@ function OffroAiutoPage() {
           ? request.citta.toLowerCase().includes(cityFilter.toLowerCase())
           : true
 
-        const matchesCategory = categoryFilter
-          ? request.categoria === categoryFilter
-          : true
+        const matchesCategory = categoryFilter ? request.categoria === categoryFilter : true
 
         const rewardValue = Number(request.compenso)
         const minRewardValue = Number(minRewardFilter)
@@ -109,222 +107,249 @@ function OffroAiutoPage() {
       <Header />
 
       <main className="page-main">
-        <section className="section page-section" aria-labelledby="offro-title">
-          <div className="container page-container">
-            <div className="page-header">
-              <p className="hero__badge">Offro aiuto</p>
+        <section className="helper-hero" aria-labelledby="offro-title">
+        <div className="container helper-hero__grid">
 
-              <h1 id="offro-title" className="page-title">
-                Richieste disponibili
+<div className="page-back">
+  <Link to="/" className="page-back__link">
+    ← Torna alla Home
+  </Link>
+</div>
+            <div className="helper-hero__content">
+              <p className="helper-hero__badge">Diventa Helper</p>
+
+              <h1 id="offro-title" className="helper-hero__title">
+                Vuoi aiutare e <span>guadagnare?</span>
               </h1>
 
-              <p className="page-subtitle">
-                Sfoglia le richieste pubblicate e candidati per aiutare.
+              <p className="helper-hero__text">
+                Sfoglia le richieste disponibili nella tua zona, scegli quelle adatte alle tue
+                competenze e candidati per offrire il tuo tempo in modo semplice e sicuro.
               </p>
+
+              <div className="helper-hero__points">
+                <div className="helper-hero__point">
+                  <span>🔎</span>
+                  <div>
+                    <h2>Trova richieste vicine</h2>
+                    <p>Filtra per città, categoria e compenso.</p>
+                  </div>
+                </div>
+
+                <div className="helper-hero__point">
+                  <span>☺</span>
+                  <div>
+                    <h2>Candidati in pochi secondi</h2>
+                    <p>Scrivi un breve messaggio e proponiti come Helper.</p>
+                  </div>
+                </div>
+
+                <div className="helper-hero__point">
+                  <span>💜</span>
+                  <div>
+                    <h2>Guadagna aiutando</h2>
+                    <p>Dai una mano alle persone vicino a te e valorizza il tuo tempo.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="helper-hero__privacy">
+                <span>🛡</span>
+                <div>
+                  <strong>Aiuta con fiducia</strong>
+                  <p>Candidati solo alle richieste che ti interessano davvero.</p>
+                </div>
+              </div>
             </div>
 
-            {message && <div className="alert alert--success">{message}</div>}
-            {error && <div className="alert alert--error">{error}</div>}
-
-            <div className="request-card">
-              <h2 className="request-card__title">Filtra richieste</h2>
-
-              <div className="form-field">
-                <label htmlFor="cityFilter">Città</label>
-                <input
-                  id="cityFilter"
-                  type="text"
-                  value={cityFilter}
-                  onChange={(event) => setCityFilter(event.target.value)}
-                  placeholder="Es. Agrigento"
-                />
+            <div className="helper-hero__panel">
+              <div className="helper-hero__panel-header">
+                <h2>Richieste disponibili</h2>
+                <p>Scegli dove puoi dare una mano.</p>
               </div>
 
-              <div className="form-field">
-                <label htmlFor="categoryFilter">Categoria</label>
-                <select
-                  id="categoryFilter"
-                  value={categoryFilter}
-                  onChange={(event) => setCategoryFilter(event.target.value)}
-                >
-                  <option value="">Tutte le categorie</option>
+              {message && <div className="alert alert--success">{message}</div>}
+              {error && <div className="alert alert--error">{error}</div>}
 
-                  {availableCategories.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <div className="helper-filters">
+                <h3>Filtra richieste</h3>
 
-              <div className="form-field">
-                <label htmlFor="minRewardFilter">Compenso minimo</label>
-                <input
-                  id="minRewardFilter"
-                  type="number"
-                  min="0"
-                  value={minRewardFilter}
-                  onChange={(event) => setMinRewardFilter(event.target.value)}
-                  placeholder="Es. 20"
-                />
-              </div>
+                <div className="helper-filters__grid">
+                  <div className="form-field">
+                    <label htmlFor="cityFilter">Città</label>
+                    <input
+                      id="cityFilter"
+                      type="text"
+                      value={cityFilter}
+                      onChange={(event) => setCityFilter(event.target.value)}
+                      placeholder="Es. Agrigento"
+                    />
+                  </div>
 
-              <div className="form-field">
-                <label htmlFor="sortBy">Ordina per</label>
-                <select
-                  id="sortBy"
-                  value={sortBy}
-                  onChange={(event) => setSortBy(event.target.value)}
-                >
-                  <option value="date">Più recenti</option>
-                  <option value="reward">Compenso più alto</option>
-                </select>
-              </div>
+                  <div className="form-field">
+                    <label htmlFor="categoryFilter">Categoria</label>
+                    <select
+                      id="categoryFilter"
+                      value={categoryFilter}
+                      onChange={(event) => setCategoryFilter(event.target.value)}
+                    >
+                      <option value="">Tutte le categorie</option>
+                      {availableCategories.map((category) => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-              <div className="form-field">
-                <label>
+                  <div className="form-field">
+                    <label htmlFor="minRewardFilter">Compenso minimo</label>
+                    <input
+                      id="minRewardFilter"
+                      type="number"
+                      min="0"
+                      value={minRewardFilter}
+                      onChange={(event) => setMinRewardFilter(event.target.value)}
+                      placeholder="Es. 20"
+                    />
+                  </div>
+
+                  <div className="form-field">
+                    <label htmlFor="sortBy">Ordina per</label>
+                    <select
+                      id="sortBy"
+                      value={sortBy}
+                      onChange={(event) => setSortBy(event.target.value)}
+                    >
+                      <option value="date">Più recenti</option>
+                      <option value="reward">Compenso più alto</option>
+                    </select>
+                  </div>
+                </div>
+
+                <label className="helper-filters__checkbox">
                   <input
                     type="checkbox"
                     checked={onlyOpen}
                     onChange={(event) => setOnlyOpen(event.target.checked)}
-                  />{' '}
+                  />
                   Mostra solo richieste aperte
                 </label>
-              </div>
 
-              <div className="form-actions">
-                <button
-                  type="button"
-                  className="btn btn--secondary"
-                  onClick={resetFilters}
-                >
+                <button type="button" className="btn btn--secondary" onClick={resetFilters}>
                   Cancella filtri
                 </button>
               </div>
-            </div>
 
-            {requests.length === 0 ? (
-              <div className="empty-state">
-                <p>Nessuna richiesta pubblicata al momento.</p>
+              {requests.length === 0 ? (
+                <div className="empty-state">
+                  <p>Nessuna richiesta pubblicata al momento.</p>
+                  <Link to="/cerco-aiuto" className="btn btn--primary">
+                    Pubblica la prima richiesta
+                  </Link>
+                </div>
+              ) : filteredRequests.length === 0 ? (
+                <div className="empty-state">
+                  <p>Nessuna richiesta corrisponde ai filtri selezionati.</p>
+                  <button type="button" className="btn btn--secondary" onClick={resetFilters}>
+                    Cancella filtri
+                  </button>
+                </div>
+              ) : (
+                <ul className="helper-requests-list">
+                  {filteredRequests.map((request) => (
+                    <li key={request.id} className="helper-request-card">
+                      <div className="request-card__header">
+                        <span className="request-card__category">{request.categoria}</span>
 
-                <Link to="/cerco-aiuto" className="btn btn--primary">
-                  Pubblica la prima richiesta
+                        {request.stato === 'aperta' && (
+                          <span className="badge badge--accepted">Aperta</span>
+                        )}
+
+                        {request.stato === 'accettata' && (
+                          <span className="badge badge--accepted">Accettata</span>
+                        )}
+
+                        {request.stato === 'completata' && (
+                          <span className="badge badge--accepted">Completata</span>
+                        )}
+                      </div>
+
+                      <h2 className="request-card__title">{request.titolo}</h2>
+                      <p className="request-card__desc">{request.descrizione}</p>
+
+                      <dl className="request-card__meta">
+                        <div>
+                          <dt>Città</dt>
+                          <dd>{request.citta}</dd>
+                        </div>
+
+                        <div>
+                          <dt>Data</dt>
+                          <dd>{formatDate(request.data)}</dd>
+                        </div>
+
+                        <div>
+                          <dt>Compenso</dt>
+                          <dd className="request-card__compenso">€{request.compenso}</dd>
+                        </div>
+                      </dl>
+
+                      {request.stato === 'aperta' ? (
+                        <div className="request-form helper-application-form">
+                          <div className="form-field">
+                            <label htmlFor={`application-${request.id}`}>
+                              Messaggio candidatura
+                            </label>
+
+                            <textarea
+                              id={`application-${request.id}`}
+                              value={applicationMessages[request.id] ?? ''}
+                              onChange={(event) =>
+                                handleApplicationMessageChange(request.id, event.target.value)
+                              }
+                              rows={3}
+                              placeholder="Scrivi perché puoi aiutare..."
+                              disabled={submittingApplicationId === request.id}
+                            />
+                          </div>
+
+                          <div className="form-actions">
+                            <button
+                              type="button"
+                              className="btn btn--primary request-card__btn"
+                              onClick={() => void handleApplication(request.id)}
+                              disabled={submittingApplicationId === request.id}
+                            >
+                              {submittingApplicationId === request.id
+                                ? 'Invio candidatura…'
+                                : 'Candidati'}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn btn--secondary request-card__btn"
+                          disabled
+                        >
+                          Richiesta non più disponibile
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              <div className="helper-hero__footer-actions">
+                <Link to="/cerco-aiuto" className="btn btn--secondary">
+                  Pubblica una richiesta
+                </Link>
+
+                <Link to="/" className="btn btn--secondary">
+                  Torna alla home
                 </Link>
               </div>
-            ) : filteredRequests.length === 0 ? (
-              <div className="empty-state">
-                <p>Nessuna richiesta corrisponde ai filtri selezionati.</p>
-
-                <button
-                  type="button"
-                  className="btn btn--secondary"
-                  onClick={resetFilters}
-                >
-                  Cancella filtri
-                </button>
-              </div>
-            ) : (
-              <ul className="requests-list">
-                {filteredRequests.map((request) => (
-                  <li key={request.id} className="request-card">
-                    <div className="request-card__header">
-                      <span className="request-card__category">
-                        {request.categoria}
-                      </span>
-
-                      {request.stato === 'aperta' && (
-                        <span className="badge badge--accepted">Aperta</span>
-                      )}
-
-                      {request.stato === 'accettata' && (
-                        <span className="badge badge--accepted">Accettata</span>
-                      )}
-
-                      {request.stato === 'completata' && (
-                        <span className="badge badge--accepted">Completata</span>
-                      )}
-                    </div>
-
-                    <h2 className="request-card__title">{request.titolo}</h2>
-
-                    <p className="request-card__desc">{request.descrizione}</p>
-
-                    <dl className="request-card__meta">
-                      <div>
-                        <dt>Città</dt>
-                        <dd>{request.citta}</dd>
-                      </div>
-
-                      <div>
-                        <dt>Data</dt>
-                        <dd>{formatDate(request.data)}</dd>
-                      </div>
-
-                      <div>
-                        <dt>Compenso</dt>
-                        <dd className="request-card__compenso">
-                          €{request.compenso}
-                        </dd>
-                      </div>
-                    </dl>
-
-                    {request.stato === 'aperta' ? (
-                      <div className="request-form">
-                        <div className="form-field">
-                          <label htmlFor={`application-${request.id}`}>
-                            Messaggio candidatura
-                          </label>
-
-                          <textarea
-                            id={`application-${request.id}`}
-                            value={applicationMessages[request.id] ?? ''}
-                            onChange={(event) =>
-                              handleApplicationMessageChange(
-                                request.id,
-                                event.target.value,
-                              )
-                            }
-                            rows={3}
-                            placeholder="Scrivi perché puoi aiutare..."
-                            disabled={submittingApplicationId === request.id}
-                          />
-                        </div>
-
-                        <div className="form-actions">
-                          <button
-                            type="button"
-                            className="btn btn--primary request-card__btn"
-                            onClick={() => void handleApplication(request.id)}
-                            disabled={submittingApplicationId === request.id}
-                          >
-                            {submittingApplicationId === request.id
-                              ? 'Invio candidatura…'
-                              : 'Candidati'}
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        className="btn btn--secondary request-card__btn"
-                        disabled
-                      >
-                        Richiesta non più disponibile
-                      </button>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            <div className="page-footer-actions">
-              <Link to="/cerco-aiuto" className="btn btn--secondary">
-                Pubblica una richiesta
-              </Link>
-
-              <Link to="/" className="btn btn--secondary">
-                Torna alla home
-              </Link>
             </div>
           </div>
         </section>

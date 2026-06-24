@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { RequestsProvider } from './context/RequestsContext'
-
+import ComeFunzionaPage from './pages/ComeFunzionaPage'
 import HomePage from './pages/HomePage'
 import CercoAiutoPage from './pages/CercoAiutoPage'
 import OffroAiutoPage from './pages/OffroAiutoPage'
@@ -31,6 +31,10 @@ function App() {
     <RequestsProvider>
       <BrowserRouter>
         <Routes>
+        <Route
+  path="/come-funziona"
+  element={<ComeFunzionaPage />}
+/>
           <Route path="/" element={<HomePage />} />
 
           <Route
