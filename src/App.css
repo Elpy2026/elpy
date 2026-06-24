@@ -1202,7 +1202,7 @@
 }
 
 
-/* ===== ELPY FINAL HERO ===== */
+/* ===== ELPYO FINAL HERO ===== */
 
 :root {
   --green-50: #fff4ec;
@@ -1414,7 +1414,7 @@
 }
 
 
-/* ===== ELPY CARD CENTERED CONTENT FINAL ===== */
+/* ===== ELPYO CARD CENTERED CONTENT FINAL ===== */
 
 .hero-final-card__content {
   position: absolute !important;
@@ -1451,7 +1451,7 @@
 }
 
 
-/* ===== ELPY CATEGORIES HOME FINAL ===== */
+/* ===== ELPYO CATEGORIES HOME FINAL ===== */
 
 .categories {
   background: linear-gradient(180deg, #f25544 0%, #f04438 100%) !important;
@@ -2449,7 +2449,7 @@
   }
 }
 /* ======================================================
-   COME FUNZIONA PAGE - ELPY 2026
+   COME FUNZIONA PAGE - ELPYO 2026
 ====================================================== */
 
 .come-funziona-page {
@@ -3116,4 +3116,112 @@
   .helper-hero__content {
     transform: none !important;
   }
+}
+/* ===== LEGAL PAGES ===== */
+
+.legal-page {
+  min-height: calc(100svh - 4rem);
+  padding: 4rem 0;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(242, 85, 68, 0.12), transparent 24rem),
+    linear-gradient(180deg, #fff8f4 0%, #ffffff 100%);
+}
+
+.legal-page__container {
+  max-width: 860px;
+  padding: 2.5rem;
+  background: #fff;
+  border: 1px solid #ffe6e2;
+  border-radius: 2rem;
+  box-shadow: 0 20px 55px rgba(13, 27, 42, 0.08);
+}
+
+.legal-page h1 {
+  margin: 0 0 1.5rem;
+  color: #0d1b2a;
+  font-size: clamp(2.4rem, 4vw, 4rem);
+  line-height: 1;
+  font-weight: 900;
+}
+
+.legal-page h2 {
+  margin: 2rem 0 0.75rem;
+  color: #0d1b2a;
+  font-size: 1.35rem;
+  font-weight: 900;
+}
+
+.legal-page p {
+  margin: 0 0 1rem;
+  color: #334155;
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+@media (max-width: 640px) {
+  .legal-page {
+    padding: 2rem 0;
+  }
+
+  .legal-page__container {
+    padding: 1.5rem;
+    border-radius: 1.5rem;
+  }
+}
+/* ===== LEGAL CONSENTS ===== */
+
+.legal-consents {
+  display: grid;
+  gap: 0.9rem;
+  margin: 1.25rem 0;
+  padding: 1.25rem;
+  border-radius: 1rem;
+  background: #fff8f4;
+  border: 1px solid #ffe6e2;
+}
+
+.legal-consent {
+  display: grid;
+  grid-template-columns: 1.25rem 1fr;
+  gap: 0.75rem;
+  align-items: start;
+  color: #334155;
+  font-size: 0.94rem;
+  line-height: 1.45;
+  font-weight: 600;
+}
+
+.legal-consent input {
+  margin-top: 0.15rem;
+  accent-color: #f25544;
+}
+
+.legal-consent a {
+  color: #d93d30;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.legal-consent a:hover {
+  text-decoration: underline;
+}
+
+.legal-consent--optional {
+  color: #64748b;
+}
+/* ===== DISABLED BUTTON STATE ===== */
+
+.btn:disabled,
+.btn[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+  filter: grayscale(0.25);
+}
+
+.btn--primary:disabled,
+.btn--primary[disabled] {
+  background: #cbd5e1;
+  border-color: #cbd5e1;
+  color: #64748b;
 }

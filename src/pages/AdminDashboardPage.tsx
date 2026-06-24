@@ -158,7 +158,7 @@ function AdminDashboardPage() {
               <h1 className="page-title">Dashboard</h1>
 
               <p className="page-subtitle">
-                Panoramica operativa della piattaforma ELPY.
+                Panoramica operativa della piattaforma ELPYO.
               </p>
             </div>
 

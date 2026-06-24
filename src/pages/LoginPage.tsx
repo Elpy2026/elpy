@@ -35,7 +35,7 @@ function LoginPage() {
           <div className="container page-container">
             <div className="page-header">
               <p className="hero__badge">Login</p>
-              <h1 className="page-title">Accedi a ELPY</h1>
+              <h1 className="page-title">Accedi a ELPYO</h1>
               <p className="page-subtitle">Accedi per pubblicare richieste o candidarti come helper.</p>
             </div>
 

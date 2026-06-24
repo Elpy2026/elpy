@@ -94,7 +94,7 @@ export async function insertRequest(
 
   if (penaltyCheck.blocked) {
     return {
-      error: `Hai penali ELPY pendenti per €${penaltyCheck.total}. Salda prima di pubblicare nuove richieste.`,
+      error: `Hai penali ELPYO pendenti per €${penaltyCheck.total}. Salda prima di pubblicare nuove richieste.`,
     }
   }
 
@@ -130,7 +130,7 @@ export async function acceptHelpRequest(
 
   if (penaltyCheck.blocked) {
     return {
-      error: `Hai penali ELPY pendenti per €${penaltyCheck.total}. Salda prima di accettare richieste.`,
+      error: `Hai penali ELPYO pendenti per €${penaltyCheck.total}. Salda prima di accettare richieste.`,
     }
   }
 

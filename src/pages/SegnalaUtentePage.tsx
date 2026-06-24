@@ -81,7 +81,7 @@ function SegnalaUtentePage() {
               </h1>
 
               <p className="page-subtitle">
-                Invia una segnalazione al team ELPY.
+                Invia una segnalazione al team ELPYO.
               </p>
             </div>
 

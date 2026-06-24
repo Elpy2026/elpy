@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { useParams } from 'react-router-dom'
+import { useLocation, useParams } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { supabase } from '../lib/supabase'
@@ -37,6 +37,9 @@ function formatMessageTime(value: string) {
 
 function ChatPage() {
   const { requestId } = useParams()
+  const location = useLocation()
+const preferredConversationId =
+  (location.state as { conversationId?: string } | null)?.conversationId ?? ''
   const { user } = useAuth()
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
 
@@ -57,13 +60,35 @@ function ChatPage() {
   const markMessagesAsRead = useCallback(
     async (activeConversationId: string) => {
       if (!user) return
+  
 
-      await supabase
+      const { error } = await supabase
         .from('messages')
         .update({ read_at: new Date().toISOString() })
         .eq('conversation_id', activeConversationId)
         .neq('sender_id', user.id)
         .is('read_at', null)
+        .select('id, read_at')
+
+      if (error) {
+        setError(error.message)
+        return
+      }
+
+
+      setMessages((current) =>
+        current.map((message) =>
+          message.sender_id !== user.id && message.read_at === null
+            ? { ...message, read_at: new Date().toISOString() }
+            : message,
+        ),
+      )
+
+      window.dispatchEvent(new Event('elpyo-badges-refresh'))
+
+      window.setTimeout(() => {
+        window.dispatchEvent(new Event('elpyo-badges-refresh'))
+      }, 800)
     },
     [user],
   )
@@ -116,8 +141,6 @@ function ChatPage() {
         .from('conversations')
         .select('id')
         .eq('request_id', requestId)
-        .order('created_at', { ascending: true })
-        .limit(1)
 
       if (conversationError) {
         setError(conversationError.message)
@@ -125,7 +148,30 @@ function ChatPage() {
         return
       }
 
-      let conversation: Conversation | null = conversationsData?.[0] ?? null
+      const availableConversations = (conversationsData ?? []) as Conversation[]
+      let conversation: Conversation | null =
+  availableConversations.find((item) => item.id === preferredConversationId) ??
+  availableConversations[0] ??
+  null
+
+      if (user && availableConversations.length > 1) {
+        const conversationIds = availableConversations.map((item) => item.id)
+
+        const { data: unreadRows } = await supabase
+          .from('messages')
+          .select('conversation_id')
+          .in('conversation_id', conversationIds)
+          .neq('sender_id', user.id)
+          .is('read_at', null)
+
+        const unreadConversationId = unreadRows?.[0]?.conversation_id
+
+        if (unreadConversationId) {
+          conversation =
+            availableConversations.find((item) => item.id === unreadConversationId) ??
+            conversation
+        }
+      }
 
       if (!conversation) {
         const { data: newConversation, error: createError } = await supabase
@@ -153,7 +199,7 @@ function ChatPage() {
     }
 
     void loadChat()
-  }, [requestId, loadMessages])
+  }, [requestId, loadMessages, user, preferredConversationId])
 
   useEffect(() => {
     if (!conversationId) return

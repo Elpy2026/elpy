@@ -80,6 +80,7 @@ function NotifichePage() {
       return
     }
 
+    window.dispatchEvent(new Event('elpyo-badges-refresh'))
     setMarkingId('')
     await loadNotifications()
   }
@@ -100,6 +101,7 @@ function NotifichePage() {
       return
     }
 
+    window.dispatchEvent(new Event('elpyo-badges-refresh'))
     await loadNotifications()
   }
 

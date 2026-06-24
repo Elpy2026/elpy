@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
@@ -12,115 +12,61 @@ function Header() {
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
 
-  const loadProfileAndNotifications = useCallback(async () => {
-    if (!user) {
-      setVerified(false)
-      setIsAdmin(false)
-      setFullName('')
-      setUnreadNotificationsCount(0)
-      setUnreadMessagesCount(0)
-      return
-    }
-
-    const { data } = await supabase
-      .from('profiles')
-      .select('full_name, verified, is_admin')
-      .eq('id', user.id)
-      .single()
-
-    setFullName(data?.full_name ?? user.email ?? 'Account')
-    setVerified(Boolean(data?.verified))
-    setIsAdmin(Boolean(data?.is_admin))
-
-    const { count: notificationsCount } = await supabase
-      .from('notifications')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .eq('is_read', false)
-
-    setUnreadNotificationsCount(notificationsCount ?? 0)
-
-    const { data: conversationsData } = await supabase
-      .from('conversations')
-      .select('id')
-      .or(`seeker_id.eq.${user.id},helper_id.eq.${user.id}`)
-
-    const conversationIds = (conversationsData ?? []).map(
-      (conversation) => conversation.id,
-    )
-
-    if (conversationIds.length === 0) {
-      setUnreadMessagesCount(0)
-      return
-    }
-
-    const { count: unreadCount } = await supabase
-  .from('messages')
-  .select('id, conversation_id, sender_id, read_at', {
-    count: 'exact',
-  })
-  .in('conversation_id', conversationIds)
-  .neq('sender_id', user.id)
-  .is('read_at', null)
-
-    setUnreadMessagesCount(unreadCount ?? 0)
-  }, [user])
-
   useEffect(() => {
+    async function loadProfileAndNotifications() {
+      if (!user) {
+        setVerified(false)
+        setIsAdmin(false)
+        setFullName('')
+        setUnreadNotificationsCount(0)
+        setUnreadMessagesCount(0)
+        return
+      }
+
+      const { data } = await supabase
+        .from('profiles')
+        .select('full_name, verified, is_admin')
+        .eq('id', user.id)
+        .single()
+
+      setFullName(data?.full_name ?? user.email ?? 'Account')
+      setVerified(Boolean(data?.verified))
+      setIsAdmin(Boolean(data?.is_admin))
+
+      const { count: notificationsCount } = await supabase
+        .from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('is_read', false)
+
+      setUnreadNotificationsCount(notificationsCount ?? 0)
+
+      const { data: conversationsData } = await supabase
+        .from('conversations')
+        .select('id')
+        .or(`seeker_id.eq.${user.id},helper_id.eq.${user.id}`)
+
+      const conversationIds = (conversationsData ?? []).map(
+        (conversation) => conversation.id,
+      )
+
+      if (conversationIds.length === 0) {
+        setUnreadMessagesCount(0)
+        return
+      }
+
+      const { count: unreadCount } = await supabase
+        .from('messages')
+        .select('id', { count: 'exact', head: true })
+        .in('conversation_id', conversationIds)
+        .neq('sender_id', user.id)
+        .is('read_at', null)
+
+      setUnreadMessagesCount(unreadCount ?? 0)
+    }
+
     void loadProfileAndNotifications()
-  }, [loadProfileAndNotifications])
-
-  useEffect(() => {
-    if (!user) return
-
-    const channel = supabase
-      .channel(`header-badges-${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'messages',
-        },
-        () => {
-          void loadProfileAndNotifications()
-        },
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${user.id}`,
-        },
-        () => {
-          void loadProfileAndNotifications()
-        },
-      )
-      .subscribe()
-
-    return () => {
-      void supabase.removeChannel(channel)
-    }
-  }, [user, loadProfileAndNotifications])
-
-  useEffect(() => {
-    function refreshBadges() {
-      void loadProfileAndNotifications()
-    }
-
-    window.addEventListener('elpyo-badges-refresh', refreshBadges)
-    window.addEventListener('focus', refreshBadges)
-
-    const intervalId = window.setInterval(refreshBadges, 2000)
-
-    return () => {
-      window.removeEventListener('elpyo-badges-refresh', refreshBadges)
-      window.removeEventListener('focus', refreshBadges)
-      window.clearInterval(intervalId)
-    }
-  }, [loadProfileAndNotifications])
+  }, [user])
 
   async function handleSignOut() {
     setMenuOpen(false)

@@ -142,7 +142,7 @@ function LeMieAttivitaPage() {
 
     setMessage(
       result.feeAmount > 0
-        ? `Accordo annullato. Commissione ELPY registrata: €${result.feeAmount}.`
+        ? `Accordo annullato. Commissione ELPYO registrata: €${result.feeAmount}.`
         : 'Accordo annullato entro 15 minuti senza commissione.',
     )
 
@@ -233,7 +233,7 @@ function LeMieAttivitaPage() {
                         <div className="alert alert--success">
                           <p>
                             <strong>Richiedente:</strong>{' '}
-                            {seeker?.full_name ?? 'Utente ELPY'}
+                            {seeker?.full_name ?? 'Utente ELPYO'}
                             {seeker?.verified && ' · Identità verificata'}
                           </p>
 

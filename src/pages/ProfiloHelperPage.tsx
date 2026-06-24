@@ -146,7 +146,7 @@ function ProfiloHelperPage() {
                   <img
                     src={
                       profile.avatar_url ||
-                      'https://ui-avatars.com/api/?name=Helper+ELPY&background=22a06b&color=fff'
+                      'https://ui-avatars.com/api/?name=Helper+ELPYO&background=22a06b&color=fff'
                     }
                     alt={profile.full_name ?? 'Foto helper'}
                     style={{
@@ -162,7 +162,7 @@ function ProfiloHelperPage() {
                   />
 
                   <h1 className="page-title">
-                    {profile.full_name ?? 'Helper ELPY'}
+                    {profile.full_name ?? 'Helper ELPYO'}
                   </h1>
 
                   <p className="page-subtitle">
@@ -186,7 +186,7 @@ function ProfiloHelperPage() {
                     )}
                   </div>
 
-                  <h2 className="request-card__title">Reputazione ELPY</h2>
+                  <h2 className="request-card__title">Reputazione ELPYO</h2>
 
                   <p style={{ fontSize: '1.8rem', margin: '0 0 0.5rem' }}>
                     {renderStars(averageRating)}
@@ -248,7 +248,7 @@ function ProfiloHelperPage() {
 
                   {profile.verified && (
                     <p>
-                      <strong>Identità:</strong> verificata da ELPY
+                      <strong>Identità:</strong> verificata da ELPYO
                     </p>
                   )}
                 </div>

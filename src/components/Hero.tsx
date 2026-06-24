@@ -5,7 +5,7 @@ function Hero() {
     <section className="hero hero--elpy-final" aria-labelledby="hero-title">
       <div className="container hero-final__top">
         <div className="hero-final__content">
-          <p className="hero-final__brand">Elpy,</p>
+          <p className="hero-final__brand">Elpyo,</p>
 
           <h1 id="hero-title" className="hero-final__title">
             Aiuto vero,

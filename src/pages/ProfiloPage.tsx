@@ -149,7 +149,7 @@ function ProfiloPage() {
               <p className="hero__badge">Profilo</p>
               <h1 className="page-title">Il mio profilo</h1>
               <p className="page-subtitle">
-                Aggiorna le informazioni visibili agli altri utenti ELPY.
+                Aggiorna le informazioni visibili agli altri utenti ELPYO.
               </p>
             </div>
 

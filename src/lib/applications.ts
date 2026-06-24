@@ -25,7 +25,7 @@ export async function createApplication(
 
   if (penaltyCheck.blocked) {
     return {
-      error: `Hai penali ELPY pendenti per €${penaltyCheck.total}. Salda prima di candidarti.`,
+      error: `Hai penali ELPYO pendenti per €${penaltyCheck.total}. Salda prima di candidarti.`,
     }
   }
 

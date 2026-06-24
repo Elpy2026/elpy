@@ -53,7 +53,7 @@ function Trust() {
             Fiducia al centro
           </h2>
           <p className="section__subtitle">
-            ELPY è pensato per chi cerca supporto e per chi lo offre con serietà.
+            ELPYO è pensato per chi cerca supporto e per chi lo offre con serietà.
           </p>
         </div>
         <ul className="trust__grid">

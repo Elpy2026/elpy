@@ -9,7 +9,7 @@ function Footer() {
         <div className="footer__brand">
           <Link to="/" className="logo logo--footer">
             <span className="logo__mark">E</span>
-            <span className="logo__text">ELPY</span>
+            <span className="logo__text">ELPYO</span>
           </Link>
 
           <p className="footer__tagline">
@@ -67,7 +67,7 @@ function Footer() {
 
       <div className="footer__bottom">
         <div className="container footer__bottom-inner">
-          <p>© {year} ELPY. Tutti i diritti riservati.</p>
+          <p>© {year} ELPYO. Tutti i diritti riservati.</p>
         </div>
       </div>
     </footer>

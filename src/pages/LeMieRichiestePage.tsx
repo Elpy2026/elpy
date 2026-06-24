@@ -252,7 +252,7 @@ function LeMieRichiestePage() {
 
     setMessage(
       result.feeAmount > 0
-        ? `Accordo annullato. Commissione ELPY registrata: €${result.feeAmount}. La richiesta è tornata aperta.`
+        ? `Accordo annullato. Commissione ELPYO registrata: €${result.feeAmount}. La richiesta è tornata aperta.`
         : 'Accordo annullato entro 15 minuti senza commissione. La richiesta è tornata aperta.',
     )
 
@@ -310,7 +310,7 @@ function LeMieRichiestePage() {
     }
 
     setMessage(
-      `Pagamento registrato. Commissione ELPY: €${amounts.platformFee}. Netto helper: €${amounts.helperAmount}.`,
+      `Pagamento registrato. Commissione ELPYO: €${amounts.platformFee}. Netto helper: €${amounts.helperAmount}.`,
     )
     setPayingRequestId('')
     await loadMyRequests()
@@ -327,7 +327,7 @@ function LeMieRichiestePage() {
               <p className="hero__badge">Area personale</p>
               <h1 className="page-title">Le mie richieste</h1>
               <p className="page-subtitle">
-                Qui trovi tutte le richieste che hai pubblicato su ELPY.
+                Qui trovi tutte le richieste che hai pubblicato su ELPYO.
               </p>
             </div>
 
@@ -385,7 +385,7 @@ function LeMieRichiestePage() {
 
                       {request.cancellation_fee_status === 'pending' && (
                         <div className="alert alert--error">
-                          Commissione ELPY da gestire per annullamento: €
+                          Commissione ELPYO da gestire per annullamento: €
                           {request.cancellation_fee_amount ?? 0}
                         </div>
                       )}
@@ -405,7 +405,7 @@ function LeMieRichiestePage() {
                                   <li key={application.id} className="request-card">
                                     <p>
                                       <strong>Helper:</strong>{' '}
-                                      {applicant?.full_name ?? 'Helper ELPY'}
+                                      {applicant?.full_name ?? 'Helper ELPYO'}
                                       {applicant?.verified && ' · Identità verificata'}
                                     </p>
 
@@ -546,7 +546,7 @@ function LeMieRichiestePage() {
                           </p>
 
                           <p>
-                            <strong>Commissione ELPY ({PLATFORM_FEE_PERCENTAGE}%):</strong>{' '}
+                            <strong>Commissione ELPYO ({PLATFORM_FEE_PERCENTAGE}%):</strong>{' '}
                             €{amounts.platformFee}
                           </p>
 

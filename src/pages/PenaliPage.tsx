@@ -109,7 +109,7 @@ function PenaliPage() {
               <p className="hero__badge">Pagamenti</p>
               <h1 className="page-title">Le mie penali</h1>
               <p className="page-subtitle">
-                Qui trovi eventuali commissioni ELPY da saldare.
+                Qui trovi eventuali commissioni ELPYO da saldare.
               </p>
             </div>
 
@@ -147,7 +147,7 @@ function PenaliPage() {
                     <li key={penalty.id} className="request-card">
                       <div className="request-card__header">
                         <span className="request-card__category">
-                          Penale ELPY
+                          Penale ELPYO
                         </span>
                         <span className="badge badge--accepted">
                           {penalty.status === 'paid' ? 'pagata' : 'pending'}

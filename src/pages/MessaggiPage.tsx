@@ -136,12 +136,15 @@ function MessaggiPage() {
                     </p>
 
                     <div className="form-actions">
-                      <Link
-                        to={`/chat/${conversation.requestId}`}
-                        className="btn btn--primary"
-                      >
-                        Apri chat
-                      </Link>
+                    <Link
+  to={`/chat/${conversation.requestId}`}
+  state={{ conversationId: conversation.conversationId }}
+  className="btn btn--primary"
+  onClick={() => {
+  }}
+>
+  Apri chat
+</Link>
                     </div>
                   </li>
                 ))}

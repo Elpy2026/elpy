@@ -18,7 +18,7 @@ function ComeFunzionaPage() {
               </h1>
 
               <p className="come-funziona-subtitle">
-                ELPY collega chi ha bisogno di una mano con persone disponibili
+                ELPYO collega chi ha bisogno di una mano con persone disponibili
                 nella stessa zona. Tutto è pensato per essere chiaro, veloce e sicuro.
               </p>
 
@@ -121,7 +121,7 @@ function ComeFunzionaPage() {
                 <span>🛡</span>
                 <h2>Sicurezza e fiducia al primo posto</h2>
                 <p>
-                  ELPY è pensata per creare relazioni locali più semplici,
+                  ELPYO è pensata per creare relazioni locali più semplici,
                   controllate e trasparenti.
                 </p>
               </div>
@@ -152,7 +152,7 @@ function ComeFunzionaPage() {
                 <h2>Domande frequenti</h2>
 
                 <details>
-                  <summary>ELPY è gratuito?</summary>
+                  <summary>ELPYO è gratuito?</summary>
                   <p>
                     Puoi usare la piattaforma per pubblicare richieste e candidarti.
                   </p>
@@ -189,7 +189,7 @@ function ComeFunzionaPage() {
             <div className="come-cta">
               <h2>Pronto per iniziare?</h2>
               <p>
-                Che tu abbia bisogno di aiuto o voglia offrirlo, ELPY ti accompagna
+                Che tu abbia bisogno di aiuto o voglia offrirlo, ELPYO ti accompagna
                 passo dopo passo.
               </p>
 

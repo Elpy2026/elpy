@@ -1,6 +1,9 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { RequestsProvider } from './context/RequestsContext'
 import ComeFunzionaPage from './pages/ComeFunzionaPage'
+import PrivacyPage from './pages/PrivacyPage'
+import TerminiPage from './pages/TerminiPage'
+import CookiePolicyPage from './pages/CookiePolicyPage'
 import HomePage from './pages/HomePage'
 import CercoAiutoPage from './pages/CercoAiutoPage'
 import OffroAiutoPage from './pages/OffroAiutoPage'
@@ -35,6 +38,9 @@ function App() {
   path="/come-funziona"
   element={<ComeFunzionaPage />}
 />
+<Route path="/privacy" element={<PrivacyPage />} />
+<Route path="/termini" element={<TerminiPage />} />
+<Route path="/cookie-policy" element={<CookiePolicyPage />} />
           <Route path="/" element={<HomePage />} />
 
           <Route

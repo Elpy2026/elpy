@@ -82,7 +82,7 @@ function IdentityVerificationPage() {
               <p className="hero__badge">Verifica identità</p>
               <h1 className="page-title">Carica documento e selfie</h1>
               <p className="page-subtitle">
-                Per usare ELPY in sicurezza, ogni utente deve completare la verifica identità.
+                Per usare ELPYO in sicurezza, ogni utente deve completare la verifica identità.
               </p>
             </div>
 

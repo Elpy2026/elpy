@@ -39,7 +39,7 @@ function VerifiedRoute({ children }: { children: ReactNode }) {
     return (
       <div className="container page-ntainer">
         <div className="alert alert--error">
-          Devi registrarti e accedere prima di usare ELPY.
+          Devi registrarti e accedere prima di usare ELPYO.
         </div>
         <div className="form-actions">
           <Link className="btn btn--primary" to="/registrazione">Registrati</Link>
