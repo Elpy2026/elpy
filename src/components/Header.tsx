@@ -78,9 +78,12 @@ function Header() {
   return (
     <header className="header">
       <div className="container header__inner">
-        <Link to="/" className="logo" aria-label="ELPY — Home">
-          <span className="logo__mark" aria-hidden="true">E</span>
-          <span className="logo__text">ELPY</span>
+        <Link to="/" className="logo logo--image" aria-label="ELPY — Home">
+          <img
+            src="/elpy-logo-header-transparent.png"
+            alt="ELPY"
+            className="logo__image"
+          />
         </Link>
 
         <nav className="header__nav" aria-label="Navigazione principale">
@@ -136,10 +139,7 @@ function Header() {
                     )}
                   </Link>
 
-                  <Link
-                    to="/penali"
-                    onClick={() => setMenuOpen(false)}
-                  >
+                  <Link to="/penali" onClick={() => setMenuOpen(false)}>
                     Le mie penali
                   </Link>
 

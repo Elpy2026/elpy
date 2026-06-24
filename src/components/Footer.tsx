@@ -7,12 +7,13 @@ function Footer() {
     <footer className="footer">
       <div className="container footer__inner">
         <div className="footer__brand">
-          <Link to="/" className="logo logo--footer" aria-label="ELPY — Home">
-            <span className="logo__mark" aria-hidden="true">
-              E
-            </span>
-            <span className="logo__text">ELPY</span>
-          </Link>
+        <Link to="/" className="logo logo--image logo--footer" aria-label="ELPY — Home">
+        <img
+  src="/elpy-logo-header-transparent.png"
+  alt="ELPY"
+  className="logo__image"
+/>
+</Link>
           <p className="footer__tagline">
             Il marketplace locale che connette chi cerca aiuto con helper verificati.
           </p>
