@@ -26,6 +26,7 @@ import AdminDashboardPage from './pages/AdminDashboardPage'
 
 import AdminRoute from './components/AdminRoute'
 import VerifiedRoute from './components/VerifiedRoute'
+import CookieBanner from './components/CookieBanner'
 
 import './App.css'
 
@@ -186,6 +187,7 @@ function App() {
             }
           />
         </Routes>
+        <CookieBanner />
       </BrowserRouter>
     </RequestsProvider>
   )
