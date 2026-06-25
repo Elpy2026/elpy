@@ -77,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       },
     })
-
+    console.log("SIGNUP RESULT", data, error)
     if (error) throw error
 
     const userId = data.user?.id
