@@ -1,8 +1,10 @@
-import { useState, type FormEvent } from 'react'
+import { useCallback, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
+import TurnstileWidget from '../components/TurnstileWidget'
 import { useAuth } from '../context/AuthContext'
+import { verifyTurnstileToken } from '../lib/turnstile'
 
 function RegisterPage() {
   const { signUp } = useAuth()
@@ -15,9 +17,26 @@ function RegisterPage() {
   const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false)
   const [marketingConsent, setMarketingConsent] = useState(false)
+  const [turnstileToken, setTurnstileToken] = useState('')
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+
+  const handleTurnstileVerify = useCallback((token: string) => {
+    console.log('Turnstile token:', token)
+    setTurnstileToken(token)
+    setError('')
+  }, [])
+
+  const handleTurnstileReset = useCallback(() => {
+    setTurnstileToken('')
+  }, [])
+
+  function resetTurnstile() {
+    setTurnstileToken('')
+    setTurnstileResetKey((current) => current + 1)
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -29,18 +48,26 @@ function RegisterPage() {
       return
     }
 
+    if (!turnstileToken) {
+      setError('Completa la verifica anti-bot prima di registrarti.')
+      return
+    }
+
     setLoading(true)
 
     try {
-      console.log('Marketing consent:', marketingConsent)
+      await verifyTurnstileToken(turnstileToken)
+
       await signUp(email, password, fullName, role, phone, {
         acceptedTerms,
         acceptedPrivacy,
         marketingConsent,
       })
+
       setMessage('Registrazione completata. Controlla la tua email per confermare l’account.')
       setTimeout(() => navigate('/login'), 1800)
     } catch (err) {
+      resetTurnstile()
       setError(err instanceof Error ? err.message : 'Errore durante la registrazione')
     } finally {
       setLoading(false)
@@ -177,11 +204,21 @@ function RegisterPage() {
                 </label>
               </div>
 
+              <div className="form-field">
+                <label>Verifica anti-bot</label>
+                <TurnstileWidget
+                  resetKey={turnstileResetKey}
+                  onVerify={handleTurnstileVerify}
+                  onExpire={handleTurnstileReset}
+                  onError={handleTurnstileReset}
+                />
+              </div>
+
               <div className="form-actions">
                 <button
                   className="btn btn--primary"
                   type="submit"
-                  disabled={loading || !acceptedTerms || !acceptedPrivacy}
+                  disabled={loading || !acceptedTerms || !acceptedPrivacy || !turnstileToken}
                 >
                   {loading ? 'Registrazione in corso…' : 'Registrati'}
                 </button>

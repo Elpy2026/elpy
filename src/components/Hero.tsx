@@ -13,9 +13,8 @@ function Hero() {
           </h1>
 
           <p className="hero-final__subtitle">
-            il modo normale di
-            <br />
-            trovare aiuto in città
+            Trova persone affidabili vicino a te per spesa, commissioni,
+            accompagnamenti e supporto quotidiano.
           </p>
 
           <div className="hero-final__actions">
@@ -24,7 +23,7 @@ function Hero() {
             </Link>
 
             <Link to="/offro-aiuto" className="btn btn--secondary">
-              Offri aiuto →
+              Diventa helper →
             </Link>
           </div>
         </div>
@@ -36,12 +35,7 @@ function Hero() {
 
       <div className="container hero-final__cards">
         <Link to="/cerco-aiuto" className="hero-final-card hero-final-card--help">
-          <img
-            src="/elpy-card-help.png"
-            alt=""
-            className="hero-final-card__bg"
-            aria-hidden="true"
-          />
+          <img src="/elpy-card-help.png" alt="" className="hero-final-card__bg" aria-hidden="true" />
 
           <div className="hero-final-card__content">
             <div className="hero-final-card__icon">🛡️</div>
@@ -56,12 +50,7 @@ function Hero() {
         </Link>
 
         <Link to="/offro-aiuto" className="hero-final-card hero-final-card--offer">
-          <img
-            src="/elpy-card-offer.png"
-            alt=""
-            className="hero-final-card__bg"
-            aria-hidden="true"
-          />
+          <img src="/elpy-card-offer.png" alt="" className="hero-final-card__bg" aria-hidden="true" />
 
           <div className="hero-final-card__content">
             <div className="hero-final-card__icon">💶</div>
@@ -71,7 +60,7 @@ function Hero() {
               e <span>guadagnare?</span>
             </h2>
             <p>Offri il tuo tempo e le tue competenze alle persone vicino a te.</p>
-            <span className="hero-final-card__button">Offri aiuto →</span>
+            <span className="hero-final-card__button">Diventa helper →</span>
           </div>
         </Link>
       </div>
