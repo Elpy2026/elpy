@@ -195,14 +195,19 @@ function NotifichePage() {
                       </dl>
 
                       <div className="form-actions">
-                        {notification.link && (
-                          <Link
-                            to={notification.link}
-                            className="btn btn--primary"
-                          >
-                            Apri
-                          </Link>
-                        )}
+                      {notification.link && (
+  <Link
+    to={notification.link}
+    className="btn btn--primary"
+    onClick={() => {
+      if (!notification.is_read) {
+        void handleMarkAsRead(notification.id)
+      }
+    }}
+  >
+    Apri
+  </Link>
+)}
 
                         {!notification.is_read && (
                           <button

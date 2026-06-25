@@ -54,7 +54,7 @@ function CercoAiutoPage() {
       await refreshRequests()
       setSubmitted(true)
       setForm(emptyForm)
-      setTimeout(() => navigate('/offro-aiuto'), 1200)
+      setTimeout(() => navigate('/le-mie-richieste'), 1200)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Errore durante la pubblicazione')
     } finally {
