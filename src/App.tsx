@@ -23,6 +23,8 @@ import PenaliPage from './pages/PenaliPage'
 import AdminVerifichePage from './pages/AdminVerifichePage'
 import AdminSegnalazioniPage from './pages/AdminSegnalazioniPage'
 import AdminDashboardPage from './pages/AdminDashboardPage'
+import PagamentoSuccessoPage from './pages/PagamentoSuccessoPage'
+import PagamentoAnnullatoPage from './pages/PagamentoAnnullatoPage'
 
 import AdminRoute from './components/AdminRoute'
 import VerifiedRoute from './components/VerifiedRoute'
@@ -155,6 +157,8 @@ function App() {
 
           <Route path="/login" element={<LoginPage />} />
           <Route path="/registrazione" element={<RegisterPage />} />
+          <Route path="/pagamento-successo" element={<PagamentoSuccessoPage />} />
+<Route path="/pagamento-annullato" element={<PagamentoAnnullatoPage />} />
 
           <Route
             path="/verifica-identita"
