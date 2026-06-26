@@ -16,6 +16,10 @@ function ProfiloPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [verified, setVerified] = useState(false)
 
+  const [emergencyContactName, setEmergencyContactName] = useState('')
+  const [emergencyContactPhone, setEmergencyContactPhone] = useState('')
+  const [emergencyShareLocation, setEmergencyShareLocation] = useState(true)
+
   const [stripeAccountId, setStripeAccountId] = useState<string | null>(null)
   const [stripeOnboardingCompleted, setStripeOnboardingCompleted] = useState(false)
   const [stripePayoutsEnabled, setStripePayoutsEnabled] = useState(false)
@@ -26,6 +30,24 @@ function ProfiloPage() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+
+  async function syncStripeAccount() {
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-connect-account')
+
+      if (error) throw error
+
+      setStripeOnboardingCompleted(Boolean(data?.stripe_onboarding_completed))
+      setStripePayoutsEnabled(Boolean(data?.stripe_payouts_enabled))
+      setStripeChargesEnabled(Boolean(data?.stripe_charges_enabled))
+
+      if (data?.stripe_onboarding_completed) {
+        setMessage('Account Stripe aggiornato correttamente.')
+      }
+    } catch {
+      // Non blocchiamo il caricamento profilo se Stripe non risponde subito.
+    }
+  }
 
   useEffect(() => {
     async function loadProfile() {
@@ -44,6 +66,9 @@ function ProfiloPage() {
           bio,
           avatar_url,
           verified,
+          emergency_contact_name,
+          emergency_contact_phone,
+          emergency_share_location,
           stripe_account_id,
           stripe_onboarding_completed,
           stripe_payouts_enabled,
@@ -62,10 +87,14 @@ function ProfiloPage() {
         setBio(data?.bio ?? '')
         setAvatarUrl(data?.avatar_url ?? '')
         setVerified(Boolean(data?.verified))
+        setEmergencyContactName(data?.emergency_contact_name ?? '')
+        setEmergencyContactPhone(data?.emergency_contact_phone ?? '')
+        setEmergencyShareLocation(data?.emergency_share_location ?? true)
         setStripeAccountId(data?.stripe_account_id ?? null)
         setStripeOnboardingCompleted(Boolean(data?.stripe_onboarding_completed))
         setStripePayoutsEnabled(Boolean(data?.stripe_payouts_enabled))
         setStripeChargesEnabled(Boolean(data?.stripe_charges_enabled))
+
         if (data?.stripe_account_id) {
           void syncStripeAccount()
         }
@@ -108,23 +137,7 @@ function ProfiloPage() {
     const { data } = supabase.storage.from('avatars').getPublicUrl(filePath)
     return data.publicUrl
   }
-  async function syncStripeAccount() {
-    try {
-      const { data, error } = await supabase.functions.invoke('sync-connect-account')
-  
-      if (error) throw error
-  
-      setStripeOnboardingCompleted(Boolean(data?.stripe_onboarding_completed))
-      setStripePayoutsEnabled(Boolean(data?.stripe_payouts_enabled))
-      setStripeChargesEnabled(Boolean(data?.stripe_charges_enabled))
-  
-      if (data?.stripe_onboarding_completed) {
-        setMessage('Account Stripe aggiornato correttamente.')
-      }
-    } catch {
-      // Non blocchiamo il caricamento profilo se Stripe non risponde subito.
-    }
-  }
+
   async function handleConnectStripe() {
     if (!user) {
       setError('Devi accedere per collegare il conto.')
@@ -138,9 +151,7 @@ function ProfiloPage() {
     try {
       const { data, error } = await supabase.functions.invoke('create-connect-account')
 
-      if (error) {
-        throw error
-      }
+      if (error) throw error
 
       if (!data?.url) {
         throw new Error('Stripe non ha restituito il link di onboarding.')
@@ -196,6 +207,9 @@ function ProfiloPage() {
           city: city || null,
           bio: bio || null,
           avatar_url: finalAvatarUrl || null,
+          emergency_contact_name: emergencyContactName || null,
+          emergency_contact_phone: emergencyContactPhone || null,
+          emergency_share_location: emergencyShareLocation,
         })
         .eq('id', user.id)
 
@@ -263,21 +277,80 @@ function ProfiloPage() {
                   )}
 
                   <div className="form-actions">
-                  <button
-  type="button"
-  className="btn btn--primary"
-  onClick={() => void handleConnectStripe()}
-  disabled={connectingStripe}
->
-  {connectingStripe
-    ? 'Collegamento…'
-    : stripeOnboardingCompleted && stripePayoutsEnabled && stripeChargesEnabled
-      ? 'Gestisci account Stripe'
-      : stripeAccountId
-        ? 'Completa configurazione Stripe'
-        : 'Collega conto bancario'}
-</button>
+                    <button
+                      type="button"
+                      className="btn btn--primary"
+                      onClick={() => void handleConnectStripe()}
+                      disabled={connectingStripe}
+                    >
+                      {connectingStripe
+                        ? 'Collegamento…'
+                        : stripeOnboardingCompleted &&
+                            stripePayoutsEnabled &&
+                            stripeChargesEnabled
+                          ? 'Gestisci account Stripe'
+                          : stripeAccountId
+                            ? 'Completa configurazione Stripe'
+                            : 'Collega conto bancario'}
+                    </button>
                   </div>
+                </div>
+
+                <div className="request-card">
+                  <h2 className="request-card__title">Sicurezza ed emergenze</h2>
+
+                  <p>
+                    Inserisci un contatto fidato da chiamare rapidamente durante un
+                    servizio.
+                  </p>
+
+                  <div className="form-field">
+                    <label htmlFor="emergencyContactName">
+                      Nome contatto emergenza
+                    </label>
+                    <input
+                      id="emergencyContactName"
+                      type="text"
+                      value={emergencyContactName}
+                      onChange={(e) => setEmergencyContactName(e.target.value)}
+                      placeholder="Es. Marco Rossi"
+                      disabled={saving}
+                    />
+                  </div>
+
+                  <div className="form-field">
+                    <label htmlFor="emergencyContactPhone">
+                      Telefono contatto emergenza
+                    </label>
+                    <input
+                      id="emergencyContactPhone"
+                      type="tel"
+                      value={emergencyContactPhone}
+                      onChange={(e) => setEmergencyContactPhone(e.target.value)}
+                      placeholder="Es. +393331234567"
+                      disabled={saving}
+                    />
+                  </div>
+
+                  <label
+                    style={{
+                      display: 'flex',
+                      gap: 10,
+                      alignItems: 'flex-start',
+                      marginTop: 12,
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={emergencyShareLocation}
+                      onChange={(e) => setEmergencyShareLocation(e.target.checked)}
+                      disabled={saving}
+                    />
+                    <span>
+                      Autorizzo ELPYO a condividere la mia posizione durante un
+                      servizio attivo, solo con l'altra persona coinvolta.
+                    </span>
+                  </label>
                 </div>
 
                 <div className="form-field">
