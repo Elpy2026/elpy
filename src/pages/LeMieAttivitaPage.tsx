@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase'
 import { completeHelpRequest } from '../lib/requests'
 import { cancelAcceptedRequest } from '../lib/cancellations'
 import { useAuth } from '../context/AuthContext'
+import SafetyPanel from '../components/SafetyPanel'
 
 type HelperRequest = {
   id: string
@@ -232,21 +233,19 @@ function LeMieAttivitaPage() {
                         request.status === 'completata') && (
                         <div className="alert alert--success">
                           <p>
-                            <strong>Richiedente:</strong>{' '}
-                            {seeker?.full_name ?? 'Utente ELPYO'}
-                            {seeker?.verified && ' · Identità verificata'}
-                          </p>
+  <strong>Richiedente:</strong>{' '}
+  {seeker?.full_name ?? 'Utente ELPYO'}
+  {seeker?.verified && ' · Identità verificata'}
+</p>
 
-                          {seeker?.phone ? (
-                            <p>
-                              <strong>Telefono richiedente:</strong>{' '}
-                              <a href={`tel:${seeker.phone}`}>{seeker.phone}</a>
-                            </p>
-                          ) : (
-                            <p>Telefono richiedente non disponibile.</p>
-                          )}
+<SafetyPanel
+  requestId={request.id}
+  otherUserId={request.seeker_id}
+  otherUserName={seeker?.full_name}
+  requestStatus={request.status}
+/>
 
-                          <div className="form-actions">
+<div className="form-actions">
                             {seeker?.phone && (
                               <>
                                 <a

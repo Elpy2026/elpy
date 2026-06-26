@@ -5,6 +5,7 @@ import Footer from '../components/Footer'
 import { supabase } from '../lib/supabase'
 import { cancelAcceptedRequest } from '../lib/cancellations'
 import { useAuth } from '../context/AuthContext'
+import SafetyPanel from '../components/SafetyPanel'
 
 type HelperProfile = {
   id: string
@@ -436,6 +437,12 @@ function LeMieRichiestePage() {
                                       >
                                         Vedi profilo helper
                                       </Link>
+                                      <SafetyPanel
+  requestId={request.id}
+  otherUserId={request.helper_id}
+  otherUserName={helper?.full_name}
+  requestStatus={request.status}
+/>
 
                                       {application.status === 'pending' && (
                                         <button
