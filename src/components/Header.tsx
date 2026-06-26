@@ -250,6 +250,12 @@ function Header() {
                       >
                         Admin segnalazioni
                       </Link>
+                      <Link
+  to="/admin/pagamenti"
+  onClick={() => setMenuOpen(false)}
+>
+  Admin pagamenti
+</Link>
                     </>
                   )}
 
