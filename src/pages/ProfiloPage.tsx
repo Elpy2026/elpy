@@ -15,6 +15,13 @@ function ProfiloPage() {
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [verified, setVerified] = useState(false)
+
+  const [stripeAccountId, setStripeAccountId] = useState<string | null>(null)
+  const [stripeOnboardingCompleted, setStripeOnboardingCompleted] = useState(false)
+  const [stripePayoutsEnabled, setStripePayoutsEnabled] = useState(false)
+  const [stripeChargesEnabled, setStripeChargesEnabled] = useState(false)
+  const [connectingStripe, setConnectingStripe] = useState(false)
+
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
@@ -29,7 +36,20 @@ function ProfiloPage() {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('full_name, phone, city, bio, avatar_url, verified')
+        .select(
+          `
+          full_name,
+          phone,
+          city,
+          bio,
+          avatar_url,
+          verified,
+          stripe_account_id,
+          stripe_onboarding_completed,
+          stripe_payouts_enabled,
+          stripe_charges_enabled
+        `,
+        )
         .eq('id', user.id)
         .single()
 
@@ -42,6 +62,10 @@ function ProfiloPage() {
         setBio(data?.bio ?? '')
         setAvatarUrl(data?.avatar_url ?? '')
         setVerified(Boolean(data?.verified))
+        setStripeAccountId(data?.stripe_account_id ?? null)
+        setStripeOnboardingCompleted(Boolean(data?.stripe_onboarding_completed))
+        setStripePayoutsEnabled(Boolean(data?.stripe_payouts_enabled))
+        setStripeChargesEnabled(Boolean(data?.stripe_charges_enabled))
       }
 
       setLoading(false)
@@ -80,6 +104,38 @@ function ProfiloPage() {
 
     const { data } = supabase.storage.from('avatars').getPublicUrl(filePath)
     return data.publicUrl
+  }
+
+  async function handleConnectStripe() {
+    if (!user) {
+      setError('Devi accedere per collegare il conto.')
+      return
+    }
+
+    setConnectingStripe(true)
+    setMessage('')
+    setError('')
+
+    try {
+      const { data, error } = await supabase.functions.invoke('create-connect-account')
+
+      if (error) {
+        throw error
+      }
+
+      if (!data?.url) {
+        throw new Error('Stripe non ha restituito il link di onboarding.')
+      }
+
+      window.location.href = data.url
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Errore durante il collegamento del conto Stripe.',
+      )
+      setConnectingStripe(false)
+    }
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -159,6 +215,50 @@ function ProfiloPage() {
 
             {!loading && (
               <form className="request-form" onSubmit={handleSubmit}>
+                <div className="request-card">
+                  <h2 className="request-card__title">Incassi helper</h2>
+
+                  {stripeAccountId ? (
+                    <div className="alert alert--success">
+                      <p>
+                        <strong>Account Stripe collegato.</strong>
+                      </p>
+                      <p>
+                        Stato onboarding:{' '}
+                        {stripeOnboardingCompleted ? 'completato' : 'da completare'}
+                      </p>
+                      <p>
+                        Bonifici:{' '}
+                        {stripePayoutsEnabled ? 'abilitati' : 'non ancora abilitati'}
+                      </p>
+                      <p>
+                        Pagamenti:{' '}
+                        {stripeChargesEnabled ? 'abilitati' : 'non ancora abilitati'}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="alert alert--error">
+                      Per ricevere i compensi come helper devi collegare il tuo conto
+                      tramite Stripe.
+                    </div>
+                  )}
+
+                  <div className="form-actions">
+                    <button
+                      type="button"
+                      className="btn btn--primary"
+                      onClick={() => void handleConnectStripe()}
+                      disabled={connectingStripe}
+                    >
+                      {connectingStripe
+                        ? 'Collegamento…'
+                        : stripeAccountId
+                          ? 'Completa configurazione Stripe'
+                          : 'Collega conto bancario'}
+                    </button>
+                  </div>
+                </div>
+
                 <div className="form-field">
                   <label htmlFor="fullName">Nome e cognome</label>
                   <input
