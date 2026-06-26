@@ -49,17 +49,26 @@ type MyRequest = {
 }
 
 const PLATFORM_FEE_PERCENTAGE = 15
+const MIN_PLATFORM_FEE = 2
+const PLATFORM_FEE_THRESHOLD = 20
 
 function calculatePaymentAmounts(reward: number | string) {
-  const amount = Number(reward)
-  const safeAmount = Number.isNaN(amount) ? 0 : amount
-  const platformFee = Number((safeAmount * PLATFORM_FEE_PERCENTAGE / 100).toFixed(2))
-  const helperAmount = Number((safeAmount - platformFee).toFixed(2))
+  const helperAmount = Number(reward)
+  const safeHelperAmount = Number.isNaN(helperAmount) ? 0 : helperAmount
+
+  const platformFee =
+    safeHelperAmount > 0
+      ? safeHelperAmount <= PLATFORM_FEE_THRESHOLD
+        ? MIN_PLATFORM_FEE
+        : Number((safeHelperAmount * PLATFORM_FEE_PERCENTAGE / 100).toFixed(2))
+      : 0
+
+  const total = Number((safeHelperAmount + platformFee).toFixed(2))
 
   return {
-    total: safeAmount,
+    total,
     platformFee,
-    helperAmount,
+    helperAmount: safeHelperAmount,
   }
 }
 

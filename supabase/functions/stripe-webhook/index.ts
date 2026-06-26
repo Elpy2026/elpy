@@ -57,9 +57,8 @@ Deno.serve(async (req) => {
         return new Response("Missing requestId or amount", { status: 400 });
       }
 
-      const total = amountTotal / 100;
-      const platformFee = Number((total * PLATFORM_FEE_PERCENTAGE / 100).toFixed(2));
-      const helperAmount = Number((total - platformFee).toFixed(2));
+      const helperAmount = Number(session.metadata?.helperAmount ?? 0);
+const platformFee = Number(session.metadata?.platformFee ?? 0);
 
       const { error } = await supabaseAdmin
         .from("requests")

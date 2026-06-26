@@ -33,7 +33,25 @@ Deno.serve(async (req) => {
       );
     }
 
-    const amountInCents = Math.round(Number(amount) * 100);
+    const helperAmount = Number(amount);
+    const safeHelperAmount = Number.isNaN(helperAmount) ? 0 : helperAmount;
+    
+    const platformFee =
+      safeHelperAmount > 0
+        ? safeHelperAmount <= 20
+          ? 2
+          : Number((safeHelperAmount * 15 / 100).toFixed(2))
+        : 0;
+    
+    const totalAmount = Number((safeHelperAmount + platformFee).toFixed(2));
+    const amountInCents = Math.round(totalAmount * 100);
+    
+    if (!Number.isFinite(amountInCents) || amountInCents < 50) {
+      return Response.json(
+        { error: "Invalid amount" },
+        { status: 400, headers: corsHeaders },
+      );
+    }
 
     if (!Number.isFinite(amountInCents) || amountInCents < 50) {
       return Response.json(
