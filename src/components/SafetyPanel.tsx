@@ -106,7 +106,7 @@ function SafetyPanel({
     if (!requestId || !user) return
 
     const channel = supabase
-      .channel(`request-location-${requestId}`)
+    .channel(`request-location-${requestId}-${user.id}-${crypto.randomUUID()}`)
       .on(
         'postgres_changes',
         {
