@@ -3225,3 +3225,278 @@
   border-color: #cbd5e1;
   color: #64748b;
 }
+/* ELPYO Request Experience — restyling richieste, sicurezza, pagamento */
+
+.page-main {
+  background:
+    radial-gradient(circle at top, rgba(255, 116, 97, 0.13), transparent 34rem),
+    #fffaf8;
+}
+
+.page-container {
+  max-width: 860px;
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.page-title {
+  font-size: clamp(2rem, 4vw, 3rem);
+  letter-spacing: -0.04em;
+}
+
+.page-subtitle {
+  max-width: 36rem;
+  margin-inline: auto;
+  color: #667085;
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+/* Main request card */
+
+.requests-list {
+  gap: 1.5rem;
+}
+
+.request-card {
+  border: 1px solid rgba(15, 23, 42, 0.09);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow:
+    0 18px 60px rgba(15, 23, 42, 0.06),
+    0 1px 0 rgba(255, 255, 255, 0.8) inset;
+}
+
+li.request-card {
+  padding: 1.85rem;
+}
+
+.request-card__header {
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.request-card__category {
+  color: #ef3f2f;
+  background: linear-gradient(135deg, #fff5ee, #ffe9e2);
+  border: 1px solid rgba(255, 116, 97, 0.18);
+  border-radius: 999px;
+  padding: 0.55rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.badge,
+.badge--accepted {
+  border-radius: 999px;
+  padding: 0.55rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(135deg, #ff7a66, #f04438);
+  border: 0;
+  box-shadow: 0 8px 18px rgba(240, 68, 56, 0.18);
+}
+
+.request-card__title {
+  font-size: 1.45rem;
+  letter-spacing: -0.03em;
+}
+
+.request-card__desc {
+  color: #667085;
+}
+
+/* Meta boxes */
+
+.request-card__meta {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-block: 1.25rem;
+}
+
+.request-card__meta > div {
+  padding: 1rem;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 16px;
+  background: #fff;
+}
+
+.request-card__meta dt {
+  color: #667085;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+}
+
+.request-card__meta dd {
+  margin: 0.3rem 0 0;
+  color: #101828;
+  font-weight: 800;
+}
+
+.request-card__compenso {
+  color: #ef3f2f !important;
+}
+
+/* Alerts as premium blocks */
+
+.alert {
+  border-radius: 18px;
+  padding: 1.1rem 1.25rem;
+}
+
+.alert--success {
+  background: linear-gradient(135deg, #fff7f2, #fffaf8);
+  border: 1px solid rgba(255, 116, 97, 0.35);
+  color: #101828;
+}
+
+.alert--error {
+  background: linear-gradient(135deg, #fff5f5, #fffafa);
+  border: 1px solid rgba(240, 68, 56, 0.28);
+  color: #b42318;
+}
+
+/* Buttons */
+
+.form-actions {
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.form-actions .btn {
+  min-height: 54px;
+  border-radius: 14px;
+  font-weight: 800;
+}
+
+.btn--primary {
+  background: linear-gradient(135deg, #ff7a66, #f04438);
+  color: #fff;
+  border: 0;
+  box-shadow: 0 12px 24px rgba(240, 68, 56, 0.18);
+}
+
+.btn--primary:hover {
+  background: linear-gradient(135deg, #ff6a55, #d92d20);
+  box-shadow: 0 16px 30px rgba(240, 68, 56, 0.24);
+}
+
+.btn--secondary {
+  background: #fff;
+  color: #ef3f2f;
+  border-color: rgba(240, 68, 56, 0.34);
+}
+
+.btn--secondary:hover {
+  background: #fff5f2;
+  border-color: #f04438;
+}
+
+/* Safety panel */
+
+.request-card .request-card {
+  margin-top: 1rem;
+  padding: 1.25rem;
+  box-shadow: none;
+}
+
+.request-card h3,
+.request-card__title {
+  color: #101828;
+}
+
+.request-card > h3,
+.request-card .request-card__title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.request-card > h3::before,
+.request-card .request-card__title::before {
+  content: "🛡️";
+  display: inline-flex;
+  width: 2.3rem;
+  height: 2.3rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(0, 122, 92, 0.1);
+  font-size: 1.1rem;
+}
+
+.request-card .request-card__title + p,
+.request-card > h3 + p {
+  color: #667085;
+  line-height: 1.55;
+}
+
+/* Make first safety button green and emergency red */
+.request-card .form-actions button:first-child.btn--primary {
+  background: linear-gradient(135deg, #13906f, #087052);
+  box-shadow: 0 12px 24px rgba(8, 112, 82, 0.18);
+}
+
+.request-card .form-actions button:first-child.btn--primary:hover {
+  background: linear-gradient(135deg, #0f7f61, #065f46);
+}
+
+.request-card .form-actions a[href="tel:112"].btn--primary {
+  background: linear-gradient(135deg, #ff6255, #e11d48);
+  box-shadow: 0 12px 24px rgba(225, 29, 72, 0.18);
+}
+
+/* Links */
+
+a[href^="tel:"],
+a[href^="https://wa.me"] {
+  font-weight: 800;
+}
+
+/* Payment/review cards */
+
+.request-card h3 {
+  margin-top: 0;
+}
+
+.request-card strong {
+  color: #101828;
+}
+
+.request-card p {
+  line-height: 1.55;
+}
+
+/* Mobile */
+
+@media (max-width: 640px) {
+  .container {
+    padding-inline: 1rem;
+  }
+
+  li.request-card {
+    padding: 1.2rem;
+    border-radius: 22px;
+  }
+
+  .request-card__meta {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions .btn {
+    width: 100%;
+  }
+
+  .page-title {
+    font-size: 2rem;
+  }
+}
