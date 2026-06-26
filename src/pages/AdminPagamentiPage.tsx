@@ -4,28 +4,48 @@ import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { supabase } from '../lib/supabase'
 
-type RequestRow = {
-  id: string
-  title?: string | null
-  status?: string | null
-  payment_status?: string | null
-  paid_at?: string | null
-  reward?: number | string | null
-  platform_fee?: number | string | null
-  helper_amount?: number | string | null
-  accepted_by?: string | null
-  user_id?: string | null
-  created_at?: string | null
+type StripeSummary = {
+  volumeTotal: number
+  applicationFeesTotal: number
+  refundedTotal: number
+  availableBalance: number
+  pendingBalance: number
+  successfulPayments: number
+  refundedPayments: number
+  connectedAccounts: number
 }
 
-type ProfileRow = {
+type StripePayment = {
   id: string
-  full_name?: string | null
+  date: string
+  amount: number
+  amountRefunded: number
+  currency: string
+  status: string
+  refunded: boolean
+  paid: boolean
+  description?: string | null
+  receiptEmail?: string | null
+  paymentIntent?: string | null
+  applicationFeeAmount: number
+}
+
+type ConnectedAccount = {
+  id: string
   email?: string | null
-  stripe_account_id?: string | null
-  stripe_onboarding_completed?: boolean | null
-  stripe_payouts_enabled?: boolean | null
-  stripe_charges_enabled?: boolean | null
+  type?: string | null
+  country?: string | null
+  chargesEnabled: boolean
+  payoutsEnabled: boolean
+  detailsSubmitted: boolean
+  date: string
+  businessType?: string | null
+}
+
+type StripeDashboardData = {
+  summary: StripeSummary
+  latestPayments: StripePayment[]
+  connectedAccounts: ConnectedAccount[]
 }
 
 function eur(value: number) {
@@ -36,73 +56,31 @@ function eur(value: number) {
 }
 
 function AdminPagamentiPage() {
-  const [requests, setRequests] = useState<RequestRow[]>([])
-  const [profiles, setProfiles] = useState<Record<string, ProfileRow>>({})
+  const [data, setData] = useState<StripeDashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    async function loadData() {
+    async function loadStripeDashboard() {
       setLoading(true)
       setError('')
 
-      const [requestsResult, profilesResult] = await Promise.all([
-        supabase
-          .from('requests')
-          .select('*')
-          .order('created_at', { ascending: false }),
-        supabase.from('profiles').select('*'),
-      ])
+      const { data, error } = await supabase.functions.invoke(
+        'admin-stripe-dashboard',
+      )
 
-      if (requestsResult.error) {
-        setError(requestsResult.error.message)
+      if (error) {
+        setError(error.message)
         setLoading(false)
         return
       }
 
-      if (profilesResult.error) {
-        setError(profilesResult.error.message)
-        setLoading(false)
-        return
-      }
-
-      const profileMap: Record<string, ProfileRow> = {}
-
-      for (const profile of profilesResult.data ?? []) {
-        profileMap[profile.id] = profile
-      }
-
-      setRequests((requestsResult.data ?? []) as RequestRow[])
-      setProfiles(profileMap)
+      setData(data as StripeDashboardData)
       setLoading(false)
     }
 
-    void loadData()
+    void loadStripeDashboard()
   }, [])
-
-  const paidRequests = requests.filter((request) => request.payment_status === 'paid')
-  const pendingRequests = requests.filter(
-    (request) => request.payment_status === 'pending',
-  )
-
-  const totalVolume = paidRequests.reduce(
-    (sum, request) => sum + Number(request.helper_amount ?? 0) + Number(request.platform_fee ?? 0),
-    0,
-  )
-
-  const totalFees = paidRequests.reduce(
-    (sum, request) => sum + Number(request.platform_fee ?? 0),
-    0,
-  )
-
-  const totalHelperAmount = paidRequests.reduce(
-    (sum, request) => sum + Number(request.helper_amount ?? 0),
-    0,
-  )
-
-  const connectedHelpers = Object.values(profiles).filter(
-    (profile) => profile.stripe_account_id,
-  )
 
   return (
     <div className="landing">
@@ -113,100 +91,100 @@ function AdminPagamentiPage() {
           <div className="container page-container">
             <div className="page-header">
               <p className="hero__badge">Admin</p>
-              <h1 className="page-title">Pagamenti</h1>
+              <h1 className="page-title">Dashboard Stripe</h1>
               <p className="page-subtitle">
-                Monitoraggio pagamenti, commissioni ELPYO e account Stripe degli helper.
+                Dati reali letti direttamente da Stripe.
               </p>
             </div>
 
-            {loading && <p>Caricamento pagamenti…</p>}
+            {loading && <p>Caricamento dati Stripe…</p>}
             {error && <div className="alert alert--error">{error}</div>}
 
-            {!loading && !error && (
+            {!loading && !error && data && (
               <>
                 <div className="dashboard__grid">
                   <div className="dashboard__card">
-                    <p className="dashboard__label">Volume transato</p>
-                    <p className="dashboard__value">{eur(totalVolume)}</p>
+                    <p className="dashboard__label">Volume reale Stripe</p>
+                    <p className="dashboard__value">
+                      {eur(data.summary.volumeTotal)}
+                    </p>
                   </div>
 
                   <div className="dashboard__card dashboard__card--accepted">
-                    <p className="dashboard__label">Commissioni ELPYO</p>
-                    <p className="dashboard__value">{eur(totalFees)}</p>
+                    <p className="dashboard__label">Commissioni app</p>
+                    <p className="dashboard__value">
+                      {eur(data.summary.applicationFeesTotal)}
+                    </p>
                   </div>
 
                   <div className="dashboard__card">
-                    <p className="dashboard__label">Netto helper</p>
-                    <p className="dashboard__value">{eur(totalHelperAmount)}</p>
+                    <p className="dashboard__label">Saldo disponibile</p>
+                    <p className="dashboard__value">
+                      {eur(data.summary.availableBalance)}
+                    </p>
                   </div>
 
                   <div className="dashboard__card">
-                    <p className="dashboard__label">Pagamenti completati</p>
-                    <p className="dashboard__value">{paidRequests.length}</p>
+                    <p className="dashboard__label">Saldo pending</p>
+                    <p className="dashboard__value">
+                      {eur(data.summary.pendingBalance)}
+                    </p>
                   </div>
 
                   <div className="dashboard__card">
-                    <p className="dashboard__label">Pagamenti pending</p>
-                    <p className="dashboard__value">{pendingRequests.length}</p>
+                    <p className="dashboard__label">Pagamenti riusciti</p>
+                    <p className="dashboard__value">
+                      {data.summary.successfulPayments}
+                    </p>
                   </div>
 
                   <div className="dashboard__card dashboard__card--accepted">
-                    <p className="dashboard__label">Helper Stripe collegati</p>
-                    <p className="dashboard__value">{connectedHelpers.length}</p>
+                    <p className="dashboard__label">Account Connect</p>
+                    <p className="dashboard__value">
+                      {data.summary.connectedAccounts}
+                    </p>
                   </div>
                 </div>
 
                 <div className="request-card">
-                  <h2 className="request-card__title">Ultimi pagamenti</h2>
+                  <h2 className="request-card__title">Ultimi pagamenti Stripe</h2>
 
-                  {requests.length === 0 ? (
-                    <p>Nessun pagamento registrato.</p>
+                  {data.latestPayments.length === 0 ? (
+                    <p>Nessun pagamento trovato su Stripe.</p>
                   ) : (
                     <div style={{ overflowX: 'auto' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
                           <tr>
                             <th>Data</th>
-                            <th>Richiesta</th>
-                            <th>Cliente</th>
-                            <th>Helper</th>
+                            <th>Descrizione</th>
+                            <th>Email</th>
                             <th>Stato</th>
-                            <th>Totale</th>
-                            <th>Fee ELPYO</th>
-                            <th>Netto helper</th>
+                            <th>Importo</th>
+                            <th>Rimborsato</th>
+                            <th>Fee app</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {requests.slice(0, 30).map((request) => {
-                            const seeker = request.user_id
-                              ? profiles[request.user_id]
-                              : undefined
-
-                            const helper = request.accepted_by
-                              ? profiles[request.accepted_by]
-                              : undefined
-
-                            const platformFee = Number(request.platform_fee ?? 0)
-                            const helperAmount = Number(request.helper_amount ?? 0)
-                            const total = platformFee + helperAmount
-
-                            return (
-                              <tr key={request.id}>
-                                <td>
-                                  {request.paid_at
-                                    ? new Date(request.paid_at).toLocaleDateString('it-IT')
-                                    : '-'}
-                                </td>
-                                <td>{request.title ?? request.id.slice(0, 8)}</td>
-                                <td>{seeker?.full_name ?? '-'}</td>
-                                <td>{helper?.full_name ?? '-'}</td>
-                                <td>{request.payment_status ?? 'not_required'}</td>
-                                <td>{eur(total)}</td>
-                                <td>{eur(platformFee)}</td>
-                                <td>{eur(helperAmount)}</td>
-                              </tr>
-                            )
-                          })}
+                          {data.latestPayments.map((payment) => (
+                            <tr key={payment.id}>
+                              <td>
+                                {new Date(payment.date).toLocaleDateString(
+                                  'it-IT',
+                                )}
+                              </td>
+                              <td>{payment.description ?? payment.id}</td>
+                              <td>{payment.receiptEmail ?? '-'}</td>
+                              <td>
+                                {payment.refunded
+                                  ? 'rimborsato'
+                                  : payment.status}
+                              </td>
+                              <td>{eur(payment.amount)}</td>
+                              <td>{eur(payment.amountRefunded)}</td>
+                              <td>{eur(payment.applicationFeeAmount)}</td>
+                            </tr>
+                          ))}
                         </tbody>
                       </table>
                     </div>
@@ -214,49 +192,66 @@ function AdminPagamentiPage() {
                 </div>
 
                 <div className="request-card">
-                  <h2 className="request-card__title">Helper e Stripe Connect</h2>
+                  <h2 className="request-card__title">
+                    Account Stripe Connect
+                  </h2>
 
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                      <thead>
-                        <tr>
-                          <th>Helper</th>
-                          <th>Stripe</th>
-                          <th>Onboarding</th>
-                          <th>Pagamenti</th>
-                          <th>Bonifici</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {Object.values(profiles)
-                          .filter((profile) => profile.stripe_account_id)
-                          .map((profile) => (
-                            <tr key={profile.id}>
-                              <td>{profile.full_name ?? profile.id.slice(0, 8)}</td>
-                              <td>Collegato</td>
+                  {data.connectedAccounts.length === 0 ? (
+                    <p>Nessun account Connect trovato.</p>
+                  ) : (
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <thead>
+                          <tr>
+                            <th>Account</th>
+                            <th>Email</th>
+                            <th>Tipo</th>
+                            <th>Paese</th>
+                            <th>Onboarding</th>
+                            <th>Pagamenti</th>
+                            <th>Bonifici</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {data.connectedAccounts.map((account) => (
+                            <tr key={account.id}>
+                              <td>{account.id}</td>
+                              <td>{account.email ?? '-'}</td>
+                              <td>{account.type ?? '-'}</td>
+                              <td>{account.country ?? '-'}</td>
                               <td>
-                                {profile.stripe_onboarding_completed
+                                {account.detailsSubmitted
                                   ? 'Completato'
                                   : 'Da completare'}
                               </td>
                               <td>
-                                {profile.stripe_charges_enabled
+                                {account.chargesEnabled
                                   ? 'Abilitati'
                                   : 'Non abilitati'}
                               </td>
                               <td>
-                                {profile.stripe_payouts_enabled
+                                {account.payoutsEnabled
                                   ? 'Abilitati'
                                   : 'Non abilitati'}
                               </td>
                             </tr>
                           ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
 
                 <div className="form-actions">
+                  <a
+                    href="https://dashboard.stripe.com"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn btn--primary"
+                  >
+                    Apri Stripe Dashboard
+                  </a>
+
                   <Link to="/admin/dashboard" className="btn btn--secondary">
                     Torna alla dashboard
                   </Link>
