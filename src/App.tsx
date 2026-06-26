@@ -23,6 +23,7 @@ import PenaliPage from './pages/PenaliPage'
 import AdminVerifichePage from './pages/AdminVerifichePage'
 import AdminSegnalazioniPage from './pages/AdminSegnalazioniPage'
 import AdminDashboardPage from './pages/AdminDashboardPage'
+import AdminPagamentiPage from './pages/AdminPagamentiPage'
 import PagamentoSuccessoPage from './pages/PagamentoSuccessoPage'
 import PagamentoAnnullatoPage from './pages/PagamentoAnnullatoPage'
 
@@ -173,6 +174,14 @@ function App() {
               </AdminRoute>
             }
           />
+          <Route
+  path="/admin/pagamenti"
+  element={
+    <AdminRoute>
+      <AdminPagamentiPage />
+    </AdminRoute>
+  }
+/>
 
           <Route
             path="/admin/verifiche"
