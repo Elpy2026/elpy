@@ -1,6 +1,17 @@
-import { Link } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 
 export default function PagamentoSuccessoPage() {
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      navigate('/le-mie-richieste')
+    }, 5000)
+
+    return () => clearTimeout(timer)
+  }, [navigate])
+
   return (
     <div
       style={{
@@ -50,10 +61,20 @@ export default function PagamentoSuccessoPage() {
           style={{
             color: '#4b5563',
             lineHeight: 1.6,
-            marginBottom: '32px',
+            marginBottom: '12px',
           }}
         >
           Grazie per aver utilizzato ELPYO.
+        </p>
+
+        <p
+          style={{
+            color: '#6b7280',
+            fontSize: '14px',
+            marginBottom: '32px',
+          }}
+        >
+          Verrai reindirizzato automaticamente tra 5 secondi...
         </p>
 
         <Link
@@ -68,7 +89,7 @@ export default function PagamentoSuccessoPage() {
             fontWeight: 600,
           }}
         >
-          Torna alle mie richieste
+          Torna subito alle mie richieste
         </Link>
       </div>
     </div>
