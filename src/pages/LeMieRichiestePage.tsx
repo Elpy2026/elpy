@@ -285,35 +285,36 @@ function LeMieRichiestePage() {
     await loadMyRequests()
   }
 
-  async function handleMockPayment(request: MyRequest) {
+  async function handleStripePayment(request: MyRequest) {
     setError('')
     setMessage('')
     setPayingRequestId(request.id)
 
-    const amounts = calculatePaymentAmounts(request.reward)
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        'create-checkout-session',
+        {
+          body: {
+            requestId: request.id,
+            amount: Number(request.reward),
+            description: `Pagamento richiesta ELPYO - ${request.title}`,
+          },
+        },
+      )
 
-    const { error } = await supabase
-      .from('requests')
-      .update({
-        payment_status: 'paid',
-        paid_at: new Date().toISOString(),
-        platform_fee: amounts.platformFee,
-        helper_amount: amounts.helperAmount,
-      })
-      .eq('id', request.id)
-      .eq('status', 'completata')
+      if (error) throw error
 
-    if (error) {
-      setError(error.message)
+      if (!data?.url) {
+        throw new Error('Stripe non ha restituito il link di pagamento.')
+      }
+
+      window.location.href = data.url
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Errore durante il pagamento.',
+      )
       setPayingRequestId('')
-      return
     }
-
-    setMessage(
-      `Pagamento registrato. Commissione ELPYO: €${amounts.platformFee}. Netto helper: €${amounts.helperAmount}.`,
-    )
-    setPayingRequestId('')
-    await loadMyRequests()
   }
 
   return (
@@ -559,7 +560,7 @@ function LeMieRichiestePage() {
                               <button
                                 type="button"
                                 className="btn btn--primary"
-                                onClick={() => void handleMockPayment(request)}
+                                onClick={() => void handleStripePayment(request)}
                                 disabled={payingRequestId === request.id}
                               >
                                 {payingRequestId === request.id
