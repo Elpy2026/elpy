@@ -66,6 +66,9 @@ function ProfiloPage() {
         setStripeOnboardingCompleted(Boolean(data?.stripe_onboarding_completed))
         setStripePayoutsEnabled(Boolean(data?.stripe_payouts_enabled))
         setStripeChargesEnabled(Boolean(data?.stripe_charges_enabled))
+        if (data?.stripe_account_id) {
+          void syncStripeAccount()
+        }
       }
 
       setLoading(false)
@@ -105,7 +108,23 @@ function ProfiloPage() {
     const { data } = supabase.storage.from('avatars').getPublicUrl(filePath)
     return data.publicUrl
   }
-
+  async function syncStripeAccount() {
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-connect-account')
+  
+      if (error) throw error
+  
+      setStripeOnboardingCompleted(Boolean(data?.stripe_onboarding_completed))
+      setStripePayoutsEnabled(Boolean(data?.stripe_payouts_enabled))
+      setStripeChargesEnabled(Boolean(data?.stripe_charges_enabled))
+  
+      if (data?.stripe_onboarding_completed) {
+        setMessage('Account Stripe aggiornato correttamente.')
+      }
+    } catch {
+      // Non blocchiamo il caricamento profilo se Stripe non risponde subito.
+    }
+  }
   async function handleConnectStripe() {
     if (!user) {
       setError('Devi accedere per collegare il conto.')
