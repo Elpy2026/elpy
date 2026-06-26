@@ -437,12 +437,6 @@ function LeMieRichiestePage() {
                                       >
                                         Vedi profilo helper
                                       </Link>
-                                      <SafetyPanel
-  requestId={request.id}
-  otherUserId={request.helper_id}
-  otherUserName={helper?.full_name}
-  requestStatus={request.status}
-/>
 
                                       {application.status === 'pending' && (
                                         <button
@@ -472,53 +466,62 @@ function LeMieRichiestePage() {
                       {(request.status === 'accettata' ||
                         request.status === 'completata') &&
                         request.helper_id && (
-                          <div className="alert alert--success">
-                            <p>
-                              <strong>
-                                {request.status === 'completata'
-                                  ? 'Completata da:'
-                                  : 'Accettata da:'}
-                              </strong>{' '}
-                              {helper?.full_name ?? 'Helper verificato'}
-                              {helper?.verified && ' · Identità verificata'}
-                            </p>
-
-                            {helper?.phone ? (
+                          <>
+                            <div className="alert alert--success">
                               <p>
-                                <strong>Telefono helper:</strong>{' '}
-                                <a href={`tel:${helper.phone}`}>{helper.phone}</a>
+                                <strong>
+                                  {request.status === 'completata'
+                                    ? 'Completata da:'
+                                    : 'Accettata da:'}
+                                </strong>{' '}
+                                {helper?.full_name ?? 'Helper verificato'}
+                                {helper?.verified && ' · Identità verificata'}
                               </p>
-                            ) : (
-                              <p>Telefono helper non disponibile.</p>
-                            )}
 
-                            <div className="form-actions">
-                              <Link
-                                to={`/profilo-helper/${request.helper_id}`}
-                                className="btn btn--secondary"
-                              >
-                                Vedi profilo helper
-                              </Link>
-
-                              <Link
-                                to={`/chat/${request.id}`}
-                                className="btn btn--primary"
-                              >
-                                Apri chat
-                              </Link>
-
-                              {helper?.phone && (
-                                <a
-                                  className="btn btn--primary"
-                                  href={`https://wa.me/${helper.phone.replace(/\D/g, '')}`}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                >
-                                  Contatta su WhatsApp
-                                </a>
+                              {helper?.phone ? (
+                                <p>
+                                  <strong>Telefono helper:</strong>{' '}
+                                  <a href={`tel:${helper.phone}`}>{helper.phone}</a>
+                                </p>
+                              ) : (
+                                <p>Telefono helper non disponibile.</p>
                               )}
+
+                              <div className="form-actions">
+                                <Link
+                                  to={`/profilo-helper/${request.helper_id}`}
+                                  className="btn btn--secondary"
+                                >
+                                  Vedi profilo helper
+                                </Link>
+
+                                <Link
+                                  to={`/chat/${request.id}`}
+                                  className="btn btn--primary"
+                                >
+                                  Apri chat
+                                </Link>
+
+                                {helper?.phone && (
+                                  <a
+                                    className="btn btn--primary"
+                                    href={`https://wa.me/${helper.phone.replace(/\D/g, '')}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                  >
+                                    Contatta su WhatsApp
+                                  </a>
+                                )}
+                              </div>
                             </div>
-                          </div>
+
+                            <SafetyPanel
+                              requestId={request.id}
+                              otherUserId={request.helper_id}
+                              otherUserName={helper?.full_name}
+                              requestStatus={request.status}
+                            />
+                          </>
                         )}
 
                       {request.status === 'accettata' && (
@@ -563,7 +566,9 @@ function LeMieRichiestePage() {
                           </p>
 
                           <p>
-                            <strong>Commissione ELPYO ({PLATFORM_FEE_PERCENTAGE}%):</strong>{' '}
+                            <strong>
+                              Commissione ELPYO ({PLATFORM_FEE_PERCENTAGE}%):
+                            </strong>{' '}
                             €{amounts.platformFee}
                           </p>
 
