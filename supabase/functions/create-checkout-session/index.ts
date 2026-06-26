@@ -35,23 +35,16 @@ Deno.serve(async (req) => {
 
     const helperAmount = Number(amount);
     const safeHelperAmount = Number.isNaN(helperAmount) ? 0 : helperAmount;
-    
+
     const platformFee =
       safeHelperAmount > 0
         ? safeHelperAmount <= 20
           ? 2
-          : Number((safeHelperAmount * 15 / 100).toFixed(2))
+          : Number(((safeHelperAmount * 15) / 100).toFixed(2))
         : 0;
-    
+
     const totalAmount = Number((safeHelperAmount + platformFee).toFixed(2));
     const amountInCents = Math.round(totalAmount * 100);
-    
-    if (!Number.isFinite(amountInCents) || amountInCents < 50) {
-      return Response.json(
-        { error: "Invalid amount" },
-        { status: 400, headers: corsHeaders },
-      );
-    }
 
     if (!Number.isFinite(amountInCents) || amountInCents < 50) {
       return Response.json(
@@ -59,6 +52,13 @@ Deno.serve(async (req) => {
         { status: 400, headers: corsHeaders },
       );
     }
+
+    const paymentMetadata = {
+      requestId,
+      helperAmount: String(safeHelperAmount),
+      platformFee: String(platformFee),
+      totalAmount: String(totalAmount),
+    };
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -71,16 +71,12 @@ Deno.serve(async (req) => {
             unit_amount: amountInCents,
             product_data: {
               name: description || "Pagamento richiesta ELPYO",
-              metadata: {
-                requestId,
-              },
+              metadata: paymentMetadata,
             },
           },
         },
       ],
-      metadata: {
-        requestId,
-      },
+      metadata: paymentMetadata,
       success_url: `${siteUrl}/pagamento-successo?session_id={CHECKOUT_SESSION_ID}&request_id=${requestId}`,
       cancel_url: `${siteUrl}/pagamento-annullato?request_id=${requestId}`,
     });
