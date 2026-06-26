@@ -263,18 +263,20 @@ function ProfiloPage() {
                   )}
 
                   <div className="form-actions">
-                    <button
-                      type="button"
-                      className="btn btn--primary"
-                      onClick={() => void handleConnectStripe()}
-                      disabled={connectingStripe}
-                    >
-                      {connectingStripe
-                        ? 'Collegamento…'
-                        : stripeAccountId
-                          ? 'Completa configurazione Stripe'
-                          : 'Collega conto bancario'}
-                    </button>
+                  <button
+  type="button"
+  className="btn btn--primary"
+  onClick={() => void handleConnectStripe()}
+  disabled={connectingStripe}
+>
+  {connectingStripe
+    ? 'Collegamento…'
+    : stripeOnboardingCompleted && stripePayoutsEnabled && stripeChargesEnabled
+      ? 'Gestisci account Stripe'
+      : stripeAccountId
+        ? 'Completa configurazione Stripe'
+        : 'Collega conto bancario'}
+</button>
                   </div>
                 </div>
 
