@@ -10,7 +10,16 @@ import { useAuth } from '../context/AuthContext'
 
 const MIN_COMPENSO = 5
 
-const emptyForm = {
+type RequestFormState = {
+  categoria: (typeof CATEGORIES)[number]
+  titolo: string
+  descrizione: string
+  citta: string
+  data: string
+  compenso: string
+}
+
+const emptyForm: RequestFormState = {
   categoria: CATEGORIES[0],
   titolo: '',
   descrizione: '',
@@ -19,11 +28,77 @@ const emptyForm = {
   compenso: '',
 }
 
+function detectCategory(text: string): (typeof CATEGORIES)[number] {
+  const normalized = text.toLowerCase()
+
+  if (
+    normalized.includes('accompagna') ||
+    normalized.includes('accompagnare') ||
+    normalized.includes('visita') ||
+    normalized.includes('ospedale') ||
+    normalized.includes('medico')
+  ) {
+    return 'Accompagnamento personale'
+  }
+
+  if (
+    normalized.includes('computer') ||
+    normalized.includes('telefono') ||
+    normalized.includes('pc') ||
+    normalized.includes('internet') ||
+    normalized.includes('stampante')
+  ) {
+    return 'Supporto tecnologico'
+  }
+
+  if (
+    normalized.includes('casa') ||
+    normalized.includes('pulizie') ||
+    normalized.includes('pulire') ||
+    normalized.includes('riordinare')
+  ) {
+    return 'Aiuto domestico leggero'
+  }
+
+  return 'Spesa e commissioni'
+}
+
+function estimateReward(text: string) {
+  const normalized = text.toLowerCase()
+
+  if (normalized.includes('urgente') || normalized.includes('stasera')) return '25'
+  if (normalized.includes('accompagna') || normalized.includes('visita')) return '20'
+  if (normalized.includes('spesa') || normalized.includes('farmacia')) return '15'
+  if (normalized.includes('pulizie') || normalized.includes('casa')) return '25'
+  if (normalized.includes('computer') || normalized.includes('telefono')) return '20'
+
+  return '15'
+}
+
+function buildTitle(text: string) {
+  const cleanText = text.trim()
+
+  if (cleanText.length <= 55) {
+    return cleanText
+  }
+
+  return `${cleanText.slice(0, 52).trim()}...`
+}
+
+function buildDescription(text: string) {
+  const cleanText = text.trim()
+
+  return `Ho bisogno di aiuto per questa richiesta: ${cleanText}
+
+Cerco una persona affidabile e disponibile in zona. Possiamo accordarci sui dettagli tramite ELPYO dopo la candidatura.`
+}
+
 function CercoAiutoPage() {
   const { user } = useAuth()
   const { refreshRequests } = useRequests()
   const navigate = useNavigate()
   const [form, setForm] = useState(emptyForm)
+  const [rawRequest, setRawRequest] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [verified, setVerified] = useState(false)
@@ -56,6 +131,25 @@ function CercoAiutoPage() {
   function handleChange(field: keyof typeof emptyForm, value: string) {
     setError('')
     setForm((prev) => ({ ...prev, [field]: value }))
+  }
+
+  function handleAiSuggestion() {
+    const cleanRequest = rawRequest.trim()
+
+    if (!cleanRequest) {
+      setError('Scrivi prima di cosa hai bisogno nel box AI Concierge.')
+      return
+    }
+
+    setError('')
+
+    setForm((prev) => ({
+      ...prev,
+      titolo: buildTitle(cleanRequest),
+      descrizione: buildDescription(cleanRequest),
+      categoria: detectCategory(cleanRequest),
+      compenso: estimateReward(cleanRequest),
+    }))
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -112,6 +206,7 @@ function CercoAiutoPage() {
       await refreshRequests()
       setSubmitted(true)
       setForm(emptyForm)
+      setRawRequest('')
       setTimeout(() => navigate('/le-mie-richieste'), 1200)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Errore durante la pubblicazione')
@@ -218,6 +313,43 @@ function CercoAiutoPage() {
               )}
 
               {error && <div className="alert alert--error">{error}</div>}
+
+              <div
+                style={{
+                  marginBottom: '1rem',
+                  padding: '1rem',
+                  borderRadius: '18px',
+                  background: '#f3faf6',
+                  border: '1px solid #d7eadf',
+                }}
+              >
+                <h3 style={{ marginTop: 0 }}>✨ AI Concierge ELPYO</h3>
+                <p style={{ marginBottom: '0.75rem', color: '#24543a' }}>
+                  Scrivi in modo semplice cosa ti serve. ELPYO ti prepara titolo,
+                  categoria, descrizione e budget indicativo.
+                </p>
+
+                <div className="form-field">
+                  <label htmlFor="ai-request">Di cosa hai bisogno?</label>
+                  <textarea
+                    id="ai-request"
+                    value={rawRequest}
+                    onChange={(event) => setRawRequest(event.target.value)}
+                    rows={3}
+                    placeholder="Es. Mi serve qualcuno che accompagni mia mamma a una visita domani mattina"
+                    disabled={submitting || !verified}
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  className="btn btn--secondary"
+                  onClick={handleAiSuggestion}
+                  disabled={submitting || !verified}
+                >
+                  Suggerisci richiesta
+                </button>
+              </div>
 
               <form className="request-form request-form--cerco" onSubmit={handleSubmit}>
                 <div className="form-field">
