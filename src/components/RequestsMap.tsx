@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Circle, MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet'
+import { Circle, MapContainer, Marker, TileLayer, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { HelpRequest } from '../types/request'
@@ -8,12 +8,9 @@ import type { HelpRequest } from '../types/request'
 delete (L.Icon.Default.prototype as any)._getIconUrl
 
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl:
-    'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl:
-    'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 })
 
 type RequestsMapProps = {
@@ -38,7 +35,6 @@ function calculateDistanceKm(
   const earthRadiusKm = 6371
   const latitudeDistance = ((secondLatitude - firstLatitude) * Math.PI) / 180
   const longitudeDistance = ((secondLongitude - firstLongitude) * Math.PI) / 180
-
   const firstLatRad = (firstLatitude * Math.PI) / 180
   const secondLatRad = (secondLatitude * Math.PI) / 180
 
@@ -49,26 +45,15 @@ function calculateDistanceKm(
       Math.sin(longitudeDistance / 2) *
       Math.sin(longitudeDistance / 2)
 
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-
-  return earthRadiusKm * c
+  return earthRadiusKm * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)))
 }
 
 function formatDistance(distanceKm: number) {
-  if (distanceKm < 1) {
-    return `${Math.round(distanceKm * 1000)} m`
-  }
-
+  if (distanceKm < 1) return `${Math.round(distanceKm * 1000)} m`
   return `${distanceKm.toFixed(1).replace('.', ',')} km`
 }
 
-function MapAutoCenter({
-  latitude,
-  longitude,
-}: {
-  latitude: number
-  longitude: number
-}) {
+function MapAutoCenter({ latitude, longitude }: UserPosition) {
   const map = useMap()
 
   useEffect(() => {
@@ -80,6 +65,7 @@ function MapAutoCenter({
 
 export default function RequestsMap({ requests }: RequestsMapProps) {
   const [userPosition, setUserPosition] = useState<UserPosition | null>(null)
+  const [selectedRequestId, setSelectedRequestId] = useState('')
   const [locationError, setLocationError] = useState('')
 
   useEffect(() => {
@@ -112,9 +98,7 @@ export default function RequestsMap({ requests }: RequestsMapProps) {
   const mappedRequests = useMemo(() => {
     const requestsWithCoordinates = requests.filter(hasCoordinates)
 
-    if (!userPosition) {
-      return requestsWithCoordinates
-    }
+    if (!userPosition) return requestsWithCoordinates
 
     return [...requestsWithCoordinates].sort((a, b) => {
       const firstDistance = calculateDistanceKm(
@@ -135,6 +119,11 @@ export default function RequestsMap({ requests }: RequestsMapProps) {
     })
   }, [requests, userPosition])
 
+  const selectedRequest =
+    mappedRequests.find((request) => request.id === selectedRequestId) ??
+    mappedRequests[0] ??
+    null
+
   if (mappedRequests.length === 0) {
     return (
       <div className="empty-state">
@@ -146,11 +135,19 @@ export default function RequestsMap({ requests }: RequestsMapProps) {
     )
   }
 
-  const firstRequest = mappedRequests[0]
-
   const mapCenter = userPosition
     ? [userPosition.latitude, userPosition.longitude]
-    : [Number(firstRequest.latitude), Number(firstRequest.longitude)]
+    : [Number(mappedRequests[0].latitude), Number(mappedRequests[0].longitude)]
+
+  const selectedDistance =
+    selectedRequest && userPosition && selectedRequest.latitude && selectedRequest.longitude
+      ? calculateDistanceKm(
+          userPosition.latitude,
+          userPosition.longitude,
+          Number(selectedRequest.latitude),
+          Number(selectedRequest.longitude),
+        )
+      : null
 
   return (
     <div>
@@ -165,13 +162,11 @@ export default function RequestsMap({ requests }: RequestsMapProps) {
           fontSize: '0.95rem',
         }}
       >
-        {userPosition ? (
-          <strong>
-            📍 Mappa centrata sulla tua posizione. Richieste ordinate per vicinanza.
-          </strong>
-        ) : (
-          <strong>📍 Attiva la posizione per vedere le richieste più vicine a te.</strong>
-        )}
+        <strong>
+          {userPosition
+            ? `📍 ${mappedRequests.length} richieste ordinate per vicinanza.`
+            : '📍 Attiva la posizione per vedere le richieste più vicine a te.'}
+        </strong>
 
         {locationError && <p style={{ margin: '0.35rem 0 0' }}>{locationError}</p>}
       </div>
@@ -204,49 +199,68 @@ export default function RequestsMap({ requests }: RequestsMapProps) {
 
           {userPosition && (
             <>
-              <Marker position={[userPosition.latitude, userPosition.longitude]}>
-                <Popup>Tu sei qui</Popup>
-              </Marker>
-
-              <Circle
-                center={[userPosition.latitude, userPosition.longitude]}
-                radius={5000}
-              />
+              <Marker position={[userPosition.latitude, userPosition.longitude]} />
+              <Circle center={[userPosition.latitude, userPosition.longitude]} radius={5000} />
             </>
           )}
 
-          {mappedRequests.map((request) => {
-            const distance =
-              userPosition && request.latitude && request.longitude
-                ? calculateDistanceKm(
-                    userPosition.latitude,
-                    userPosition.longitude,
-                    Number(request.latitude),
-                    Number(request.longitude),
-                  )
-                : null
-
-            return (
-              <Marker
-                key={request.id}
-                position={[Number(request.latitude), Number(request.longitude)]}
-              >
-                <Popup>
-                  <strong>{request.titolo}</strong>
-                  <br />
-                  {request.categoria}
-                  <br />
-                  {request.citta} · €{request.compenso}
-                  <br />
-                  {distance !== null && <>Distanza: {formatDistance(distance)}</>}
-                  <br />
-                  <Link to="/offro-aiuto">Vedi richiesta</Link>
-                </Popup>
-              </Marker>
-            )
-          })}
+          {mappedRequests.map((request) => (
+            <Marker
+              key={request.id}
+              position={[Number(request.latitude), Number(request.longitude)]}
+              eventHandlers={{
+                click: () => setSelectedRequestId(request.id),
+              }}
+            />
+          ))}
         </MapContainer>
       </div>
+
+      {selectedRequest && (
+        <div
+          style={{
+            marginTop: '1rem',
+            padding: '1rem',
+            borderRadius: 20,
+            background: '#ffffff',
+            border: '1px solid var(--border)',
+            boxShadow: 'var(--shadow-sm)',
+          }}
+        >
+          <p className="request-card__category">{selectedRequest.categoria}</p>
+
+          <h3 className="request-card__title" style={{ marginTop: '0.35rem' }}>
+            {selectedRequest.titolo}
+          </h3>
+
+          <p className="request-card__desc">{selectedRequest.descrizione}</p>
+
+          <dl className="request-card__meta">
+            <div>
+              <dt>Città</dt>
+              <dd>{selectedRequest.citta}</dd>
+            </div>
+
+            <div>
+              <dt>Compenso</dt>
+              <dd className="request-card__compenso">€{selectedRequest.compenso}</dd>
+            </div>
+
+            {selectedDistance !== null && (
+              <div>
+                <dt>Distanza</dt>
+                <dd>{formatDistance(selectedDistance)}</dd>
+              </div>
+            )}
+          </dl>
+
+          <div className="form-actions">
+            <Link to="/offro-aiuto" className="btn btn--primary">
+              Vai alla richiesta
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
