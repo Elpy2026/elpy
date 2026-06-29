@@ -3971,3 +3971,150 @@ li.request-card > .form-actions .btn:last-child::before {
     height: 320px;
   }
 }
+/* ELPYO Notifications Center */
+
+.notifications-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.notifications-summary > div {
+  padding: 1.1rem 1.25rem;
+  border-radius: 20px;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.05);
+}
+
+.notifications-summary span {
+  display: block;
+  color: #667085;
+  font-size: 0.82rem;
+  font-weight: 800;
+  margin-bottom: 0.3rem;
+}
+
+.notifications-summary strong {
+  color: #101828;
+  font-size: 1.7rem;
+  font-weight: 950;
+}
+
+.notifications-list {
+  display: grid;
+  gap: 1rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.notification-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1rem;
+  padding: 1.25rem;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 16px 48px rgba(15, 23, 42, 0.05);
+}
+
+.notification-card--unread {
+  border-color: rgba(240, 68, 56, 0.25);
+  background:
+    radial-gradient(circle at top right, rgba(255, 116, 97, 0.12), transparent 16rem),
+    #fff;
+}
+
+.notification-card__icon {
+  width: 3.1rem;
+  height: 3.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background: #fff1ec;
+  font-size: 1.35rem;
+}
+
+.notification-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.35rem;
+}
+
+.notification-card__type {
+  color: #ef3f2f;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.notification-card__time {
+  color: #98a2b3;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.notification-card h2 {
+  margin: 0 0 0.35rem;
+  color: #101828;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+}
+
+.notification-card p {
+  margin: 0;
+  color: #667085;
+  line-height: 1.55;
+}
+
+.notification-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.notification-card__actions .btn {
+  min-height: 44px;
+  padding-block: 0.65rem;
+}
+
+.notification-card__dot {
+  position: absolute;
+  top: 1.15rem;
+  right: 1.15rem;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 999px;
+  background: #f04438;
+  box-shadow: 0 0 0 6px rgba(240, 68, 56, 0.12);
+}
+
+@media (max-width: 760px) {
+  .notifications-summary {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .notifications-summary .btn {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .notification-card {
+    grid-template-columns: 1fr;
+  }
+
+  .notification-card__top {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

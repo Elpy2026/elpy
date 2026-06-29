@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
@@ -16,10 +16,30 @@ type Notification = {
   created_at: string | null
 }
 
+function getNotificationIcon(type: string) {
+  if (type.includes('application')) return '🙋'
+  if (type.includes('message')) return '💬'
+  if (type.includes('payment')) return '💳'
+  if (type.includes('review')) return '⭐'
+  if (type.includes('penalty')) return '⚠️'
+  return '🔔'
+}
+
 function formatDate(value: string | null) {
   if (!value) return 'Data non disponibile'
 
-  return new Date(value).toLocaleDateString('it-IT', {
+  const date = new Date(value)
+  const diffSeconds = Math.max(0, Math.round((Date.now() - date.getTime()) / 1000))
+
+  if (diffSeconds < 60) return 'adesso'
+
+  const diffMinutes = Math.round(diffSeconds / 60)
+  if (diffMinutes < 60) return `${diffMinutes} min fa`
+
+  const diffHours = Math.round(diffMinutes / 60)
+  if (diffHours < 24) return `${diffHours} h fa`
+
+  return date.toLocaleDateString('it-IT', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -34,6 +54,11 @@ function NotifichePage() {
   const [loading, setLoading] = useState(true)
   const [markingId, setMarkingId] = useState('')
   const [error, setError] = useState('')
+
+  const unreadCount = useMemo(
+    () => notifications.filter((notification) => !notification.is_read).length,
+    [notifications],
+  )
 
   const loadNotifications = useCallback(async () => {
     if (!user) {
@@ -63,6 +88,31 @@ function NotifichePage() {
   useEffect(() => {
     void loadNotifications()
   }, [loadNotifications])
+
+  useEffect(() => {
+    if (!user) return
+
+    const channel = supabase
+      .channel(`notifications-page-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          void loadNotifications()
+          window.dispatchEvent(new Event('elpyo-badges-refresh'))
+        },
+      )
+      .subscribe()
+
+    return () => {
+      void supabase.removeChannel(channel)
+    }
+  }, [user, loadNotifications])
 
   async function handleMarkAsRead(notificationId: string) {
     setError('')
@@ -105,9 +155,6 @@ function NotifichePage() {
     await loadNotifications()
   }
 
-  const unreadCount = notifications.filter((notification) => !notification.is_read)
-    .length
-
   return (
     <div className="landing">
       <Header />
@@ -116,15 +163,39 @@ function NotifichePage() {
         <section className="section page-section">
           <div className="container page-container">
             <div className="page-header">
-              <p className="hero__badge">Notifiche</p>
-              <h1 className="page-title">Le tue notifiche</h1>
+              <p className="hero__badge">Centro notifiche</p>
+              <h1 className="page-title">Aggiornamenti importanti</h1>
               <p className="page-subtitle">
-                Qui trovi aggiornamenti su candidature, messaggi, penali e richieste.
+                Qui trovi candidature, messaggi, pagamenti e aggiornamenti sulle tue richieste.
               </p>
             </div>
 
             {error && <div className="alert alert--error">{error}</div>}
             {loading && <p>Caricamento notifiche…</p>}
+
+            {!loading && (
+              <div className="notifications-summary">
+                <div>
+                  <span>Non lette</span>
+                  <strong>{unreadCount}</strong>
+                </div>
+
+                <div>
+                  <span>Totali</span>
+                  <strong>{notifications.length}</strong>
+                </div>
+
+                {unreadCount > 0 && (
+                  <button
+                    type="button"
+                    className="btn btn--secondary"
+                    onClick={() => void handleMarkAllAsRead()}
+                  >
+                    Segna tutte come lette
+                  </button>
+                )}
+              </div>
+            )}
 
             {!loading && notifications.length === 0 && (
               <div className="empty-state">
@@ -136,78 +207,48 @@ function NotifichePage() {
             )}
 
             {!loading && notifications.length > 0 && (
-              <>
-                <div className="request-card">
-                  <h2 className="request-card__title">Riepilogo</h2>
-
-                  {unreadCount > 0 ? (
-                    <div className="alert alert--error">
-                      Hai {unreadCount} notifiche non lette.
+              <ul className="notifications-list">
+                {notifications.map((notification) => (
+                  <li
+                    key={notification.id}
+                    className={
+                      notification.is_read
+                        ? 'notification-card'
+                        : 'notification-card notification-card--unread'
+                    }
+                  >
+                    <div className="notification-card__icon">
+                      {getNotificationIcon(notification.type)}
                     </div>
-                  ) : (
-                    <div className="alert alert--success">
-                      Hai letto tutte le notifiche.
-                    </div>
-                  )}
 
-                  {unreadCount > 0 && (
-                    <div className="form-actions">
-                      <button
-                        type="button"
-                        className="btn btn--secondary"
-                        onClick={() => void handleMarkAllAsRead()}
-                      >
-                        Segna tutte come lette
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                <ul className="requests-list">
-                  {notifications.map((notification) => (
-                    <li key={notification.id} className="request-card">
-                      <div className="request-card__header">
-                        <span className="request-card__category">
-                          {notification.type}
+                    <div className="notification-card__content">
+                      <div className="notification-card__top">
+                        <span className="notification-card__type">
+                          {notification.type.replaceAll('_', ' ')}
                         </span>
 
-                        <span className="badge badge--accepted">
-                          {notification.is_read ? 'letta' : 'nuova'}
+                        <span className="notification-card__time">
+                          {formatDate(notification.created_at)}
                         </span>
                       </div>
 
-                      <h2 className="request-card__title">
-                        {notification.title}
-                      </h2>
+                      <h2>{notification.title}</h2>
+                      <p>{notification.body}</p>
 
-                      <p className="request-card__desc">{notification.body}</p>
-
-                      <dl className="request-card__meta">
-                        <div>
-                          <dt>Data</dt>
-                          <dd>{formatDate(notification.created_at)}</dd>
-                        </div>
-
-                        <div>
-                          <dt>Stato</dt>
-                          <dd>{notification.is_read ? 'letta' : 'non letta'}</dd>
-                        </div>
-                      </dl>
-
-                      <div className="form-actions">
-                      {notification.link && (
-  <Link
-    to={notification.link}
-    className="btn btn--primary"
-    onClick={() => {
-      if (!notification.is_read) {
-        void handleMarkAsRead(notification.id)
-      }
-    }}
-  >
-    Apri
-  </Link>
-)}
+                      <div className="notification-card__actions">
+                        {notification.link && (
+                          <Link
+                            to={notification.link}
+                            className="btn btn--primary"
+                            onClick={() => {
+                              if (!notification.is_read) {
+                                void handleMarkAsRead(notification.id)
+                              }
+                            }}
+                          >
+                            Apri
+                          </Link>
+                        )}
 
                         {!notification.is_read && (
                           <button
@@ -222,10 +263,14 @@ function NotifichePage() {
                           </button>
                         )}
                       </div>
-                    </li>
-                  ))}
-                </ul>
-              </>
+                    </div>
+
+                    {!notification.is_read && (
+                      <span className="notification-card__dot" aria-label="Non letta" />
+                    )}
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
         </section>
