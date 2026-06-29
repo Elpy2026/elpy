@@ -15,6 +15,9 @@ export interface RequestRow {
   seeker_id?: string | null
   user_id?: string | null
   helper_id?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  location_label?: string | null
 }
 
 function mapStatus(status?: string | null): RequestStatus {
@@ -40,6 +43,9 @@ export function mapRowToHelpRequest(row: RequestRow): HelpRequest {
     compenso: String(row.reward),
     stato: mapStatus(row.status),
     createdAt: row.created_at ?? new Date().toISOString(),
+    latitude: row.latitude ?? null,
+    longitude: row.longitude ?? null,
+    locationLabel: row.location_label ?? row.city,
   }
 }
 
@@ -51,9 +57,9 @@ export function mapFormToRow(data: NewHelpRequest) {
     city: data.citta,
     request_date: data.data,
     reward: Number(data.compenso),
-    latitude: 'latitude' in data ? data.latitude : null,
-    longitude: 'longitude' in data ? data.longitude : null,
-    location_label: 'locationLabel' in data ? data.locationLabel : null,
+    latitude: data.latitude ?? null,
+    longitude: data.longitude ?? null,
+    location_label: data.locationLabel ?? data.citta,
   }
 }
 

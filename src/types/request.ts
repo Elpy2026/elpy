@@ -10,6 +10,9 @@ export interface HelpRequest {
   compenso: string
   stato: RequestStatus
   createdAt: string
+  latitude?: number | null
+  longitude?: number | null
+  locationLabel?: string | null
 }
 
 export interface NewHelpRequest {
@@ -19,7 +22,6 @@ export interface NewHelpRequest {
   citta: string
   data: string
   compenso: string
-
   latitude?: number | null
   longitude?: number | null
   locationLabel?: string | null

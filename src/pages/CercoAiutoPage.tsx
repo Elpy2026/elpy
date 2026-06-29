@@ -60,26 +60,26 @@ function CercoAiutoPage() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
-  
+
     if (!verified) {
       setError(
         'Per pubblicare una richiesta devi prima completare la verifica identità.',
       )
       return
     }
-  
+
     if (Number(form.compenso) < MIN_COMPENSO) {
       setError('Il compenso minimo è di 5€')
       return
     }
-  
+
     try {
       setSubmitting(true)
       setError('')
-  
+
       let latitude: number | null = null
       let longitude: number | null = null
-  
+
       if (navigator.geolocation) {
         try {
           const position = await new Promise<GeolocationPosition>((resolve, reject) => {
@@ -89,7 +89,7 @@ function CercoAiutoPage() {
               maximumAge: 60000,
             })
           })
-  
+
           latitude = position.coords.latitude
           longitude = position.coords.longitude
         } catch {
@@ -97,18 +97,18 @@ function CercoAiutoPage() {
           longitude = null
         }
       }
-  
+
       const result = await insertRequest({
         ...form,
         latitude,
         longitude,
         locationLabel: form.citta,
       })
-  
+
       if (result.error) {
         throw new Error(result.error)
       }
-  
+
       await refreshRequests()
       setSubmitted(true)
       setForm(emptyForm)
@@ -305,6 +305,21 @@ function CercoAiutoPage() {
                   {compensoNonValido && (
                     <small className="form-error">Il compenso minimo è di 5€</small>
                   )}
+                </div>
+
+                <div
+                  style={{
+                    marginTop: '1rem',
+                    padding: '12px 16px',
+                    borderRadius: '12px',
+                    background: '#f3faf6',
+                    border: '1px solid #d7eadf',
+                    fontSize: '0.95rem',
+                    color: '#24543a',
+                  }}
+                >
+                  📍 ELPYO utilizzerà la tua posizione solo per mostrare la richiesta
+                  agli Helper nelle vicinanze. La posizione esatta non verrà resa pubblica.
                 </div>
 
                 <div className="form-actions form-actions--cerco">

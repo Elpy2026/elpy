@@ -9,12 +9,14 @@ function HomePage() {
   return (
     <div className="landing">
       <Header />
+
       <main>
         <Hero />
         <Dashboard />
         <Categories />
         <Trust />
       </main>
+
       <Footer />
     </div>
   )
