@@ -41,21 +41,35 @@ function SegnalaUtentePage() {
     setError('')
     setMessage('')
 
-    const { error } = await supabase
-      .from('reports')
-      .insert({
-        reporter_id: user.id,
-        reported_user_id: reportedUserId,
-        request_id: requestId || null,
-        reason,
-        details: details || null,
-      })
+    const { data: reportData, error } = await supabase
+    .from('reports')
+    .insert({
+      reporter_id: user.id,
+      reported_user_id: reportedUserId,
+      request_id: requestId || null,
+      reason,
+      details: details || null,
+    })
+    .select('id')
+    .single()
 
     if (error) {
       setError(error.message)
       setSaving(false)
       return
     }
+    await supabase.from('admin_notifications').insert({
+      type: 'new_report',
+      title: 'Nuova segnalazione',
+      message: 'È stata inviata una nuova segnalazione utente.',
+      metadata: {
+        report_id: reportData?.id ?? null,
+        reporter_id: user.id,
+        reported_user_id: reportedUserId,
+        request_id: requestId || null,
+        reason,
+      },
+    })
 
     setMessage('Segnalazione inviata correttamente.')
 
