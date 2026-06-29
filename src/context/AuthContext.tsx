@@ -31,7 +31,7 @@ interface AuthContextValue {
   signOut: () => Promise<void>
 }
 
-const AuthContext = createContext<AuthContextValue | null>(null)
+const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
@@ -61,9 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     phone: string,
     consents: SignUpConsents,
   ) {
-    const now = new Date().toISOString()
-
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -78,31 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
     })
 
-    console.log('SIGNUP RESULT', data, error)
-
     if (error) throw error
-
-    const userId = data.user?.id
-
-    if (userId) {
-      const { error: profileError } = await supabase.from('profiles').upsert({
-        id: userId,
-        full_name: fullName,
-        role,
-        phone: phone || null,
-        verified: false,
-        is_admin: false,
-        accepted_terms: consents.acceptedTerms,
-        accepted_privacy: consents.acceptedPrivacy,
-        marketing_consent: consents.marketingConsent,
-        accepted_terms_at: consents.acceptedTerms ? now : null,
-        accepted_privacy_at: consents.acceptedPrivacy ? now : null,
-        marketing_consent_at: consents.marketingConsent ? now : null,
-      })
-
-      if (profileError) throw profileError
-
-    }
   }
 
   async function signIn(email: string, password: string) {
@@ -132,6 +106,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext)
-  if (!context) throw new Error('useAuth must be used within AuthProvider')
+
+  if (!context) {
+    throw new Error('useAuth deve essere usato dentro AuthProvider')
+  }
+
   return context
 }
