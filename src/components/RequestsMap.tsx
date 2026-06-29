@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Circle, MapContainer, Marker, TileLayer, useMap } from 'react-leaflet'
+import MarkerClusterGroup from 'react-leaflet-cluster'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import 'leaflet.markercluster/dist/MarkerCluster.css'
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 import type { HelpRequest } from '../types/request'
 
 type RequestsMapProps = {
@@ -278,16 +281,18 @@ export default function RequestsMap({
             </>
           )}
 
-          {mappedRequests.map((request) => (
-            <Marker
-              key={request.id}
-              position={[Number(request.latitude), Number(request.longitude)]}
-              icon={request.id === selectedRequest?.id ? selectedIcon : requestIcon}
-              eventHandlers={{
-                click: () => setSelectedRequestId(request.id),
-              }}
-            />
-          ))}
+          <MarkerClusterGroup chunkedLoading>
+            {mappedRequests.map((request) => (
+              <Marker
+                key={request.id}
+                position={[Number(request.latitude), Number(request.longitude)]}
+                icon={request.id === selectedRequest?.id ? selectedIcon : requestIcon}
+                eventHandlers={{
+                  click: () => setSelectedRequestId(request.id),
+                }}
+              />
+            ))}
+          </MarkerClusterGroup>
         </MapContainer>
       </div>
 
@@ -333,6 +338,17 @@ export default function RequestsMap({
             <a href={`#request-${selectedRequest.id}`} className="btn btn--primary">
               Scorri alla richiesta
             </a>
+
+            {selectedRequest.latitude && selectedRequest.longitude && (
+              <a
+                href={`https://www.google.com/maps/dir/?api=1&destination=${selectedRequest.latitude},${selectedRequest.longitude}`}
+                className="btn btn--secondary"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Apri percorso
+              </a>
+            )}
           </div>
         </div>
       )}
