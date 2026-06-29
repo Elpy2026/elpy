@@ -4,6 +4,7 @@ import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { supabase } from '../lib/supabase'
 import { cancelAcceptedRequest } from '../lib/cancellations'
+import { createAdminNotification } from '../lib/adminNotifications'
 import { useAuth } from '../context/AuthContext'
 import SafetyPanel from '../components/SafetyPanel'
 
@@ -351,7 +352,7 @@ const [completingRequestId, setCompletingRequestId] = useState('')
   
     const completedRequest = requests.find((request) => request.id === requestId)
   
-    await supabase.from('admin_notifications').insert({
+    await createAdminNotification({
       type: 'request_completed',
       title: 'Richiesta completata',
       message: `La richiesta "${completedRequest?.title ?? 'senza titolo'}" è stata segnata come completata.`,

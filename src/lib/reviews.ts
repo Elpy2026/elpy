@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { createAdminNotification } from './adminNotifications'
 
 export type NewReview = {
   requestId: string
@@ -95,7 +96,7 @@ export async function createReview(
     is_read: false,
     link: `/profilo-helper/${review.reviewedUserId}`,
   })
-  await supabase.from('admin_notifications').insert({
+  await createAdminNotification({
     type: 'new_review',
     title: 'Nuova recensione',
     message: `È stata pubblicata una recensione da ${review.rating} stelle.`,

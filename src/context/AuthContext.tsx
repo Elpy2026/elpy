@@ -61,9 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     phone: string,
     consents: SignUpConsents,
   ) {
-    const now = new Date().toISOString()
-
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -78,42 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
     })
 
-    console.log('SIGNUP RESULT', data, error)
-
     if (error) throw error
-
-    const userId = data.user?.id
-
-    if (userId) {
-      const { error: profileError } = await supabase.from('profiles').upsert({
-        id: userId,
-        full_name: fullName,
-        role,
-        phone: phone || null,
-        verified: false,
-        is_admin: false,
-        accepted_terms: consents.acceptedTerms,
-        accepted_privacy: consents.acceptedPrivacy,
-        marketing_consent: consents.marketingConsent,
-        accepted_terms_at: consents.acceptedTerms ? now : null,
-        accepted_privacy_at: consents.acceptedPrivacy ? now : null,
-        marketing_consent_at: consents.marketingConsent ? now : null,
-      })
-
-      if (profileError) throw profileError
-
-      await supabase.from('admin_notifications').insert({
-        type: 'new_user',
-        title: 'Nuovo utente registrato',
-        message: `${fullName} si è registrato su ELPYO.`,
-        metadata: {
-          user_id: userId,
-          email,
-          full_name: fullName,
-          role,
-        },
-      })
-    }
   }
 
   async function signIn(email: string, password: string) {
