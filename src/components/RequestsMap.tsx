@@ -4,14 +4,6 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { HelpRequest } from '../types/request'
 
-delete (L.Icon.Default.prototype as any)._getIconUrl
-
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-})
-
 type RequestsMapProps = {
   requests: HelpRequest[]
   onVisibleRequestIdsChange?: (requestIds: string[]) => void
@@ -21,6 +13,35 @@ type UserPosition = {
   latitude: number
   longitude: number
 }
+
+function createEmojiIcon(emoji: string, background: string) {
+  return L.divIcon({
+    html: `
+      <div style="
+        width: 38px;
+        height: 38px;
+        border-radius: 999px;
+        background: ${background};
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 19px;
+        border: 3px solid white;
+        box-shadow: 0 8px 18px rgba(0,0,0,0.25);
+      ">
+        ${emoji}
+      </div>
+    `,
+    className: '',
+    iconSize: [38, 38],
+    iconAnchor: [19, 38],
+  })
+}
+
+const userIcon = createEmojiIcon('🧍', '#2563eb')
+const selectedIcon = createEmojiIcon('⭐', '#f59e0b')
+const requestIcon = createEmojiIcon('📍', '#16a34a')
 
 function hasCoordinates(request: HelpRequest) {
   return typeof request.latitude === 'number' && typeof request.longitude === 'number'
@@ -136,7 +157,6 @@ export default function RequestsMap({
 
   useEffect(() => {
     if (!onVisibleRequestIdsChange) return
-
     onVisibleRequestIdsChange(mappedRequests.map((request) => request.id))
   }, [mappedRequests, onVisibleRequestIdsChange])
 
@@ -148,9 +168,7 @@ export default function RequestsMap({
   if (mappedRequests.length === 0) {
     return (
       <div className="empty-state">
-        <p>
-          Nessuna richiesta nel raggio selezionato. Prova ad aumentare la distanza.
-        </p>
+        <p>Nessuna richiesta nel raggio selezionato. Prova ad aumentare la distanza.</p>
       </div>
     )
   }
@@ -194,11 +212,7 @@ export default function RequestsMap({
           <div style={{ marginTop: '0.85rem' }}>
             <label
               htmlFor="radius-filter"
-              style={{
-                display: 'block',
-                marginBottom: '0.4rem',
-                fontWeight: 700,
-              }}
+              style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 700 }}
             >
               Mostra richieste entro {radiusKm} km
             </label>
@@ -253,7 +267,10 @@ export default function RequestsMap({
 
           {userPosition && (
             <>
-              <Marker position={[userPosition.latitude, userPosition.longitude]} />
+              <Marker
+                position={[userPosition.latitude, userPosition.longitude]}
+                icon={userIcon}
+              />
               <Circle
                 center={[userPosition.latitude, userPosition.longitude]}
                 radius={radiusKm * 1000}
@@ -265,6 +282,7 @@ export default function RequestsMap({
             <Marker
               key={request.id}
               position={[Number(request.latitude), Number(request.longitude)]}
+              icon={request.id === selectedRequest?.id ? selectedIcon : requestIcon}
               eventHandlers={{
                 click: () => setSelectedRequestId(request.id),
               }}
