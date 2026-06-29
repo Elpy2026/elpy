@@ -212,7 +212,29 @@ const [completingRequestId, setCompletingRequestId] = useState('')
       setAcceptingApplicationId('')
       return
     }
+    const { data: requestData } = await supabase
+      .from('requests')
+      .select('id, seeker_id, helper_id')
+      .eq('id', application.request_id)
+      .single()
 
+    if (requestData?.seeker_id && requestData?.helper_id) {
+      const { data: existingConversation } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('request_id', application.request_id)
+        .eq('seeker_id', requestData.seeker_id)
+        .eq('helper_id', requestData.helper_id)
+        .maybeSingle()
+
+      if (!existingConversation) {
+        await supabase.from('conversations').insert({
+          request_id: application.request_id,
+          seeker_id: requestData.seeker_id,
+          helper_id: requestData.helper_id,
+        })
+      }
+    }
     const { error: notificationError } = await supabase
       .from('notifications')
       .insert({
@@ -308,22 +330,41 @@ const [completingRequestId, setCompletingRequestId] = useState('')
     setError('')
     setMessage('')
     setCompletingRequestId(requestId)
-
+  
+    const completedAt = new Date().toISOString()
+  
     const { error } = await supabase
       .from('requests')
       .update({
         status: 'completata',
         payment_status: 'pending',
+        completed_at: completedAt,
       })
       .eq('id', requestId)
       .eq('status', 'accettata')
-
+  
     if (error) {
       setError(error.message)
       setCompletingRequestId('')
       return
     }
-
+  
+    const completedRequest = requests.find((request) => request.id === requestId)
+  
+    await supabase.from('admin_notifications').insert({
+      type: 'request_completed',
+      title: 'Richiesta completata',
+      message: `La richiesta "${completedRequest?.title ?? 'senza titolo'}" è stata segnata come completata.`,
+      metadata: {
+        request_id: requestId,
+        request_title: completedRequest?.title ?? null,
+        seeker_id: user?.id ?? null,
+        helper_id: completedRequest?.helper_id ?? null,
+        reward: completedRequest?.reward ?? null,
+        completed_at: completedAt,
+      },
+    })
+  
     setMessage('Richiesta completata. Ora puoi procedere con il pagamento.')
     setCompletingRequestId('')
     await loadMyRequests()

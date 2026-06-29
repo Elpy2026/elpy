@@ -95,6 +95,17 @@ export async function createReview(
     is_read: false,
     link: `/profilo-helper/${review.reviewedUserId}`,
   })
+  await supabase.from('admin_notifications').insert({
+    type: 'new_review',
+    title: 'Nuova recensione',
+    message: `È stata pubblicata una recensione da ${review.rating} stelle.`,
+    metadata: {
+      request_id: review.requestId,
+      reviewer_id: user.id,
+      reviewed_user_id: review.reviewedUserId,
+      rating: review.rating,
+    },
+  })
 
   return {
     error: null,
