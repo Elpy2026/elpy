@@ -14,6 +14,7 @@ L.Icon.Default.mergeOptions({
 
 type RequestsMapProps = {
   requests: HelpRequest[]
+  onVisibleRequestIdsChange?: (requestIds: string[]) => void
 }
 
 type UserPosition = {
@@ -62,9 +63,13 @@ function MapAutoCenter({ latitude, longitude }: UserPosition) {
   return null
 }
 
-export default function RequestsMap({ requests }: RequestsMapProps) {
+export default function RequestsMap({
+  requests,
+  onVisibleRequestIdsChange,
+}: RequestsMapProps) {
   const [userPosition, setUserPosition] = useState<UserPosition | null>(null)
   const [selectedRequestId, setSelectedRequestId] = useState('')
+  const [radiusKm, setRadiusKm] = useState(5)
   const [locationError, setLocationError] = useState('')
 
   useEffect(() => {
@@ -99,7 +104,18 @@ export default function RequestsMap({ requests }: RequestsMapProps) {
 
     if (!userPosition) return requestsWithCoordinates
 
-    return [...requestsWithCoordinates].sort((a, b) => {
+    const requestsWithinRadius = requestsWithCoordinates.filter((request) => {
+      const distance = calculateDistanceKm(
+        userPosition.latitude,
+        userPosition.longitude,
+        Number(request.latitude),
+        Number(request.longitude),
+      )
+
+      return distance <= radiusKm
+    })
+
+    return [...requestsWithinRadius].sort((a, b) => {
       const firstDistance = calculateDistanceKm(
         userPosition.latitude,
         userPosition.longitude,
@@ -116,7 +132,13 @@ export default function RequestsMap({ requests }: RequestsMapProps) {
 
       return firstDistance - secondDistance
     })
-  }, [requests, userPosition])
+  }, [requests, userPosition, radiusKm])
+
+  useEffect(() => {
+    if (!onVisibleRequestIdsChange) return
+
+    onVisibleRequestIdsChange(mappedRequests.map((request) => request.id))
+  }, [mappedRequests, onVisibleRequestIdsChange])
 
   const selectedRequest =
     mappedRequests.find((request) => request.id === selectedRequestId) ??
@@ -127,8 +149,7 @@ export default function RequestsMap({ requests }: RequestsMapProps) {
     return (
       <div className="empty-state">
         <p>
-          Nessuna richiesta con posizione disponibile al momento. Le nuove richieste
-          pubblicate con geolocalizzazione compariranno qui.
+          Nessuna richiesta nel raggio selezionato. Prova ad aumentare la distanza.
         </p>
       </div>
     )
@@ -163,11 +184,45 @@ export default function RequestsMap({ requests }: RequestsMapProps) {
       >
         <strong>
           {userPosition
-            ? `📍 ${mappedRequests.length} richieste ordinate per vicinanza.`
+            ? `📍 ${mappedRequests.length} richieste entro ${radiusKm} km.`
             : '📍 Attiva la posizione per vedere le richieste più vicine a te.'}
         </strong>
 
         {locationError && <p style={{ margin: '0.35rem 0 0' }}>{locationError}</p>}
+
+        {userPosition && (
+          <div style={{ marginTop: '0.85rem' }}>
+            <label
+              htmlFor="radius-filter"
+              style={{
+                display: 'block',
+                marginBottom: '0.4rem',
+                fontWeight: 700,
+              }}
+            >
+              Mostra richieste entro {radiusKm} km
+            </label>
+
+            <select
+              id="radius-filter"
+              value={radiusKm}
+              onChange={(event) => setRadiusKm(Number(event.target.value))}
+              style={{
+                width: '100%',
+                padding: '0.75rem 1rem',
+                borderRadius: 12,
+                border: '1px solid #d7eadf',
+                background: '#ffffff',
+                fontWeight: 700,
+              }}
+            >
+              <option value={5}>5 km</option>
+              <option value={10}>10 km</option>
+              <option value={20}>20 km</option>
+              <option value={50}>50 km</option>
+            </select>
+          </div>
+        )}
       </div>
 
       <div
@@ -199,7 +254,10 @@ export default function RequestsMap({ requests }: RequestsMapProps) {
           {userPosition && (
             <>
               <Marker position={[userPosition.latitude, userPosition.longitude]} />
-              <Circle center={[userPosition.latitude, userPosition.longitude]} radius={5000} />
+              <Circle
+                center={[userPosition.latitude, userPosition.longitude]}
+                radius={radiusKm * 1000}
+              />
             </>
           )}
 
