@@ -6,6 +6,7 @@ import { useRequests } from '../context/RequestsContext'
 import { createApplication } from '../lib/applications'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import RequestsMap from '../components/RequestsMap'
 
 function formatDate(dateStr: string) {
   return new Date(dateStr + 'T00:00:00').toLocaleDateString('it-IT', {
@@ -209,6 +210,9 @@ function OffroAiutoPage() {
                 <h2>Richieste disponibili</h2>
                 <p>Scegli dove puoi dare una mano.</p>
               </div>
+              <div style={{ marginBottom: '1.5rem' }}>
+  <RequestsMap requests={filteredRequests} />
+</div>
 
               {checkingVerification && <p>Controllo verifica identità…</p>}
 
@@ -320,7 +324,7 @@ function OffroAiutoPage() {
               ) : (
                 <ul className="helper-requests-list">
                   {filteredRequests.map((request) => (
-                    <li key={request.id} className="helper-request-card">
+                    <li id={`request-${request.id}`} key={request.id} className="helper-request-card">
                       <div className="request-card__header">
                         <span className="request-card__category">{request.categoria}</span>
 

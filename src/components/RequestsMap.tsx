@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { Circle, MapContainer, Marker, TileLayer, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -255,9 +254,9 @@ export default function RequestsMap({ requests }: RequestsMapProps) {
           </dl>
 
           <div className="form-actions">
-            <Link to="/offro-aiuto" className="btn btn--primary">
-              Vai alla richiesta
-            </Link>
+            <a href={`#request-${selectedRequest.id}`} className="btn btn--primary">
+              Scorri alla richiesta
+            </a>
           </div>
         </div>
       )}
