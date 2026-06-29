@@ -80,7 +80,9 @@ function LeMieRichiestePage() {
   const [helpers, setHelpers] = useState<Record<string, HelperProfile>>({})
   const [loading, setLoading] = useState(true)
   const [acceptingApplicationId, setAcceptingApplicationId] = useState('')
-  const [completingRequestId, setCompletingRequestId] = useState('')
+const [rejectingApplicationId, setRejectingApplicationId] = useState('')
+
+const [completingRequestId, setCompletingRequestId] = useState('')
   const [payingRequestId, setPayingRequestId] = useState('')
   const [cancellingRequestId, setCancellingRequestId] = useState('')
   const [message, setMessage] = useState('')
@@ -234,12 +236,44 @@ function LeMieRichiestePage() {
       .eq('request_id', application.request_id)
       .neq('id', application.id)
 
-    setMessage('Candidatura accettata con successo.')
-    setAcceptingApplicationId('')
-    await loadMyRequests()
-  }
-
-  async function handleCancelRequest(request: MyRequest) {
+      setMessage('Candidatura accettata con successo.')
+      setAcceptingApplicationId('')
+      await loadMyRequests()
+    }
+  
+    async function handleRejectApplication(application: Application) {
+      setError('')
+      setMessage('')
+      setRejectingApplicationId(application.id)
+  
+      const { error } = await supabase
+        .from('request_applications')
+        .update({
+          status: 'rejected',
+        })
+        .eq('id', application.id)
+  
+      if (error) {
+        setError(error.message)
+        setRejectingApplicationId('')
+        return
+      }
+  
+      await supabase.from('notifications').insert({
+        user_id: application.helper_id,
+        type: 'application_rejected',
+        title: 'Candidatura non selezionata',
+        body: 'Per questa richiesta è stato scelto un altro helper.',
+        link: '/offro-aiuto',
+        is_read: false,
+      })
+  
+      setMessage('Candidatura rifiutata.')
+      setRejectingApplicationId('')
+      await loadMyRequests()
+    }
+  
+    async function handleCancelRequest(request: MyRequest) {
     if (!user) return
 
     setError('')
@@ -439,21 +473,36 @@ function LeMieRichiestePage() {
                                       </Link>
 
                                       {application.status === 'pending' && (
-                                        <button
-                                          type="button"
-                                          className="btn btn--primary"
-                                          onClick={() =>
-                                            void handleAcceptApplication(application)
-                                          }
-                                          disabled={
-                                            acceptingApplicationId === application.id
-                                          }
-                                        >
-                                          {acceptingApplicationId === application.id
-                                            ? 'Accettazione…'
-                                            : 'Accetta candidatura'}
-                                        </button>
-                                      )}
+  <>
+    <button
+      type="button"
+      className="btn btn--primary"
+      onClick={() => void handleAcceptApplication(application)}
+      disabled={
+        acceptingApplicationId === application.id ||
+        rejectingApplicationId === application.id
+      }
+    >
+      {acceptingApplicationId === application.id
+        ? 'Accettazione…'
+        : 'Accetta candidatura'}
+    </button>
+
+    <button
+      type="button"
+      className="btn btn--secondary"
+      onClick={() => void handleRejectApplication(application)}
+      disabled={
+        acceptingApplicationId === application.id ||
+        rejectingApplicationId === application.id
+      }
+    >
+      {rejectingApplicationId === application.id
+        ? 'Rifiuto…'
+        : 'Rifiuta candidatura'}
+    </button>
+  </>
+)}
                                     </div>
                                   </li>
                                 )
