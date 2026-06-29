@@ -77,7 +77,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       },
     })
-    console.log("SIGNUP RESULT", data, error)
+
+    console.log('SIGNUP RESULT', data, error)
+
     if (error) throw error
 
     const userId = data.user?.id
@@ -99,6 +101,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
 
       if (profileError) throw profileError
+
+      await supabase.from('admin_notifications').insert({
+        type: 'new_user',
+        title: 'Nuovo utente registrato',
+        message: `${fullName} si è registrato su ELPYO.`,
+        metadata: {
+          user_id: userId,
+          email,
+          full_name: fullName,
+          role,
+        },
+      })
     }
   }
 

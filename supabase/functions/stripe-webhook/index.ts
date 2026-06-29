@@ -18,8 +18,6 @@ const stripe = new Stripe(stripeSecretKey, {
 
 const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-const PLATFORM_FEE_PERCENTAGE = 15;
-
 Deno.serve(async (req) => {
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
@@ -58,9 +56,10 @@ Deno.serve(async (req) => {
       }
 
       const helperAmount = Number(session.metadata?.helperAmount ?? 0);
-const platformFee = Number(session.metadata?.platformFee ?? 0);
+      const platformFee = Number(session.metadata?.platformFee ?? 0);
+      const totalAmount = amountTotal / 100;
 
-      const { error } = await supabaseAdmin
+      const { error: updateError } = await supabaseAdmin
         .from("requests")
         .update({
           payment_status: "paid",
@@ -71,9 +70,41 @@ const platformFee = Number(session.metadata?.platformFee ?? 0);
         .eq("id", requestId)
         .eq("status", "completata");
 
-      if (error) {
-        console.error("Supabase update error:", error);
+      if (updateError) {
+        console.error("Supabase update error:", updateError);
         return new Response("Database update failed", { status: 500 });
+      }
+
+      const { data: requestData, error: requestError } = await supabaseAdmin
+        .from("requests")
+        .select("id, title, reward, seeker_id, helper_id")
+        .eq("id", requestId)
+        .single();
+
+      if (requestError) {
+        console.error("Request lookup error:", requestError);
+      }
+
+      const { error: notificationError } = await supabaseAdmin
+        .from("admin_notifications")
+        .insert({
+          type: "stripe_payment_completed",
+          title: "Pagamento Stripe completato",
+          message: `Pagamento completato per ${requestData?.title ?? "una richiesta"}: €${totalAmount.toFixed(2)}.`,
+          metadata: {
+            request_id: requestId,
+            request_title: requestData?.title ?? null,
+            seeker_id: requestData?.seeker_id ?? null,
+            helper_id: requestData?.helper_id ?? null,
+            amount_total: totalAmount,
+            helper_amount: helperAmount,
+            platform_fee: platformFee,
+            stripe_session_id: session.id,
+          },
+        });
+
+      if (notificationError) {
+        console.error("Admin notification error:", notificationError);
       }
     }
 
