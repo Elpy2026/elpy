@@ -107,7 +107,6 @@ create policy "Authenticated users can create admin notifications"
   to authenticated
   with check (
     type in (
-      'new_user',
       'new_request',
       'new_application',
       'new_review',
