@@ -3,6 +3,7 @@ import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { createAdminNotification } from '../lib/adminNotifications'
 
 function IdentityVerificationPage() {
   const { user } = useAuth()
@@ -60,6 +61,18 @@ function IdentityVerificationPage() {
         })
 
       if (insertError) throw insertError
+
+      await createAdminNotification({
+        type: 'new_kyc_request',
+        title: 'Nuova richiesta KYC',
+        message: 'Un utente ha inviato documenti e selfie per la verifica identità.',
+        metadata: {
+          user_id: user.id,
+          document_front_url: frontPath,
+          document_back_url: backPath,
+          selfie_url: selfiePath,
+        },
+      })
 
       setMessage('Documenti inviati correttamente. La verifica è ora in revisione.')
       setFront(null)

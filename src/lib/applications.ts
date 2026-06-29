@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { userHasPendingPenalties } from './penalties'
+import { createAdminNotification } from './adminNotifications'
 
 export type NewApplication = {
   requestId: string
@@ -72,6 +73,18 @@ export async function createApplication(
     body: `Hai ricevuto una candidatura per "${requestData.title}".`,
     link: '/le-mie-richieste',
     is_read: false,
+  })
+
+  await createAdminNotification({
+    type: 'new_application',
+    title: 'Nuova candidatura helper',
+    message: `Un helper si è candidato per "${requestData.title}".`,
+    metadata: {
+      request_id: application.requestId,
+      request_title: requestData.title,
+      seeker_id: requestData.seeker_id,
+      helper_id: user.id,
+    },
   })
 
   return {
