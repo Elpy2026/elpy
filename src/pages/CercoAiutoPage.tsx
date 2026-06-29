@@ -1,10 +1,12 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { CATEGORIES } from '../constants/categories'
 import { useRequests } from '../context/RequestsContext'
 import { insertRequest } from '../lib/requests'
+import { supabase } from '../lib/supabase'
+import { useAuth } from '../context/AuthContext'
 
 const MIN_COMPENSO = 5
 
@@ -18,15 +20,38 @@ const emptyForm = {
 }
 
 function CercoAiutoPage() {
+  const { user } = useAuth()
   const { refreshRequests } = useRequests()
   const navigate = useNavigate()
   const [form, setForm] = useState(emptyForm)
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [verified, setVerified] = useState(false)
+  const [checkingVerification, setCheckingVerification] = useState(true)
   const [error, setError] = useState('')
 
   const compensoNumber = Number(form.compenso)
   const compensoNonValido = form.compenso !== '' && compensoNumber < MIN_COMPENSO
+
+  useEffect(() => {
+    async function loadVerification() {
+      if (!user) {
+        setCheckingVerification(false)
+        return
+      }
+
+      const { data } = await supabase
+        .from('profiles')
+        .select('verified')
+        .eq('id', user.id)
+        .single()
+
+      setVerified(Boolean(data?.verified))
+      setCheckingVerification(false)
+    }
+
+    void loadVerification()
+  }, [user])
 
   function handleChange(field: keyof typeof emptyForm, value: string) {
     setError('')
@@ -35,6 +60,13 @@ function CercoAiutoPage() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
+
+    if (!verified) {
+      setError(
+        'Per pubblicare una richiesta devi prima completare la verifica identità.',
+      )
+      return
+    }
 
     if (Number(form.compenso) < MIN_COMPENSO) {
       setError('Il compenso minimo è di 5€')
@@ -68,13 +100,13 @@ function CercoAiutoPage() {
 
       <main className="page-main">
         <section className="cerco-hero" aria-labelledby="cerco-title">
-        <div className="container cerco-hero__grid">
+          <div className="container cerco-hero__grid">
+            <div className="page-back">
+              <Link to="/" className="page-back__link">
+                ← Torna alla Home
+              </Link>
+            </div>
 
-<div className="page-back">
-  <Link to="/" className="page-back__link">
-    ← Torna alla Home
-  </Link>
-</div>
             <div className="cerco-hero__content">
               <p className="cerco-hero__badge">Chiedi aiuto</p>
 
@@ -108,7 +140,10 @@ function CercoAiutoPage() {
                   <span>🛡</span>
                   <div>
                     <h2>Sicuro e affidabile</h2>
-                    <p>Proteggiamo i tuoi dati e ogni richiesta pubblicata.</p>
+                    <p>
+                      Puoi esplorare ELPYO subito. La verifica documento viene
+                      richiesta solo prima di pubblicare o candidarti.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -116,8 +151,11 @@ function CercoAiutoPage() {
               <div className="cerco-hero__privacy">
                 <span>🛡</span>
                 <div>
-                  <strong>La tua privacy è importante</strong>
-                  <p>I tuoi dati sono al sicuro e non saranno condivisi.</p>
+                  <strong>Verifica richiesta solo quando serve</strong>
+                  <p>
+                    Ti chiediamo il documento solo prima delle azioni sensibili,
+                    per proteggere la community.
+                  </p>
                 </div>
               </div>
             </div>
@@ -127,6 +165,25 @@ function CercoAiutoPage() {
                 <h2>Invia la tua richiesta</h2>
                 <p>Raccontaci di cosa hai bisogno.</p>
               </div>
+
+              {checkingVerification && <p>Controllo verifica identità…</p>}
+
+              {!checkingVerification && !verified && (
+                <div className="alert alert--error">
+                  <p>
+                    <strong>Verifica identità richiesta.</strong>
+                  </p>
+                  <p>
+                    Per pubblicare una richiesta devi prima completare la verifica
+                    con un documento in corso di validità.
+                  </p>
+                  <div className="form-actions">
+                    <Link to="/verifica-identita" className="btn btn--primary">
+                      Completa verifica
+                    </Link>
+                  </div>
+                </div>
+              )}
 
               {submitted && (
                 <div className="alert alert--success">
@@ -146,7 +203,7 @@ function CercoAiutoPage() {
                     onChange={(e) => handleChange('titolo', e.target.value)}
                     placeholder="Es. Ho bisogno di una mano con la spesa"
                     required
-                    disabled={submitting}
+                    disabled={submitting || !verified}
                   />
                 </div>
 
@@ -159,7 +216,7 @@ function CercoAiutoPage() {
                     placeholder="Descrivi nel dettaglio la tua richiesta..."
                     rows={4}
                     required
-                    disabled={submitting}
+                    disabled={submitting || !verified}
                   />
                 </div>
 
@@ -170,7 +227,7 @@ function CercoAiutoPage() {
                     value={form.categoria}
                     onChange={(e) => handleChange('categoria', e.target.value)}
                     required
-                    disabled={submitting}
+                    disabled={submitting || !verified}
                   >
                     {CATEGORIES.map((category) => (
                       <option key={category} value={category}>
@@ -190,7 +247,7 @@ function CercoAiutoPage() {
                       onChange={(e) => handleChange('citta', e.target.value)}
                       placeholder="Es. Agrigento"
                       required
-                      disabled={submitting}
+                      disabled={submitting || !verified}
                     />
                   </div>
 
@@ -202,7 +259,7 @@ function CercoAiutoPage() {
                       value={form.data}
                       onChange={(e) => handleChange('data', e.target.value)}
                       required
-                      disabled={submitting}
+                      disabled={submitting || !verified}
                     />
                   </div>
                 </div>
@@ -217,7 +274,7 @@ function CercoAiutoPage() {
                     onChange={(e) => handleChange('compenso', e.target.value)}
                     placeholder="Es. 20 €"
                     required
-                    disabled={submitting}
+                    disabled={submitting || !verified}
                   />
                   {compensoNonValido && (
                     <small className="form-error">Il compenso minimo è di 5€</small>
@@ -228,7 +285,12 @@ function CercoAiutoPage() {
                   <button
                     type="submit"
                     className="btn btn--primary"
-                    disabled={submitting || compensoNonValido}
+                    disabled={
+                      submitting ||
+                      compensoNonValido ||
+                      checkingVerification ||
+                      !verified
+                    }
                   >
                     {submitting ? 'Pubblicazione in corso…' : 'Lancia la tua richiesta'}
                   </button>

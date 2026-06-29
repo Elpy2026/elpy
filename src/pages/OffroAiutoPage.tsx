@@ -1,9 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { useRequests } from '../context/RequestsContext'
 import { createApplication } from '../lib/applications'
+import { supabase } from '../lib/supabase'
+import { useAuth } from '../context/AuthContext'
 
 function formatDate(dateStr: string) {
   return new Date(dateStr + 'T00:00:00').toLocaleDateString('it-IT', {
@@ -14,6 +16,7 @@ function formatDate(dateStr: string) {
 }
 
 function OffroAiutoPage() {
+  const { user } = useAuth()
   const { requests } = useRequests()
   const [applicationMessages, setApplicationMessages] = useState<Record<string, string>>({})
   const [submittingApplicationId, setSubmittingApplicationId] = useState('')
@@ -22,8 +25,30 @@ function OffroAiutoPage() {
   const [minRewardFilter, setMinRewardFilter] = useState('')
   const [onlyOpen, setOnlyOpen] = useState(true)
   const [sortBy, setSortBy] = useState('date')
+  const [verified, setVerified] = useState(false)
+  const [checkingVerification, setCheckingVerification] = useState(true)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    async function loadVerification() {
+      if (!user) {
+        setCheckingVerification(false)
+        return
+      }
+
+      const { data } = await supabase
+        .from('profiles')
+        .select('verified')
+        .eq('id', user.id)
+        .single()
+
+      setVerified(Boolean(data?.verified))
+      setCheckingVerification(false)
+    }
+
+    void loadVerification()
+  }, [user])
 
   const availableCategories = useMemo(() => {
     return Array.from(new Set(requests.map((request) => request.categoria))).sort()
@@ -81,6 +106,14 @@ function OffroAiutoPage() {
   async function handleApplication(requestId: string) {
     setMessage('')
     setError('')
+
+    if (!verified) {
+      setError(
+        'Per candidarti come helper devi prima completare la verifica identità.',
+      )
+      return
+    }
+
     setSubmittingApplicationId(requestId)
 
     const result = await createApplication({
@@ -108,13 +141,13 @@ function OffroAiutoPage() {
 
       <main className="page-main">
         <section className="helper-hero" aria-labelledby="offro-title">
-        <div className="container helper-hero__grid">
+          <div className="container helper-hero__grid">
+            <div className="page-back">
+              <Link to="/" className="page-back__link">
+                ← Torna alla Home
+              </Link>
+            </div>
 
-<div className="page-back">
-  <Link to="/" className="page-back__link">
-    ← Torna alla Home
-  </Link>
-</div>
             <div className="helper-hero__content">
               <p className="helper-hero__badge">Diventa Helper</p>
 
@@ -139,16 +172,22 @@ function OffroAiutoPage() {
                 <div className="helper-hero__point">
                   <span>☺</span>
                   <div>
-                    <h2>Candidati in pochi secondi</h2>
-                    <p>Scrivi un breve messaggio e proponiti come Helper.</p>
+                    <h2>Candidati quando sei pronto</h2>
+                    <p>
+                      Puoi esplorare le richieste subito. La verifica documento serve
+                      solo prima della candidatura.
+                    </p>
                   </div>
                 </div>
 
                 <div className="helper-hero__point">
-                  <span>💜</span>
+                  <span>🛡</span>
                   <div>
-                    <h2>Guadagna aiutando</h2>
-                    <p>Dai una mano alle persone vicino a te e valorizza il tuo tempo.</p>
+                    <h2>Sicurezza prima di tutto</h2>
+                    <p>
+                      Prima di entrare in contatto operativo con altri utenti,
+                      completiamo la verifica identità.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -156,8 +195,11 @@ function OffroAiutoPage() {
               <div className="helper-hero__privacy">
                 <span>🛡</span>
                 <div>
-                  <strong>Aiuta con fiducia</strong>
-                  <p>Candidati solo alle richieste che ti interessano davvero.</p>
+                  <strong>Verifica richiesta solo quando serve</strong>
+                  <p>
+                    Ti chiediamo il documento prima delle azioni sensibili, come
+                    candidarti a una richiesta.
+                  </p>
                 </div>
               </div>
             </div>
@@ -167,6 +209,26 @@ function OffroAiutoPage() {
                 <h2>Richieste disponibili</h2>
                 <p>Scegli dove puoi dare una mano.</p>
               </div>
+
+              {checkingVerification && <p>Controllo verifica identità…</p>}
+
+              {!checkingVerification && !verified && (
+                <div className="alert alert--error">
+                  <p>
+                    <strong>Verifica identità richiesta per candidarti.</strong>
+                  </p>
+                  <p>
+                    Puoi consultare le richieste disponibili, ma per inviare una
+                    candidatura devi completare la verifica con un documento in corso
+                    di validità.
+                  </p>
+                  <div className="form-actions">
+                    <Link to="/verifica-identita" className="btn btn--primary">
+                      Completa verifica
+                    </Link>
+                  </div>
+                </div>
+              )}
 
               {message && <div className="alert alert--success">{message}</div>}
               {error && <div className="alert alert--error">{error}</div>}
@@ -310,7 +372,10 @@ function OffroAiutoPage() {
                               }
                               rows={3}
                               placeholder="Scrivi perché puoi aiutare..."
-                              disabled={submittingApplicationId === request.id}
+                              disabled={
+                                submittingApplicationId === request.id ||
+                                !verified
+                              }
                             />
                           </div>
 
@@ -319,11 +384,17 @@ function OffroAiutoPage() {
                               type="button"
                               className="btn btn--primary request-card__btn"
                               onClick={() => void handleApplication(request.id)}
-                              disabled={submittingApplicationId === request.id}
+                              disabled={
+                                submittingApplicationId === request.id ||
+                                checkingVerification ||
+                                !verified
+                              }
                             >
                               {submittingApplicationId === request.id
                                 ? 'Invio candidatura…'
-                                : 'Candidati'}
+                                : verified
+                                  ? 'Candidati'
+                                  : 'Verifica identità per candidarti'}
                             </button>
                           </div>
                         </div>
