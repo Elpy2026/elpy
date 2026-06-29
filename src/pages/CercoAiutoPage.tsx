@@ -60,29 +60,55 @@ function CercoAiutoPage() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
-
+  
     if (!verified) {
       setError(
         'Per pubblicare una richiesta devi prima completare la verifica identità.',
       )
       return
     }
-
+  
     if (Number(form.compenso) < MIN_COMPENSO) {
       setError('Il compenso minimo è di 5€')
       return
     }
-
+  
     try {
       setSubmitting(true)
       setError('')
-
-      const result = await insertRequest(form)
-
+  
+      let latitude: number | null = null
+      let longitude: number | null = null
+  
+      if (navigator.geolocation) {
+        try {
+          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 10000,
+              maximumAge: 60000,
+            })
+          })
+  
+          latitude = position.coords.latitude
+          longitude = position.coords.longitude
+        } catch {
+          latitude = null
+          longitude = null
+        }
+      }
+  
+      const result = await insertRequest({
+        ...form,
+        latitude,
+        longitude,
+        locationLabel: form.citta,
+      })
+  
       if (result.error) {
         throw new Error(result.error)
       }
-
+  
       await refreshRequests()
       setSubmitted(true)
       setForm(emptyForm)

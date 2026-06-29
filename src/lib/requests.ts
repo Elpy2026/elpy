@@ -51,6 +51,9 @@ export function mapFormToRow(data: NewHelpRequest) {
     city: data.citta,
     request_date: data.data,
     reward: Number(data.compenso),
+    latitude: 'latitude' in data ? data.latitude : null,
+    longitude: 'longitude' in data ? data.longitude : null,
+    location_label: 'locationLabel' in data ? data.locationLabel : null,
   }
 }
 
