@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
@@ -26,6 +26,7 @@ function OffroAiutoPage() {
   const [minRewardFilter, setMinRewardFilter] = useState('')
   const [onlyOpen, setOnlyOpen] = useState(true)
   const [sortBy, setSortBy] = useState('date')
+  const [visibleRequestIds, setVisibleRequestIds] = useState<string[] | null>(null)
   const [verified, setVerified] = useState(false)
   const [checkingVerification, setCheckingVerification] = useState(true)
   const [message, setMessage] = useState('')
@@ -89,12 +90,27 @@ function OffroAiutoPage() {
       })
   }, [requests, cityFilter, categoryFilter, minRewardFilter, onlyOpen, sortBy])
 
+  const handleVisibleRequestIdsChange = useCallback((requestIds: string[]) => {
+    setVisibleRequestIds(requestIds)
+  }, [])
+
+  const displayedRequests = useMemo(() => {
+    if (visibleRequestIds === null) {
+      return filteredRequests
+    }
+
+    const visibleIds = new Set(visibleRequestIds)
+
+    return filteredRequests.filter((request) => visibleIds.has(request.id))
+  }, [filteredRequests, visibleRequestIds])
+
   function resetFilters() {
     setCityFilter('')
     setCategoryFilter('')
     setMinRewardFilter('')
     setOnlyOpen(true)
     setSortBy('date')
+    setVisibleRequestIds(null)
   }
 
   function handleApplicationMessageChange(requestId: string, value: string) {
@@ -210,9 +226,13 @@ function OffroAiutoPage() {
                 <h2>Richieste disponibili</h2>
                 <p>Scegli dove puoi dare una mano.</p>
               </div>
+
               <div style={{ marginBottom: '1.5rem' }}>
-  <RequestsMap requests={filteredRequests} />
-</div>
+                <RequestsMap
+                  requests={filteredRequests}
+                  onVisibleRequestIdsChange={handleVisibleRequestIdsChange}
+                />
+              </div>
 
               {checkingVerification && <p>Controllo verifica identità…</p>}
 
@@ -314,16 +334,16 @@ function OffroAiutoPage() {
                     Pubblica la prima richiesta
                   </Link>
                 </div>
-              ) : filteredRequests.length === 0 ? (
+              ) : displayedRequests.length === 0 ? (
                 <div className="empty-state">
-                  <p>Nessuna richiesta corrisponde ai filtri selezionati.</p>
+                  <p>Nessuna richiesta corrisponde ai filtri o al raggio selezionato.</p>
                   <button type="button" className="btn btn--secondary" onClick={resetFilters}>
                     Cancella filtri
                   </button>
                 </div>
               ) : (
                 <ul className="helper-requests-list">
-                  {filteredRequests.map((request) => (
+                  {displayedRequests.map((request) => (
                     <li id={`request-${request.id}`} key={request.id} className="helper-request-card">
                       <div className="request-card__header">
                         <span className="request-card__category">{request.categoria}</span>
