@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
+import AdminNotificationBell from '../components/AdminNotificationBell'
 import { supabase } from '../lib/supabase'
 
 type DashboardStats = {
@@ -152,14 +153,18 @@ function AdminDashboardPage() {
       <main className="page-main">
         <section className="section page-section">
           <div className="container page-container">
-            <div className="page-header">
-              <p className="hero__badge">Admin</p>
+            <div className="page-header page-header--with-action">
+              <div>
+                <p className="hero__badge">Admin</p>
 
-              <h1 className="page-title">Dashboard</h1>
+                <h1 className="page-title">Dashboard</h1>
 
-              <p className="page-subtitle">
-                Panoramica operativa della piattaforma ELPYO.
-              </p>
+                <p className="page-subtitle">
+                  Panoramica operativa della piattaforma ELPYO.
+                </p>
+              </div>
+
+              <AdminNotificationBell />
             </div>
 
             {loading && <p>Caricamento dashboard...</p>}
@@ -241,6 +246,10 @@ function AdminDashboardPage() {
                   <div className="form-actions">
                     <Link to="/admin/verifiche" className="btn btn--primary">
                       Verifiche identità
+                    </Link>
+
+                    <Link to="/admin/notifiche" className="btn btn--secondary">
+                      Centro notifiche
                     </Link>
 
                     <Link

@@ -24,6 +24,7 @@ import AdminVerifichePage from './pages/AdminVerifichePage'
 import AdminSegnalazioniPage from './pages/AdminSegnalazioniPage'
 import AdminDashboardPage from './pages/AdminDashboardPage'
 import AdminPagamentiPage from './pages/AdminPagamentiPage'
+import AdminNotifichePage from './pages/AdminNotifichePage'
 import PagamentoSuccessoPage from './pages/PagamentoSuccessoPage'
 import PagamentoAnnullatoPage from './pages/PagamentoAnnullatoPage'
 
@@ -171,6 +172,14 @@ function App() {
             element={
               <AdminRoute>
                 <AdminDashboardPage />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/notifiche"
+            element={
+              <AdminRoute>
+                <AdminNotifichePage />
               </AdminRoute>
             }
           />

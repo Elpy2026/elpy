@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { userHasPendingPenalties } from './penalties'
+import { createAdminNotification } from './adminNotifications'
 import type { HelpRequest, NewHelpRequest, RequestStatus } from '../types/request'
 
 export interface RequestRow {
@@ -113,7 +114,27 @@ export async function insertRequest(
     user_id: user.id,
   }
 
-  const { error } = await supabase.from('requests').insert(row)
+  const { data: insertedRequest, error } = await supabase
+    .from('requests')
+    .insert(row)
+    .select('id')
+    .single()
+
+  if (!error) {
+    await createAdminNotification({
+      type: 'new_request',
+      title: 'Nuova richiesta pubblicata',
+      message: `${data.titolo} è stata pubblicata a ${data.citta}.`,
+      metadata: {
+        request_id: insertedRequest?.id ?? null,
+        seeker_id: user.id,
+        category: data.categoria,
+        title: data.titolo,
+        city: data.citta,
+        reward: Number(data.compenso),
+      },
+    })
+  }
 
   return {
     error: error?.message ?? null,

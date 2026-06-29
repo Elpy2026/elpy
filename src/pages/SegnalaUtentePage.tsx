@@ -4,6 +4,7 @@ import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { createAdminNotification } from '../lib/adminNotifications'
 
 function SegnalaUtentePage() {
   const { user } = useAuth()
@@ -58,7 +59,7 @@ function SegnalaUtentePage() {
       setSaving(false)
       return
     }
-    await supabase.from('admin_notifications').insert({
+    await createAdminNotification({
       type: 'new_report',
       title: 'Nuova segnalazione',
       message: 'È stata inviata una nuova segnalazione utente.',

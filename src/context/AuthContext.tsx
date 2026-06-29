@@ -8,6 +8,7 @@ import {
 } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
+import { createAdminNotification } from '../lib/adminNotifications'
 
 type SignUpConsents = {
   acceptedTerms: boolean
@@ -102,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (profileError) throw profileError
 
-      await supabase.from('admin_notifications').insert({
+      await createAdminNotification({
         type: 'new_user',
         title: 'Nuovo utente registrato',
         message: `${fullName} si è registrato su ELPYO.`,
