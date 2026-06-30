@@ -4211,3 +4211,53 @@ li.request-card > .form-actions .btn:last-child::before {
     justify-content: center;
   }
 }
+/* ======================================================
+   HOME FIX - HERO + BOTTONI
+====================================================== */
+
+/* Elimina il riquadro bianco dietro al testo */
+.hero-final__subtitle{
+  background: transparent !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  border: none !important;
+  display: block !important;
+}
+
+/* Bottone principale "Trova aiuto" */
+.hero-final__actions .btn--primary{
+  background: linear-gradient(135deg,#ff8a7d,#f25544) !important;
+  border: none !important;
+  color:#fff !important;
+}
+
+/* Bottone HOME "Diventa helper" */
+.hero-final__actions .btn--secondary{
+  background: linear-gradient(135deg,#7c3aed,#8f5bff) !important;
+  border:none !important;
+  color:#fff !important;
+}
+
+/* Hover */
+.hero-final__actions .btn--secondary:hover{
+  background: linear-gradient(135deg,#6d28d9,#7c3aed) !important;
+  color:#fff !important;
+}
+
+/* Bottone della card "Diventa helper" */
+.hero-final-card--offer .hero-final-card__button{
+  background: linear-gradient(135deg,#7c3aed,#8f5bff) !important;
+}
+
+/* Dashboard */
+
+.dashboard__actions .btn--secondary{
+  background: linear-gradient(135deg,#7c3aed,#8f5bff) !important;
+  color:#fff !important;
+  border:none !important;
+}
+
+.dashboard__actions .btn--secondary:hover{
+  background: linear-gradient(135deg,#6d28d9,#7c3aed) !important;
+  color:#fff !important;
+}
