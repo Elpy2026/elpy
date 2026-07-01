@@ -5,6 +5,7 @@ import PrivacyPage from './pages/PrivacyPage'
 import TerminiPage from './pages/TerminiPage'
 import CookiePolicyPage from './pages/CookiePolicyPage'
 import HomePage from './pages/HomePage'
+import PreLaunchPage from './pages/PreLaunchPage'
 import CercoAiutoPage from './pages/CercoAiutoPage'
 import OffroAiutoPage from './pages/OffroAiutoPage'
 import LoginPage from './pages/LoginPage'
@@ -48,6 +49,7 @@ function App() {
 <Route path="/termini" element={<TerminiPage />} />
 <Route path="/cookie-policy" element={<CookiePolicyPage />} />
           <Route path="/" element={<HomePage />} />
+          <Route path="/prelaunch" element={<PreLaunchPage />} />
 
           <Route
             path="/cerco-aiuto"
