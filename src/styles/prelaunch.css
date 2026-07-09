@@ -1,138 +1,459 @@
+/* ================= HERO + PRELAUNCH ALIGN FIX ================= */
+
+:root{
+  --elpy-container: 1180px;
+  --elpy-gutter: clamp(20px, 4vw, 48px);
+  --elpy-section-gap: clamp(72px, 9vw, 112px);
+  --elpy-radius-lg: 34px;
+  --elpy-radius-md: 26px;
+}
+
+/* Container generale */
+.prelaunch-hero,
+.prelaunch-section,
+.prelaunch-form-section{
+  width: min(100% - var(--elpy-gutter), var(--elpy-container));
+  margin-inline: auto;
+  margin-bottom: var(--elpy-section-gap);
+}
+
 /* ================= HERO ================= */
 
-.pl-hero{
-    max-width:1280px;
-    margin:0 auto;
-    padding:90px 40px;
-    display:grid;
-    grid-template-columns:1.05fr .95fr;
-    gap:70px;
-    align-items:center;
+.prelaunch-hero{
+  padding-top: clamp(56px, 7vw, 96px);
+  display: grid;
+  grid-template-columns: 0.92fr 1.08fr;
+  gap: clamp(48px, 7vw, 92px);
+  align-items: center;
 }
 
-.pl-logo{
-    width:180px;
-    margin-bottom:22px;
+.prelaunch-hero__content{
+  max-width: 560px;
 }
 
-.pl-badge{
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    background:#F2F4F7;
-    color:#344054;
-    padding:10px 18px;
-    border-radius:999px;
-    font-weight:600;
-    font-size:.92rem;
-    margin-bottom:26px;
+.prelaunch-badge{
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .65rem 1rem;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(13,27,42,.08);
+  font-weight: 800;
+  margin-bottom: 2rem;
 }
 
-.pl-hero h1{
-    font-size:4rem;
-    line-height:1.05;
-    color:#101828;
-    margin-bottom:26px;
-    font-weight:800;
-    letter-spacing:-2px;
+.prelaunch-hero h1{
+  font-size: clamp(3.8rem, 7vw, 6.6rem);
+  font-weight: 950;
+  line-height: .9;
+  letter-spacing: -.055em;
+  margin-bottom: 1.8rem;
+  color: #061a2f;
 }
 
-.pl-hero p{
-    font-size:1.2rem;
-    line-height:1.7;
-    color:#475467;
-    max-width:560px;
-    margin-bottom:34px;
+.prelaunch-hero h1 span{
+  color: #F25544;
 }
 
-.pl-buttons{
-    display:flex;
-    gap:16px;
-    flex-wrap:wrap;
-    margin-bottom:36px;
+.prelaunch-hero p{
+  font-size: 1.18rem;
+  max-width: 560px;
+  line-height: 1.65;
+  color: #475467;
+  margin-bottom: 2.2rem;
 }
 
-.pl-buttons .btn{
-    padding:18px 34px;
-    border-radius:18px;
-    font-size:1rem;
-    font-weight:700;
+.prelaunch-highlight{
+  margin-top: 1.5rem;
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: #27303f;
+  max-width: 620px;
 }
 
-.pl-benefits{
-    display:flex;
-    flex-direction:column;
-    gap:16px;
-    list-style:none;
-    padding:0;
-    margin:0;
+.prelaunch-highlight strong{
+  color: #7C3AED;
+  font-weight: 950;
 }
 
-.pl-benefits li{
-    font-size:1.05rem;
-    color:#344054;
-    display:flex;
-    align-items:center;
-    gap:12px;
+/* Hero image */
+.prelaunch-hero__image{
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
 }
 
-.pl-hero__image{
-    display:flex;
-    justify-content:center;
+.prelaunch-hero__image img{
+  width: 100%;
+  max-width: 610px;
+  height: 520px;
+  object-fit: cover;
+  border-radius: var(--elpy-radius-lg);
+  box-shadow: 0 42px 90px rgba(13,27,42,.16);
 }
 
-.pl-hero__image img{
-    width:100%;
-    max-width:520px;
-    border-radius:36px;
-    box-shadow:
-        0 50px 80px rgba(16,24,40,.15),
-        0 10px 20px rgba(16,24,40,.08);
+/* Hero choice cards */
+.prelaunch-hero__actions{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 1.6rem;
 }
 
-/* =============== MOBILE ================= */
+.prelaunch-choice{
+  display: grid;
+  grid-template-columns: 4.2rem 1fr;
+  gap: 1rem;
+  align-items: center;
+  min-height: 132px;
+  padding: 1.2rem;
+  border-radius: 22px;
+  text-decoration: none;
+  background: #fff;
+  box-shadow: 0 22px 55px rgba(13,27,42,.11);
+  overflow: hidden;
+}
+
+.prelaunch-choice--help{
+  border: 1px solid rgba(242,85,68,.25);
+  color: #F25544;
+  background: linear-gradient(135deg,#fff8f4,#fff);
+}
+
+.prelaunch-choice--earn{
+  border: 1px solid rgba(124,58,237,.25);
+  color: #5B21B6;
+  background: linear-gradient(135deg,#f5efff,#fff);
+}
+
+.prelaunch-choice__icon,
+.prelaunch-choice > span{
+  width: 4.2rem;
+  height: 4.2rem;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 1.45rem;
+  line-height: 1;
+  box-shadow: 0 14px 30px rgba(13,27,42,.12);
+}
+
+.prelaunch-choice strong{
+  display: block;
+  font-size: 1.05rem;
+  line-height: 1.15;
+  font-weight: 950;
+}
+
+.prelaunch-choice small{
+  display: block;
+  margin-top: .35rem;
+  font-size: .86rem;
+  line-height: 1.35;
+  color: #334155;
+  font-weight: 700;
+}
+
+/* Trust row */
+.prelaunch-checks{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 1.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+.prelaunch-checks li{
+  min-height: 78px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: .9rem;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(13,27,42,.08);
+  font-weight: 950;
+  color: #061a2f;
+}
+
+/* ================= SEZIONI ================= */
+
+.prelaunch-community-intro,
+.prelaunch-highlight-box{
+  width: 100%;
+  border-radius: 28px;
+}
+
+/* Cerco / Offro */
+.prelaunch-audience-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  align-items: stretch;
+}
+
+.prelaunch-audience-card{
+  min-height: 230px;
+  height: 100%;
+  border-radius: var(--elpy-radius-md);
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: .9fr 1.1fr;
+  align-items: center;
+}
+
+/* Come funziona */
+.prelaunch-how{
+  text-align: center;
+}
+
+.prelaunch-steps{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  align-items: stretch;
+}
+
+.prelaunch-step{
+  min-height: 190px;
+  height: 100%;
+  padding: 38px 28px;
+  border-radius: var(--elpy-radius-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Sezione blu */
+.prelaunch-different{
+  padding: clamp(42px, 6vw, 72px);
+  border-radius: var(--elpy-radius-lg);
+}
+
+.prelaunch-different > div,
+.prelaunch-different-grid{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  align-items: stretch;
+}
+
+.prelaunch-different article,
+.prelaunch-different-card{
+  min-height: 180px;
+  height: 100%;
+  padding: 30px;
+  border-radius: 22px;
+}
+
+/* Gallery */
+.prelaunch-gallery{
+  display: grid;
+  grid-template-columns: 1.3fr .85fr .85fr;
+  gap: 22px;
+}
+
+.prelaunch-gallery img{
+  width: 100%;
+  height: 100%;
+  min-height: 270px;
+  aspect-ratio: 1 / .78;
+  object-fit: cover;
+  border-radius: 28px;
+  display: block;
+}
+
+/* Form finale */
+.prelaunch-form-section{
+  border-radius: var(--elpy-radius-lg);
+}
+
+.prelaunch-form-section__inner{
+  display: grid;
+  grid-template-columns: .95fr 1.05fr;
+  gap: clamp(48px, 7vw, 88px);
+  align-items: center;
+  padding: clamp(42px, 6vw, 72px);
+}
+
+.prelaunch-form-copy{
+  max-width: 460px;
+}
+
+.prelaunch-form-card{
+  width: 100%;
+  max-width: 620px;
+  margin-left: auto;
+  border-radius: 28px;
+}
+
+.prelaunch-form-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.prelaunch-form-grid .full,
+.prelaunch-interest,
+.prelaunch-submit{
+  grid-column: 1 / -1;
+}
+
+/* ================= MOBILE ================= */
+
+@media (max-width: 980px){
+
+  .prelaunch-hero,
+  .prelaunch-form-section__inner,
+  .prelaunch-audience-grid,
+  .prelaunch-steps,
+  .prelaunch-different > div,
+  .prelaunch-different-grid,
+  .prelaunch-gallery{
+    grid-template-columns: 1fr;
+  }
+
+  .prelaunch-hero{
+    padding-top: 56px;
+    text-align: center;
+  }
+
+  .prelaunch-hero__content{
+    max-width: none;
+  }
+
+  .prelaunch-hero p,
+  .prelaunch-highlight{
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .prelaunch-hero__image{
+    justify-content: center;
+  }
+
+  .prelaunch-hero__image img{
+    height: auto;
+    max-width: 100%;
+  }
+
+  .prelaunch-hero__actions,
+  .prelaunch-checks,
+  .prelaunch-form-grid{
+    grid-template-columns: 1fr;
+  }
+
+  .prelaunch-audience-card{
+    grid-template-columns: 1fr;
+  }
+
+  .prelaunch-form-card{
+    max-width: none;
+    margin-left: 0;
+  }
+}
+/* ===== MOBILE FIX HERO CHOICE CARDS ===== */
+
+@media (max-width: 980px){
+
+  .prelaunch-hero__actions{
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+    width: 100% !important;
+  }
+
+  .prelaunch-choice{
+    grid-template-columns: 64px 1fr !important;
+    min-height: auto !important;
+    width: 100% !important;
+    padding: 18px !important;
+    overflow: visible !important;
+  }
+
+  .prelaunch-choice__icon,
+  .prelaunch-choice > span{
+    width: 64px !important;
+    height: 64px !important;
+    font-size: 1.45rem !important;
+    flex-shrink: 0 !important;
+    box-shadow: 0 10px 24px rgba(13,27,42,.10) !important;
+  }
+
+  .prelaunch-choice strong{
+    font-size: 1.15rem !important;
+    line-height: 1.15 !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .prelaunch-choice small{
+    font-size: .92rem !important;
+    line-height: 1.35 !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+  }
+}
+
+/* ===== DESKTOP FIX: evita testo tagliato nei bottoni ===== */
+
+.prelaunch-choice{
+  min-width: 0 !important;
+}
+
+.prelaunch-choice strong,
+.prelaunch-choice small{
+  min-width: 0 !important;
+  overflow-wrap: anywhere !important;
+  word-break: normal !important;
+}
+
+/* ===== ICON CLEANUP ===== */
+
+.prelaunch-choice__icon,
+.prelaunch-choice > span{
+  background: #fff !important;
+  color: inherit !important;
+  font-weight: 900 !important;
+  border: 1px solid rgba(13,27,42,.06) !important;
+}
+/* ===================================================
+   CENTRA LE 3 CARD "PERCHÉ ELPYO È DIVERSO"
+=================================================== */
+
+.prelaunch-different > div{
+  display:grid !important;
+  grid-template-columns:repeat(3,320px) !important;
+  justify-content:center !important;
+  align-items:stretch !important;
+  gap:24px !important;
+}
+
+.prelaunch-different article{
+  width:320px !important;
+  max-width:320px !important;
+  min-height:190px !important;
+  margin:0 !important;
+}
 
 @media (max-width:980px){
 
-.pl-hero{
+  .prelaunch-different > div{
 
-grid-template-columns:1fr;
+      grid-template-columns:1fr !important;
 
-padding:60px 24px;
+  }
 
-text-align:center;
+  .prelaunch-different article{
 
-}
+      width:100% !important;
+      max-width:none !important;
 
-.pl-logo{
-
-margin:auto auto 22px;
-
-}
-
-.pl-benefits{
-
-align-items:center;
-
-}
-
-.pl-buttons{
-
-justify-content:center;
-
-}
-
-.pl-hero h1{
-
-font-size:2.8rem;
-
-}
-
-.pl-hero p{
-
-margin-left:auto;
-margin-right:auto;
-
-}
+  }
 
 }

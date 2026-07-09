@@ -28,77 +28,11 @@ const emptyForm: RequestFormState = {
   compenso: '',
 }
 
-function detectCategory(text: string): (typeof CATEGORIES)[number] {
-  const normalized = text.toLowerCase()
-
-  if (
-    normalized.includes('accompagna') ||
-    normalized.includes('accompagnare') ||
-    normalized.includes('visita') ||
-    normalized.includes('ospedale') ||
-    normalized.includes('medico')
-  ) {
-    return 'Accompagnamento personale'
-  }
-
-  if (
-    normalized.includes('computer') ||
-    normalized.includes('telefono') ||
-    normalized.includes('pc') ||
-    normalized.includes('internet') ||
-    normalized.includes('stampante')
-  ) {
-    return 'Supporto tecnologico'
-  }
-
-  if (
-    normalized.includes('casa') ||
-    normalized.includes('pulizie') ||
-    normalized.includes('pulire') ||
-    normalized.includes('riordinare')
-  ) {
-    return 'Aiuto domestico leggero'
-  }
-
-  return 'Spesa e commissioni'
-}
-
-function estimateReward(text: string) {
-  const normalized = text.toLowerCase()
-
-  if (normalized.includes('urgente') || normalized.includes('stasera')) return '25'
-  if (normalized.includes('accompagna') || normalized.includes('visita')) return '20'
-  if (normalized.includes('spesa') || normalized.includes('farmacia')) return '15'
-  if (normalized.includes('pulizie') || normalized.includes('casa')) return '25'
-  if (normalized.includes('computer') || normalized.includes('telefono')) return '20'
-
-  return '15'
-}
-
-function buildTitle(text: string) {
-  const cleanText = text.trim()
-
-  if (cleanText.length <= 55) {
-    return cleanText
-  }
-
-  return `${cleanText.slice(0, 52).trim()}...`
-}
-
-function buildDescription(text: string) {
-  const cleanText = text.trim()
-
-  return `Ho bisogno di aiuto per questa richiesta: ${cleanText}
-
-Cerco una persona affidabile e disponibile in zona. Possiamo accordarci sui dettagli tramite ELPYO dopo la candidatura.`
-}
-
 function CercoAiutoPage() {
   const { user } = useAuth()
   const { refreshRequests } = useRequests()
   const navigate = useNavigate()
   const [form, setForm] = useState(emptyForm)
-  const [rawRequest, setRawRequest] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [verified, setVerified] = useState(false)
@@ -133,32 +67,11 @@ function CercoAiutoPage() {
     setForm((prev) => ({ ...prev, [field]: value }))
   }
 
-  function handleAiSuggestion() {
-    const cleanRequest = rawRequest.trim()
-
-    if (!cleanRequest) {
-      setError('Scrivi prima di cosa hai bisogno nel box AI Concierge.')
-      return
-    }
-
-    setError('')
-
-    setForm((prev) => ({
-      ...prev,
-      titolo: buildTitle(cleanRequest),
-      descrizione: buildDescription(cleanRequest),
-      categoria: detectCategory(cleanRequest),
-      compenso: estimateReward(cleanRequest),
-    }))
-  }
-
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
 
     if (!verified) {
-      setError(
-        'Per pubblicare una richiesta devi prima completare la verifica identità.',
-      )
+      setError('Per pubblicare una richiesta devi prima completare la verifica identità.')
       return
     }
 
@@ -206,7 +119,6 @@ function CercoAiutoPage() {
       await refreshRequests()
       setSubmitted(true)
       setForm(emptyForm)
-      setRawRequest('')
       setTimeout(() => navigate('/le-mie-richieste'), 1200)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Errore durante la pubblicazione')
@@ -236,49 +148,9 @@ function CercoAiutoPage() {
               </h1>
 
               <p className="cerco-hero__text">
-                Compila il form, lancia la tua richiesta, inserisci l'importo che vuoi
-                spendere per questo aiuto e attendi l'Helper che si candida per darti una mano.
+                Compila il form, pubblica la tua richiesta e attendi gli Helper
+                disponibili nella tua zona.
               </p>
-
-              <div className="cerco-hero__points">
-                <div className="cerco-hero__point">
-                  <span>👥</span>
-                  <div>
-                    <h2>Richieste pubbliche</h2>
-                    <p>La tua richiesta sarà visibile agli Helper nella tua zona.</p>
-                  </div>
-                </div>
-
-                <div className="cerco-hero__point">
-                  <span>♡</span>
-                  <div>
-                    <h2>Aiuto concreto</h2>
-                    <p>Gli Helper si candidano e tu scegli chi accettare.</p>
-                  </div>
-                </div>
-
-                <div className="cerco-hero__point">
-                  <span>🛡</span>
-                  <div>
-                    <h2>Sicuro e affidabile</h2>
-                    <p>
-                      Puoi esplorare ELPYO subito. La verifica documento viene
-                      richiesta solo prima di pubblicare o candidarti.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="cerco-hero__privacy">
-                <span>🛡</span>
-                <div>
-                  <strong>Verifica richiesta solo quando serve</strong>
-                  <p>
-                    Ti chiediamo il documento solo prima delle azioni sensibili,
-                    per proteggere la community.
-                  </p>
-                </div>
-              </div>
             </div>
 
             <div className="cerco-hero__form-card">
@@ -291,13 +163,8 @@ function CercoAiutoPage() {
 
               {!checkingVerification && !verified && (
                 <div className="alert alert--error">
-                  <p>
-                    <strong>Verifica identità richiesta.</strong>
-                  </p>
-                  <p>
-                    Per pubblicare una richiesta devi prima completare la verifica
-                    con un documento in corso di validità.
-                  </p>
+                  <p><strong>Verifica identità richiesta.</strong></p>
+                  <p>Per pubblicare una richiesta devi prima completare la verifica.</p>
                   <div className="form-actions">
                     <Link to="/verifica-identita" className="btn btn--primary">
                       Completa verifica
@@ -313,43 +180,6 @@ function CercoAiutoPage() {
               )}
 
               {error && <div className="alert alert--error">{error}</div>}
-
-              <div
-                style={{
-                  marginBottom: '1rem',
-                  padding: '1rem',
-                  borderRadius: '18px',
-                  background: '#f3faf6',
-                  border: '1px solid #d7eadf',
-                }}
-              >
-                <h3 style={{ marginTop: 0 }}>✨ AI Concierge ELPYO</h3>
-                <p style={{ marginBottom: '0.75rem', color: '#24543a' }}>
-                  Scrivi in modo semplice cosa ti serve. ELPYO ti prepara titolo,
-                  categoria, descrizione e budget indicativo.
-                </p>
-
-                <div className="form-field">
-                  <label htmlFor="ai-request">Di cosa hai bisogno?</label>
-                  <textarea
-                    id="ai-request"
-                    value={rawRequest}
-                    onChange={(event) => setRawRequest(event.target.value)}
-                    rows={3}
-                    placeholder="Es. Mi serve qualcuno che accompagni mia mamma a una visita domani mattina"
-                    disabled={submitting || !verified}
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  className="btn btn--secondary"
-                  onClick={handleAiSuggestion}
-                  disabled={submitting || !verified}
-                >
-                  Suggerisci richiesta
-                </button>
-              </div>
 
               <form className="request-form request-form--cerco" onSubmit={handleSubmit}>
                 <div className="form-field">
@@ -430,28 +260,13 @@ function CercoAiutoPage() {
                     min={MIN_COMPENSO}
                     value={form.compenso}
                     onChange={(e) => handleChange('compenso', e.target.value)}
-                    placeholder="Es. 20 €"
+                    placeholder="Es. 20"
                     required
                     disabled={submitting || !verified}
                   />
                   {compensoNonValido && (
                     <small className="form-error">Il compenso minimo è di 5€</small>
                   )}
-                </div>
-
-                <div
-                  style={{
-                    marginTop: '1rem',
-                    padding: '12px 16px',
-                    borderRadius: '12px',
-                    background: '#f3faf6',
-                    border: '1px solid #d7eadf',
-                    fontSize: '0.95rem',
-                    color: '#24543a',
-                  }}
-                >
-                  📍 ELPYO utilizzerà la tua posizione solo per mostrare la richiesta
-                  agli Helper nelle vicinanze. La posizione esatta non verrà resa pubblica.
                 </div>
 
                 <div className="form-actions form-actions--cerco">

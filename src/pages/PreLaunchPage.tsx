@@ -61,34 +61,60 @@ function PreLaunchPage() {
         <a className="prelaunch-login" href="/login">Accedi</a>
       </header>
 
-      <section className="prelaunch-hero">
+                        <section className="prelaunch-hero prelaunch-hero--model">
         <div className="prelaunch-hero__copy">
-          <h1>Aiuto vero,<br /><span>quando serve.</span></h1>
+          <span className="prelaunch-badge">La community ELPYO sta nascendo</span>
+
+          <h1>
+            Chiedi aiuto.
+            <br />
+            <span>Guadagna aiutando.</span>
+          </h1>
+
           <p>
-  Trova una persona affidabile vicino a te oppure metti a disposizione il tuo tempo e guadagna aiutando la tua comunità.
-</p>
+            Con un solo account puoi trovare una persona affidabile quando ne hai bisogno
+            e guadagnare offrendo il tuo tempo a chi vive vicino a te.
+          </p>
+
+          <div className="prelaunch-highlight">
+            Non devi scegliere chi essere.
+            <strong> Su ELPYO puoi fare entrambe le cose.</strong>
+          </div>
 
           <div className="prelaunch-hero__actions">
-            <a href="#iscriviti" className="prelaunch-btn prelaunch-btn--orange">
-              Trova aiuto <small>Ho bisogno di una mano</small>
+            <a href="#iscriviti" className="prelaunch-choice prelaunch-choice--help">
+              <span className="prelaunch-choice__icon">Aiuto</span>
+              <div>
+                <strong>Ho bisogno di una mano</strong>
+                <small>Trova aiuto vicino a te</small>
+              </div>
             </a>
-            <a href="#iscriviti" className="prelaunch-btn prelaunch-btn--purple">
-              Offri aiuto <small>Guadagna aiutando gli altri</small>
+
+            <a href="#iscriviti" className="prelaunch-choice prelaunch-choice--earn">
+              <span className="prelaunch-choice__icon">€</span>
+              <div>
+                <strong>Voglio guadagnare</strong>
+                <small>Trasforma il tuo tempo in un guadagno</small>
+              </div>
             </a>
           </div>
 
-          <div className="prelaunch-counter">
-            <strong>La community ELPYO sta nascendo.</strong>
-            <span>Unisciti ora e aiutaci ad aprire nella tua città.</span>
-          </div>
+          <ul className="prelaunch-checks">
+            <li>Persone verificate</li>
+            <li>Pagamenti sicuri</li>
+            <li>Community locale</li>
+          </ul>
         </div>
 
         <div className="prelaunch-hero__image">
-          <img src="/landing-waiting-hero.png" alt="Aiuto quotidiano ELPYO" />
+          <img
+            src="/landing-waiting-hero.png"
+            alt="Persona che consegna la spesa con ELPYO"
+          />
         </div>
       </section>
 
-      <section className="prelaunch-progress">
+<section className="prelaunch-progress">
         <div>
           <h2>Insieme possiamo fare la differenza.</h2>
           <p>Più siamo, prima apriremo ELPYO nella tua città.</p>

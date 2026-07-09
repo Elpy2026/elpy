@@ -45,16 +45,28 @@ type MyRequest = {
   seeker_id: string | null
   helper_id: string | null
   payment_status: string | null
+  expense_status: string | null
   paid_at: string | null
   platform_fee: number | string | null
   helper_amount: number | string | null
+}
+
+type RequestExpense = {
+  id: string
+  request_id: string
+  helper_id: string
+  receipt_image_path: string | null
+  receipt_amount: number | string
+  status: string
+  notes: string | null
+  created_at: string | null
 }
 
 const PLATFORM_FEE_PERCENTAGE = 15
 const MIN_PLATFORM_FEE = 2
 const PLATFORM_FEE_THRESHOLD = 20
 
-function calculatePaymentAmounts(reward: number | string) {
+function calculatePaymentAmounts(reward: number | string, approvedExpenses = 0) {
   const helperAmount = Number(reward)
   const safeHelperAmount = Number.isNaN(helperAmount) ? 0 : helperAmount
 
@@ -62,15 +74,16 @@ function calculatePaymentAmounts(reward: number | string) {
     safeHelperAmount > 0
       ? safeHelperAmount <= PLATFORM_FEE_THRESHOLD
         ? MIN_PLATFORM_FEE
-        : Number((safeHelperAmount * PLATFORM_FEE_PERCENTAGE / 100).toFixed(2))
+        : Number(((safeHelperAmount * PLATFORM_FEE_PERCENTAGE) / 100).toFixed(2))
       : 0
 
-  const total = Number((safeHelperAmount + platformFee).toFixed(2))
+  const total = Number((safeHelperAmount + approvedExpenses + platformFee).toFixed(2))
 
   return {
     total,
     platformFee,
     helperAmount: safeHelperAmount,
+    approvedExpenses,
   }
 }
 
@@ -78,16 +91,20 @@ function LeMieRichiestePage() {
   const { user } = useAuth()
   const [requests, setRequests] = useState<MyRequest[]>([])
   const [applications, setApplications] = useState<Record<string, Application[]>>({})
+  const [expenses, setExpenses] = useState<Record<string, RequestExpense[]>>({})
+  const [expenseUrls, setExpenseUrls] = useState<Record<string, string>>({})
   const [helpers, setHelpers] = useState<Record<string, HelperProfile>>({})
   const [loading, setLoading] = useState(true)
   const [acceptingApplicationId, setAcceptingApplicationId] = useState('')
-const [rejectingApplicationId, setRejectingApplicationId] = useState('')
-
-const [completingRequestId, setCompletingRequestId] = useState('')
+  const [rejectingApplicationId, setRejectingApplicationId] = useState('')
+  const [completingRequestId, setCompletingRequestId] = useState('')
+  const [approvingExpenseId, setApprovingExpenseId] = useState('')
+  const [contestingExpenseId, setContestingExpenseId] = useState('')
   const [payingRequestId, setPayingRequestId] = useState('')
   const [cancellingRequestId, setCancellingRequestId] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [openReceiptUrl, setOpenReceiptUrl] = useState('')
 
   async function loadMyRequests() {
     if (!user) {
@@ -115,6 +132,45 @@ const [completingRequestId, setCompletingRequestId] = useState('')
     setRequests(myRequests)
 
     const requestIds = myRequests.map((request) => request.id)
+
+    if (requestIds.length > 0) {
+      const { data: expensesData, error: expensesError } = await supabase
+        .from('request_expenses')
+        .select('*')
+        .in('request_id', requestIds)
+        .order('created_at', { ascending: false })
+
+      if (expensesError) {
+        setError(expensesError.message)
+      } else {
+        const groupedExpenses: Record<string, RequestExpense[]> = {}
+        const urls: Record<string, string> = {}
+
+        for (const expense of expensesData ?? []) {
+          if (!groupedExpenses[expense.request_id]) {
+            groupedExpenses[expense.request_id] = []
+          }
+
+          groupedExpenses[expense.request_id].push(expense)
+
+          if (expense.receipt_image_path) {
+            const { data: signedUrlData } = await supabase.storage
+              .from('receipts')
+              .createSignedUrl(expense.receipt_image_path, 60 * 10)
+
+            if (signedUrlData?.signedUrl) {
+              urls[expense.id] = signedUrlData.signedUrl
+            }
+          }
+        }
+
+        setExpenses(groupedExpenses)
+        setExpenseUrls(urls)
+      }
+    } else {
+      setExpenses({})
+      setExpenseUrls({})
+    }
 
     const helperIdsFromRequests = myRequests
       .map((request) => request.helper_id)
@@ -187,6 +243,7 @@ const [completingRequestId, setCompletingRequestId] = useState('')
         status: 'accettata',
         helper_id: application.helper_id,
         payment_status: 'not_required',
+        expense_status: 'none',
         accepted_at: new Date().toISOString(),
         cancelled_at: null,
         cancelled_by: null,
@@ -213,6 +270,7 @@ const [completingRequestId, setCompletingRequestId] = useState('')
       setAcceptingApplicationId('')
       return
     }
+
     const { data: requestData } = await supabase
       .from('requests')
       .select('id, seeker_id, helper_id')
@@ -236,16 +294,15 @@ const [completingRequestId, setCompletingRequestId] = useState('')
         })
       }
     }
-    const { error: notificationError } = await supabase
-      .from('notifications')
-      .insert({
-        user_id: application.helper_id,
-        type: 'application_accepted',
-        title: 'Candidatura accettata',
-        body: 'La tua candidatura è stata accettata.',
-        is_read: false,
-        link: `/chat/${application.request_id}`,
-      })
+
+    const { error: notificationError } = await supabase.from('notifications').insert({
+      user_id: application.helper_id,
+      type: 'application_accepted',
+      title: 'Candidatura accettata',
+      body: 'La tua candidatura è stata accettata.',
+      is_read: false,
+      link: `/chat/${application.request_id}`,
+    })
 
     if (notificationError) {
       setError(notificationError.message)
@@ -259,44 +316,42 @@ const [completingRequestId, setCompletingRequestId] = useState('')
       .eq('request_id', application.request_id)
       .neq('id', application.id)
 
-      setMessage('Candidatura accettata con successo.')
-      setAcceptingApplicationId('')
-      await loadMyRequests()
-    }
-  
-    async function handleRejectApplication(application: Application) {
-      setError('')
-      setMessage('')
-      setRejectingApplicationId(application.id)
-  
-      const { error } = await supabase
-        .from('request_applications')
-        .update({
-          status: 'rejected',
-        })
-        .eq('id', application.id)
-  
-      if (error) {
-        setError(error.message)
-        setRejectingApplicationId('')
-        return
-      }
-  
-      await supabase.from('notifications').insert({
-        user_id: application.helper_id,
-        type: 'application_rejected',
-        title: 'Candidatura non selezionata',
-        body: 'Per questa richiesta è stato scelto un altro helper.',
-        link: '/offro-aiuto',
-        is_read: false,
-      })
-  
-      setMessage('Candidatura rifiutata.')
+    setMessage('Candidatura accettata con successo.')
+    setAcceptingApplicationId('')
+    await loadMyRequests()
+  }
+
+  async function handleRejectApplication(application: Application) {
+    setError('')
+    setMessage('')
+    setRejectingApplicationId(application.id)
+
+    const { error } = await supabase
+      .from('request_applications')
+      .update({ status: 'rejected' })
+      .eq('id', application.id)
+
+    if (error) {
+      setError(error.message)
       setRejectingApplicationId('')
-      await loadMyRequests()
+      return
     }
-  
-    async function handleCancelRequest(request: MyRequest) {
+
+    await supabase.from('notifications').insert({
+      user_id: application.helper_id,
+      type: 'application_rejected',
+      title: 'Candidatura non selezionata',
+      body: 'Per questa richiesta è stato scelto un altro helper.',
+      link: '/offro-aiuto',
+      is_read: false,
+    })
+
+    setMessage('Candidatura rifiutata.')
+    setRejectingApplicationId('')
+    await loadMyRequests()
+  }
+
+  async function handleCancelRequest(request: MyRequest) {
     if (!user) return
 
     setError('')
@@ -331,9 +386,9 @@ const [completingRequestId, setCompletingRequestId] = useState('')
     setError('')
     setMessage('')
     setCompletingRequestId(requestId)
-  
+
     const completedAt = new Date().toISOString()
-  
+
     const { error } = await supabase
       .from('requests')
       .update({
@@ -343,15 +398,15 @@ const [completingRequestId, setCompletingRequestId] = useState('')
       })
       .eq('id', requestId)
       .eq('status', 'accettata')
-  
+
     if (error) {
       setError(error.message)
       setCompletingRequestId('')
       return
     }
-  
+
     const completedRequest = requests.find((request) => request.id === requestId)
-  
+
     await createAdminNotification({
       type: 'request_completed',
       title: 'Richiesta completata',
@@ -365,16 +420,99 @@ const [completingRequestId, setCompletingRequestId] = useState('')
         completed_at: completedAt,
       },
     })
-  
+
     setMessage('Richiesta completata. Ora puoi procedere con il pagamento.')
     setCompletingRequestId('')
     await loadMyRequests()
   }
 
-  async function handleStripePayment(request: MyRequest) {
+  async function handleApproveExpense(request: MyRequest, expense: RequestExpense) {
+    if (!user) return
+
+    setError('')
+    setMessage('')
+    setApprovingExpenseId(expense.id)
+
+    const { error: expenseError } = await supabase
+      .from('request_expenses')
+      .update({
+        status: 'approved',
+        approved_at: new Date().toISOString(),
+        approved_by: user.id,
+      })
+      .eq('id', expense.id)
+
+    if (expenseError) {
+      setError(expenseError.message)
+      setApprovingExpenseId('')
+      return
+    }
+
+    const { error: requestError } = await supabase
+      .from('requests')
+      .update({ expense_status: 'approved' })
+      .eq('id', request.id)
+
+    if (requestError) {
+      setError(requestError.message)
+      setApprovingExpenseId('')
+      return
+    }
+
+    setMessage('Spesa approvata. Ora puoi procedere con il pagamento.')
+    setApprovingExpenseId('')
+    await loadMyRequests()
+  }
+
+  async function handleContestExpense(request: MyRequest, expense: RequestExpense) {
+    const reason = window.prompt('Inserisci il motivo della contestazione:')
+
+    if (!reason || reason.trim().length < 3) {
+      setError('Inserisci un motivo valido per contestare la spesa.')
+      return
+    }
+
+    setError('')
+    setMessage('')
+    setContestingExpenseId(expense.id)
+
+    const { error: expenseError } = await supabase
+      .from('request_expenses')
+      .update({
+        status: 'contested',
+        contest_reason: reason.trim(),
+        contested_at: new Date().toISOString(),
+      })
+      .eq('id', expense.id)
+
+    if (expenseError) {
+      setError(expenseError.message)
+      setContestingExpenseId('')
+      return
+    }
+
+    const { error: requestError } = await supabase
+      .from('requests')
+      .update({ expense_status: 'contested' })
+      .eq('id', request.id)
+
+    if (requestError) {
+      setError(requestError.message)
+      setContestingExpenseId('')
+      return
+    }
+
+    setMessage('Spesa contestata. La richiesta resta bloccata finché non viene risolta.')
+    setContestingExpenseId('')
+    await loadMyRequests()
+  }
+
+  async function handleStripePayment(request: MyRequest, approvedExpensesTotal: number) {
     setError('')
     setMessage('')
     setPayingRequestId(request.id)
+
+    const amounts = calculatePaymentAmounts(request.reward, approvedExpensesTotal)
 
     try {
       const { data, error } = await supabase.functions.invoke(
@@ -382,7 +520,7 @@ const [completingRequestId, setCompletingRequestId] = useState('')
         {
           body: {
             requestId: request.id,
-            amount: Number(request.reward),
+            amount: amounts.total,
             description: `Pagamento richiesta ELPYO - ${request.title}`,
           },
         },
@@ -436,8 +574,24 @@ const [completingRequestId, setCompletingRequestId] = useState('')
                 {requests.map((request) => {
                   const helper = request.helper_id ? helpers[request.helper_id] : null
                   const requestApplications = applications[request.id] ?? []
-                  const amounts = calculatePaymentAmounts(request.reward)
+                  const requestExpenses = expenses[request.id] ?? []
+                  const pendingExpenses = requestExpenses.filter(
+                    (expense) => expense.status === 'pending',
+                  )
+                  const approvedExpensesTotal = requestExpenses
+                    .filter((expense) => expense.status === 'approved')
+                    .reduce((sum, expense) => sum + Number(expense.receipt_amount), 0)
+
+                  const amounts = calculatePaymentAmounts(
+                    request.reward,
+                    approvedExpensesTotal,
+                  )
                   const paymentStatus = request.payment_status ?? 'not_required'
+                  const canPay =
+                    request.status === 'completata' &&
+                    paymentStatus !== 'paid' &&
+                    request.expense_status !== 'pending' &&
+                    request.expense_status !== 'contested'
 
                   return (
                     <li key={request.id} className="request-card">
@@ -515,36 +669,40 @@ const [completingRequestId, setCompletingRequestId] = useState('')
                                       </Link>
 
                                       {application.status === 'pending' && (
-  <>
-    <button
-      type="button"
-      className="btn btn--primary"
-      onClick={() => void handleAcceptApplication(application)}
-      disabled={
-        acceptingApplicationId === application.id ||
-        rejectingApplicationId === application.id
-      }
-    >
-      {acceptingApplicationId === application.id
-        ? 'Accettazione…'
-        : 'Accetta candidatura'}
-    </button>
+                                        <>
+                                          <button
+                                            type="button"
+                                            className="btn btn--primary"
+                                            onClick={() =>
+                                              void handleAcceptApplication(application)
+                                            }
+                                            disabled={
+                                              acceptingApplicationId === application.id ||
+                                              rejectingApplicationId === application.id
+                                            }
+                                          >
+                                            {acceptingApplicationId === application.id
+                                              ? 'Accettazione…'
+                                              : 'Accetta candidatura'}
+                                          </button>
 
-    <button
-      type="button"
-      className="btn btn--secondary"
-      onClick={() => void handleRejectApplication(application)}
-      disabled={
-        acceptingApplicationId === application.id ||
-        rejectingApplicationId === application.id
-      }
-    >
-      {rejectingApplicationId === application.id
-        ? 'Rifiuto…'
-        : 'Rifiuta candidatura'}
-    </button>
-  </>
-)}
+                                          <button
+                                            type="button"
+                                            className="btn btn--secondary"
+                                            onClick={() =>
+                                              void handleRejectApplication(application)
+                                            }
+                                            disabled={
+                                              acceptingApplicationId === application.id ||
+                                              rejectingApplicationId === application.id
+                                            }
+                                          >
+                                            {rejectingApplicationId === application.id
+                                              ? 'Rifiuto…'
+                                              : 'Rifiuta candidatura'}
+                                          </button>
+                                        </>
+                                      )}
                                     </div>
                                   </li>
                                 )
@@ -615,6 +773,74 @@ const [completingRequestId, setCompletingRequestId] = useState('')
                           </>
                         )}
 
+                      {pendingExpenses.length > 0 && (
+                        <div className="request-card">
+                          <h3>📷 Scontrino in attesa di approvazione</h3>
+
+                          {pendingExpenses.map((expense) => (
+                            <div key={expense.id} className="request-card">
+                              <p>
+                                <strong>Importo dichiarato:</strong> €
+                                {expense.receipt_amount}
+                              </p>
+
+                              {expense.notes && (
+                                <p>
+                                  <strong>Note helper:</strong> {expense.notes}
+                                </p>
+                              )}
+
+                              {expenseUrls[expense.id] && (
+                                <p>
+                                  <button
+                                    type="button"
+                                    className="btn btn--secondary"
+                                    onClick={() => setOpenReceiptUrl(expenseUrls[expense.id])}
+                                  >
+                                    Visualizza scontrino
+                                  </button>
+                                </p>
+                              )}
+
+                              <div className="form-actions">
+                                <button
+                                  type="button"
+                                  className="btn btn--primary"
+                                  onClick={() =>
+                                    void handleApproveExpense(request, expense)
+                                  }
+                                  disabled={approvingExpenseId === expense.id}
+                                >
+                                  {approvingExpenseId === expense.id
+                                    ? 'Approvazione…'
+                                    : 'Approva spesa'}
+                                </button>
+
+                                <button
+                                  type="button"
+                                  className="btn btn--secondary"
+                                  onClick={() =>
+                                    void handleContestExpense(request, expense)
+                                  }
+                                  disabled={contestingExpenseId === expense.id}
+                                >
+                                  {contestingExpenseId === expense.id
+                                    ? 'Contestazione…'
+                                    : 'Contesta'}
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {request.expense_status === 'contested' && (
+                        <div className="alert alert--error">
+                          Spesa contestata. Il pagamento resta bloccato finché la
+                          contestazione non viene risolta.
+                        </div>
+                      )}
+
                       {request.status === 'accettata' && (
                         <div className="form-actions">
                           <button
@@ -642,7 +868,16 @@ const [completingRequestId, setCompletingRequestId] = useState('')
                       )}
 
                       {request.status === 'completata' && (
-                        <div className="request-card">
+                        <>
+                          {request.expense_status === 'approved' && (
+                            <div className="alert alert--success">
+                              <strong>✅ Spesa approvata</strong>
+                              <br />
+                              Lo scontrino è stato approvato e verrà aggiunto al pagamento finale.
+                            </div>
+                          )}
+
+                          <div className="request-card">
                           <h3>Pagamento</h3>
 
                           <p>
@@ -653,26 +888,45 @@ const [completingRequestId, setCompletingRequestId] = useState('')
                           </p>
 
                           <p>
-                            <strong>Totale:</strong> €{amounts.total}
+                            <strong>Servizio helper:</strong> €
+                            {amounts.helperAmount}
                           </p>
+
+                          {amounts.approvedExpenses > 0 && (
+                            <p>
+                              <strong>Spese approvate:</strong> €
+                              {amounts.approvedExpenses.toFixed(2).replace('.', ',')}
+                            </p>
+                          )}
 
                           <p>
                             <strong>
-                              Commissione ELPYO ({PLATFORM_FEE_PERCENTAGE}%):
+                              Commissione di servizio ELPYO:
                             </strong>{' '}
-                            €{amounts.platformFee}
+                            €{amounts.platformFee.toFixed(2).replace('.', ',')}
                           </p>
 
                           <p>
-                            <strong>Netto helper:</strong> €{amounts.helperAmount}
+                            <strong>Totale:</strong> €{amounts.total.toFixed(2).replace('.', ',')}
                           </p>
 
-                          {paymentStatus !== 'paid' ? (
+                          {request.expense_status === 'pending' && (
+                            <div className="alert alert--error">
+                              Prima di pagare devi approvare o contestare lo scontrino.
+                            </div>
+                          )}
+
+                          {canPay ? (
                             <div className="form-actions">
                               <button
                                 type="button"
                                 className="btn btn--primary"
-                                onClick={() => void handleStripePayment(request)}
+                                onClick={() =>
+                                  void handleStripePayment(
+                                    request,
+                                    approvedExpensesTotal,
+                                  )
+                                }
                                 disabled={payingRequestId === request.id}
                               >
                                 {payingRequestId === request.id
@@ -680,12 +934,13 @@ const [completingRequestId, setCompletingRequestId] = useState('')
                                   : 'Paga richiesta'}
                               </button>
                             </div>
-                          ) : (
+                          ) : paymentStatus === 'paid' ? (
                             <div className="alert alert--success">
                               Pagamento registrato correttamente.
                             </div>
-                          )}
-                        </div>
+                          ) : null}
+                          </div>
+                        </>
                       )}
 
                       {request.status === 'completata' && paymentStatus === 'paid' && (
@@ -706,6 +961,31 @@ const [completingRequestId, setCompletingRequestId] = useState('')
           </div>
         </section>
       </main>
+
+      {openReceiptUrl && (
+        <div
+          className="receipt-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Scontrino"
+        >
+          <div className="receipt-modal__content">
+            <button
+              type="button"
+              className="receipt-modal__close"
+              onClick={() => setOpenReceiptUrl('')}
+            >
+              Chiudi
+            </button>
+
+            <img
+              src={openReceiptUrl}
+              alt="Scontrino caricato dall'helper"
+              className="receipt-modal__image"
+            />
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

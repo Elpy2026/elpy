@@ -28,6 +28,7 @@ import AdminPagamentiPage from './pages/AdminPagamentiPage'
 import AdminNotifichePage from './pages/AdminNotifichePage'
 import PagamentoSuccessoPage from './pages/PagamentoSuccessoPage'
 import PagamentoAnnullatoPage from './pages/PagamentoAnnullatoPage'
+import ChiSiamoPage from './pages/ChiSiamoPage'
 
 import AdminRoute from './components/AdminRoute'
 import VerifiedRoute from './components/VerifiedRoute'
@@ -48,6 +49,7 @@ function App() {
 <Route path="/privacy" element={<PrivacyPage />} />
 <Route path="/termini" element={<TerminiPage />} />
 <Route path="/cookie-policy" element={<CookiePolicyPage />} />
+<Route path="/chi-siamo" element={<ChiSiamoPage />} />
           <Route path="/" element={<HomePage />} />
           <Route path="/prelaunch" element={<PreLaunchPage />} />
 

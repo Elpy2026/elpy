@@ -13,7 +13,6 @@ function RegisterPage() {
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
-  const [role, setRole] = useState<'seeker' | 'helper'>('seeker')
   const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false)
   const [marketingConsent, setMarketingConsent] = useState(false)
@@ -58,7 +57,7 @@ function RegisterPage() {
     try {
       await verifyTurnstileToken(turnstileToken)
 
-      await signUp(email, password, fullName, role, phone, {
+      await signUp(email, password, fullName, 'both', phone, {
         acceptedTerms,
         acceptedPrivacy,
         marketingConsent,
@@ -85,7 +84,7 @@ function RegisterPage() {
               <p className="hero__badge">Registrazione</p>
               <h1 className="page-title">Crea il tuo account ELPYO</h1>
               <p className="page-subtitle">
-                Registrati per pubblicare richieste o offrire aiuto nella tua città.
+                Registrati per chiedere aiuto, offrirlo o fare entrambe le cose nella tua città.
               </p>
             </div>
 
@@ -140,19 +139,6 @@ function RegisterPage() {
                   required
                   disabled={loading}
                 />
-              </div>
-
-              <div className="form-field">
-                <label htmlFor="role">Ruolo</label>
-                <select
-                  id="role"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value as 'seeker' | 'helper')}
-                  disabled={loading}
-                >
-                  <option value="seeker">Cerco aiuto</option>
-                  <option value="helper">Offro aiuto</option>
-                </select>
               </div>
 
               <div className="legal-consents">

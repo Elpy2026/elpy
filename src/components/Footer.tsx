@@ -43,6 +43,9 @@ function Footer() {
                 <Link to="/cerco-aiuto">Cerco aiuto</Link>
               </li>
               <li>
+  <Link to="/chi-siamo">Chi siamo</Link>
+</li>
+              <li>
                 <Link to="/offro-aiuto">Offro aiuto</Link>
               </li>
               <li>

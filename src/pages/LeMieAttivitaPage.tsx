@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, type ChangeEvent } from 'react'
 import { Link } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
@@ -35,6 +35,12 @@ type ReviewStats = {
   average_rating: number | null
 }
 
+type ExpenseDraft = {
+  amount: string
+  notes: string
+  file: File | null
+}
+
 function LeMieAttivitaPage() {
   const { user } = useAuth()
   const [requests, setRequests] = useState<HelperRequest[]>([])
@@ -43,6 +49,9 @@ function LeMieAttivitaPage() {
   const [loading, setLoading] = useState(true)
   const [completingId, setCompletingId] = useState('')
   const [cancellingId, setCancellingId] = useState('')
+  const [uploadingExpenseId, setUploadingExpenseId] = useState('')
+  const [expenseFormRequestId, setExpenseFormRequestId] = useState('')
+  const [expenseDrafts, setExpenseDrafts] = useState<Record<string, ExpenseDraft>>({})
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
@@ -102,6 +111,117 @@ function LeMieAttivitaPage() {
     void loadMyAcceptedRequests()
   }, [loadMyAcceptedRequests])
 
+  function updateExpenseDraft(requestId: string, patch: Partial<ExpenseDraft>) {
+    setExpenseDrafts((current) => ({
+      ...current,
+      [requestId]: {
+        amount: current[requestId]?.amount ?? '',
+        notes: current[requestId]?.notes ?? '',
+        file: current[requestId]?.file ?? null,
+        ...patch,
+      },
+    }))
+  }
+
+  function handleExpenseFileChange(
+    requestId: string,
+    event: ChangeEvent<HTMLInputElement>,
+  ) {
+    const file = event.target.files?.[0] ?? null
+    updateExpenseDraft(requestId, { file })
+  }
+
+  async function handleUploadExpense(requestId: string) {
+    if (!user) return
+
+    const draft = expenseDrafts[requestId]
+    const amount = Number(String(draft?.amount ?? '').replace(',', '.'))
+
+    setMessage('')
+    setError('')
+
+    if (!draft?.file) {
+      setError('Carica una foto dello scontrino.')
+      return
+    }
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setError('Inserisci un importo valido per lo scontrino.')
+      return
+    }
+
+    setUploadingExpenseId(requestId)
+
+    const safeFileName = draft.file.name
+      .toLowerCase()
+      .replace(/[^a-z0-9.]+/g, '-')
+      .replace(/-+/g, '-')
+
+    const filePath = `${user.id}/${requestId}/${Date.now()}-${safeFileName}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('receipts')
+      .upload(filePath, draft.file, {
+        cacheControl: '3600',
+        upsert: false,
+      })
+
+    if (uploadError) {
+      setError(uploadError.message)
+      setUploadingExpenseId('')
+      return
+    }
+
+    const { error: insertError } = await supabase.from('request_expenses').insert({
+      request_id: requestId,
+      helper_id: user.id,
+      receipt_image_path: filePath,
+      receipt_amount: amount,
+      notes: draft.notes || null,
+      status: 'pending',
+    })
+
+    if (insertError) {
+      setError(insertError.message)
+      setUploadingExpenseId('')
+      return
+    }
+
+    const { error: requestUpdateError } = await supabase
+      .from('requests')
+      .update({ expense_status: 'pending' })
+      .eq('id', requestId)
+
+    if (requestUpdateError) {
+      setError(requestUpdateError.message)
+      setUploadingExpenseId('')
+      return
+    }
+
+    const currentRequest = requests.find((request) => request.id === requestId)
+
+    if (currentRequest?.seeker_id) {
+      await supabase.from('notifications').insert({
+        user_id: currentRequest.seeker_id,
+        type: 'expense_uploaded',
+        title: 'Scontrino caricato',
+        body: 'L\'helper ha caricato uno scontrino da approvare o contestare.',
+        is_read: false,
+        link: '/le-mie-richieste',
+      })
+    }
+
+    setExpenseDrafts((current) => {
+      const next = { ...current }
+      delete next[requestId]
+      return next
+    })
+
+    setExpenseFormRequestId('')
+    setMessage('Scontrino caricato. Il richiedente potrà approvare o contestare la spesa.')
+    setUploadingExpenseId('')
+  }
+
   async function handleComplete(requestId: string) {
     setMessage('')
     setError('')
@@ -134,7 +254,6 @@ function LeMieAttivitaPage() {
       cancelledBy: user.id,
       reason: 'helper_cancelled_after_acceptance',
     })
-
     if (result.error) {
       setError(result.error)
       setCancellingId('')
@@ -195,6 +314,7 @@ function LeMieAttivitaPage() {
               <ul className="requests-list">
                 {requests.map((request) => {
                   const seeker = request.seeker_id ? seekers[request.seeker_id] : null
+                  const draft = expenseDrafts[request.id]
 
                   return (
                     <li key={request.id} className="request-card">
@@ -233,19 +353,19 @@ function LeMieAttivitaPage() {
                         request.status === 'completata') && (
                         <div className="alert alert--success">
                           <p>
-  <strong>Richiedente:</strong>{' '}
-  {seeker?.full_name ?? 'Utente ELPYO'}
-  {seeker?.verified && ' · Identità verificata'}
-</p>
+                            <strong>Richiedente:</strong>{' '}
+                            {seeker?.full_name ?? 'Utente ELPYO'}
+                            {seeker?.verified && ' · Identità verificata'}
+                          </p>
 
-<SafetyPanel
-  requestId={request.id}
-  otherUserId={request.seeker_id}
-  otherUserName={seeker?.full_name}
-  requestStatus={request.status}
-/>
+                          <SafetyPanel
+                            requestId={request.id}
+                            otherUserId={request.seeker_id}
+                            otherUserName={seeker?.full_name}
+                            requestStatus={request.status}
+                          />
 
-<div className="form-actions">
+                          <div className="form-actions">
                             {seeker?.phone && (
                               <>
                                 <a
@@ -277,29 +397,117 @@ function LeMieAttivitaPage() {
                       )}
 
                       {request.status === 'accettata' && (
-                        <div className="form-actions">
-                          <button
-                            type="button"
-                            className="btn btn--primary request-card__btn"
-                            onClick={() => void handleComplete(request.id)}
-                            disabled={completingId === request.id}
-                          >
-                            {completingId === request.id
-                              ? 'Completamento…'
-                              : 'Completa richiesta'}
-                          </button>
+                        <>
+                          <div className="form-actions">
+                            <button
+                              type="button"
+                              className="btn btn--secondary request-card__btn"
+                              style={{ background: "#079455", color: "#fff", borderColor: "#079455" }}
+                              onClick={() =>
+                                setExpenseFormRequestId(
+                                  expenseFormRequestId === request.id ? '' : request.id,
+                                )
+                              }
+                            >
+                              📷 Carica scontrino
+                            </button>
 
-                          <button
+                            <button
                             type="button"
-                            className="btn btn--secondary request-card__btn"
-                            onClick={() => void handleCancel(request)}
-                            disabled={cancellingId === request.id}
-                          >
-                            {cancellingId === request.id
-                              ? 'Annullamento…'
-                              : 'Annulla accordo'}
-                          </button>
-                        </div>
+                              className="btn btn--primary request-card__btn"
+                              onClick={() => void handleComplete(request.id)}
+                              disabled={completingId === request.id}
+                            >
+                              {completingId === request.id
+                                ? 'Completamento…'
+                                : 'Completa richiesta'}
+                            </button>
+
+                            <button
+                              type="button"
+                              className="btn btn--secondary request-card__btn"
+                              onClick={() => void handleCancel(request)}
+                              disabled={cancellingId === request.id}
+                            >
+                              {cancellingId === request.id
+                                ? 'Annullamento…'
+                                : 'Annulla accordo'}
+                            </button>
+                      </div>
+
+                          {expenseFormRequestId === request.id && (
+                            <div className="request-card">
+                              <h3 className="request-card__title">
+                                Carica scontrino
+                              </h3>
+                              <p className="page-subtitle">
+                                Inserisci la foto dello scontrino e l'importo che hai
+                                anticipato. Il richiedente potrà approvare o contestare.
+                              </p>
+
+                              <label className="form-field">
+                                <span>Foto scontrino</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(event) =>
+                                    handleExpenseFileChange(request.id, event)
+                                  }
+                               />
+                              </label>
+
+                              <label className="form-field">
+                                <span>Importo spesa (€)</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={draft?.amount ?? ''}
+                                  onChange={(event) =>
+                                    updateExpenseDraft(request.id, {
+                                      amount: event.target.value,
+                                    })
+                                  }
+                                  placeholder="Es. 12.47"
+                                />
+                              </label>
+
+                              <label className="form-field">
+                                <span>Note facoltative</span>
+                                <textarea
+                                  value={draft?.notes ?? ''}
+                                  onChange={(event) =>
+                                    updateExpenseDraft(request.id, {
+                                      notes: event.target.value,
+                                    })
+                                  }
+                                  placeholder="Es. pane, latte e acqua come richiesto."
+                                />
+                              </label>
+
+                              <div className="form-actions">
+                                <button
+                                  type="button"
+                                  className="btn btn--primary"
+                                  onClick={() => void handleUploadExpense(request.id)}
+                                  disabled={uploadingExpenseId === request.id}
+                                >
+                                  {uploadingExpenseId === request.id
+                                    ? 'Caricamento…'
+                                    : 'Invia scontrino'}
+                                </button>
+
+                                <button
+                                  type="button"
+                                  className="btn btn--secondary"
+                                  onClick={() => setExpenseFormRequestId('')}
+                                >
+                                  Chiudi
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </>
                       )}
 
                       {request.status === 'completata' && (

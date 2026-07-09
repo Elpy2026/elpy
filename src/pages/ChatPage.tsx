@@ -5,6 +5,7 @@ import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import BackButton from '../components/BackButton'
 
 type RequestData = {
   id: string
@@ -302,6 +303,8 @@ const preferredConversationId =
         <section className="section page-section">
           <div className="container page-container">
             <div className="page-header">
+              <BackButton />
+
               <p className="hero__badge">Chat</p>
               <h1 className="page-title">Messaggi</h1>
             </div>

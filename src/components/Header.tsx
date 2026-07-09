@@ -123,7 +123,7 @@ function Header() {
   }, [loadProfileAndNotifications])
 
   async function handleSignOut() {
-    setMenuOpen(false)
+    setMenuOpen(false)       
     await signOut()
   }
 
@@ -141,10 +141,11 @@ function Header() {
         </Link>
 
         <nav className="header__nav" aria-label="Navigazione principale">
-          <Link to="/cerco-aiuto">Cerco aiuto</Link>
-          <Link to="/offro-aiuto">Offro aiuto</Link>
-          <Link to="/come-funziona">Come funziona</Link>
-        </nav>
+  <Link to="/cerco-aiuto">Cerco aiuto</Link>
+  <Link to="/offro-aiuto">Offro aiuto</Link>
+  <Link to="/come-funziona">Come funziona</Link>
+  <Link to="/chi-siamo">Chi siamo</Link>
+</nav>
 
         <div className="header__account">
           {user ? (

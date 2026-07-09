@@ -9,6 +9,8 @@ import {
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 
+type UserRole = 'seeker' | 'helper' | 'both'
+
 type SignUpConsents = {
   acceptedTerms: boolean
   acceptedPrivacy: boolean
@@ -23,7 +25,7 @@ interface AuthContextValue {
     email: string,
     password: string,
     fullName: string,
-    role: 'seeker' | 'helper',
+    role: UserRole,
     phone: string,
     consents: SignUpConsents,
   ) => Promise<void>
@@ -57,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     email: string,
     password: string,
     fullName: string,
-    role: 'seeker' | 'helper',
+    role: UserRole,
     phone: string,
     consents: SignUpConsents,
   ) {
