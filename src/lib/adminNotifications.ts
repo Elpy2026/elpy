@@ -24,6 +24,49 @@ export type AdminNotification = {
 
 const ADMIN_NOTIFICATIONS_LIMIT = 100
 
+function getEmailLink(type: AdminNotificationType) {
+  if (type === 'new_kyc_request') {
+    return '/admin/verifiche'
+  }
+
+  if (type === 'stripe_payment_completed') {
+    return '/admin/pagamenti'
+  }
+
+  if (type === 'new_report') {
+    return '/admin/segnalazioni'
+  }
+
+  return '/admin/dashboard'
+}
+
+async function sendAdminEmail({
+  type,
+  title,
+  message,
+}: {
+  type: AdminNotificationType
+  title: string
+  message: string
+}) {
+  const { error } = await supabase.functions.invoke('send-admin-email', {
+    body: {
+      type,
+      title,
+      message,
+      link: getEmailLink(type),
+    },
+  })
+
+  if (error) {
+    console.error('Admin email sending failed:', error.message)
+  }
+
+  return {
+    error: error?.message ?? null,
+  }
+}
+
 export async function createAdminNotification({
   type,
   title,
@@ -35,19 +78,45 @@ export async function createAdminNotification({
   message: string
   metadata?: AdminNotificationMetadata
 }) {
-  const { error } = await supabase.from('admin_notifications').insert({
+  const { error: insertError } = await supabase
+    .from('admin_notifications')
+    .insert({
+      type,
+      title,
+      message,
+      metadata,
+      is_read: false,
+    })
+
+  if (insertError) {
+    console.error(
+      'Admin notification insert failed:',
+      insertError.message,
+    )
+
+    return {
+      error: insertError.message,
+      emailError: null,
+    }
+  }
+
+  const emailResult = await sendAdminEmail({
     type,
     title,
     message,
-    metadata,
-    is_read: false,
   })
 
-  if (error) {
-    console.error('Admin notification insert failed:', error.message)
+  if (emailResult.error) {
+    console.error(
+      'La notifica è stata salvata, ma l’email admin non è partita:',
+      emailResult.error,
+    )
   }
 
-  return { error: error?.message ?? null }
+  return {
+    error: null,
+    emailError: emailResult.error,
+  }
 }
 
 export async function fetchAdminNotifications() {
@@ -56,6 +125,8 @@ export async function fetchAdminNotifications() {
     .select('id, type, title, message, metadata, is_read, created_at')
     .order('created_at', { ascending: false })
     .limit(ADMIN_NOTIFICATIONS_LIMIT)
+
+  console.log('ADMIN NOTIFICATIONS', { data, error })
 
   return {
     data: (data ?? []) as AdminNotification[],
@@ -66,7 +137,10 @@ export async function fetchAdminNotifications() {
 export async function fetchUnreadAdminNotificationsCount() {
   const { count, error } = await supabase
     .from('admin_notifications')
-    .select('id', { count: 'exact', head: true })
+    .select('id', {
+      count: 'exact',
+      head: true,
+    })
     .eq('is_read', false)
 
   return {
@@ -75,47 +149,79 @@ export async function fetchUnreadAdminNotificationsCount() {
   }
 }
 
-export async function markAdminNotificationAsRead(notificationId: string) {
+export async function markAdminNotificationAsRead(
+  notificationId: string,
+) {
   const { error } = await supabase
     .from('admin_notifications')
-    .update({ is_read: true })
+    .update({
+      is_read: true,
+    })
     .eq('id', notificationId)
     .eq('is_read', false)
 
-  return { error: error?.message ?? null }
+  return {
+    error: error?.message ?? null,
+  }
 }
 
 export async function markAllAdminNotificationsAsRead() {
   const { error } = await supabase
     .from('admin_notifications')
-    .update({ is_read: true })
+    .update({
+      is_read: true,
+    })
     .eq('is_read', false)
 
-  return { error: error?.message ?? null }
+  return {
+    error: error?.message ?? null,
+  }
 }
 
 export function getAdminNotificationIcon(type: string) {
   if (type.includes('user')) return '👤'
-  if (type.includes('request') || type.includes('kyc')) return '📄'
+
+  if (type.includes('request') || type.includes('kyc')) {
+    return '📄'
+  }
+
   if (type.includes('application')) return '🙋'
   if (type.includes('review')) return '⭐'
   if (type.includes('report')) return '🚩'
-  if (type.includes('stripe') || type.includes('payment')) return '💳'
+
+  if (type.includes('stripe') || type.includes('payment')) {
+    return '💳'
+  }
+
   return '🔔'
 }
 
-export function getAdminNotificationLink(notification: AdminNotification) {
+export function getAdminNotificationLink(
+  notification: AdminNotification,
+) {
   const metadata = notification.metadata ?? {}
 
-  if (notification.type.includes('report')) return '/admin/segnalazioni'
-  if (notification.type.includes('kyc') || notification.type.includes('identity')) {
+  if (notification.type.includes('report')) {
+    return '/admin/segnalazioni'
+  }
+
+  if (
+    notification.type.includes('kyc') ||
+    notification.type.includes('identity')
+  ) {
     return '/admin/verifiche'
   }
-  if (notification.type.includes('stripe') || notification.type.includes('payment')) {
+
+  if (
+    notification.type.includes('stripe') ||
+    notification.type.includes('payment')
+  ) {
     return '/admin/pagamenti'
   }
+
   if (notification.type.includes('review')) {
     const reviewedUserId = metadata.reviewed_user_id
+
     return typeof reviewedUserId === 'string'
       ? `/profilo-helper/${reviewedUserId}`
       : '/admin/dashboard'
@@ -125,18 +231,32 @@ export function getAdminNotificationLink(notification: AdminNotification) {
 }
 
 export function formatAdminNotificationDate(value: string | null) {
-  if (!value) return 'Data non disponibile'
+  if (!value) {
+    return 'Data non disponibile'
+  }
 
   const date = new Date(value)
-  const diffSeconds = Math.max(0, Math.round((Date.now() - date.getTime()) / 1000))
 
-  if (diffSeconds < 60) return 'adesso'
+  const diffSeconds = Math.max(
+    0,
+    Math.round((Date.now() - date.getTime()) / 1000),
+  )
+
+  if (diffSeconds < 60) {
+    return 'adesso'
+  }
 
   const diffMinutes = Math.round(diffSeconds / 60)
-  if (diffMinutes < 60) return `${diffMinutes} min fa`
+
+  if (diffMinutes < 60) {
+    return `${diffMinutes} min fa`
+  }
 
   const diffHours = Math.round(diffMinutes / 60)
-  if (diffHours < 24) return `${diffHours} h fa`
+
+  if (diffHours < 24) {
+    return `${diffHours} h fa`
+  }
 
   return date.toLocaleDateString('it-IT', {
     day: 'numeric',

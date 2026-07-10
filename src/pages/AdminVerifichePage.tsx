@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { supabase } from '../lib/supabase'
@@ -12,6 +12,14 @@ type Verification = {
   status: string
   rejection_reason: string | null
   created_at: string | null
+  reviewed_at?: string | null
+}
+
+type UserProfile = {
+  id: string
+  full_name: string | null
+  phone: string | null
+  verified: boolean | null
 }
 
 type FileLinks = {
@@ -42,28 +50,82 @@ const emptyStats: AdminStats = {
   reviews: 0,
 }
 
+function formatDate(value: string | null | undefined) {
+  if (!value) return 'Data non disponibile'
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+
+  return date.toLocaleString('it-IT', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function getStatusLabel(status: string) {
+  if (status === 'pending') return 'In attesa'
+  if (status === 'approved') return 'Approvata'
+  if (status === 'rejected') return 'Rifiutata'
+  return status
+}
+
 function AdminVerifichePage() {
   const [verifiche, setVerifiche] = useState<Verification[]>([])
+  const [profiles, setProfiles] = useState<Record<string, UserProfile>>({})
   const [stats, setStats] = useState<AdminStats>(emptyStats)
   const [loading, setLoading] = useState(true)
+  const [processingId, setProcessingId] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [fileLinks, setFileLinks] = useState<Record<string, FileLinks>>({})
 
-  async function countRows(table: string, filters?: Record<string, string>) {
-    let query = supabase.from(table).select('id', { count: 'exact', head: true })
-
-    if (filters) {
-      for (const [key, value] of Object.entries(filters)) {
-        query = query.eq(key, value)
+  const verificheOrdinate = useMemo(() => {
+    return [...verifiche].sort((first, second) => {
+      if (first.status === 'pending' && second.status !== 'pending') {
+        return -1
       }
-    }
 
-    const { count } = await query
-    return count ?? 0
-  }
+      if (first.status !== 'pending' && second.status === 'pending') {
+        return 1
+      }
 
-  async function loadStats() {
+      const firstDate = new Date(first.created_at ?? 0).getTime()
+      const secondDate = new Date(second.created_at ?? 0).getTime()
+
+      return secondDate - firstDate
+    })
+  }, [verifiche])
+
+  const countRows = useCallback(
+    async (table: string, filters?: Record<string, string | boolean>) => {
+      let query = supabase
+        .from(table)
+        .select('id', { count: 'exact', head: true })
+
+      if (filters) {
+        for (const [key, value] of Object.entries(filters)) {
+          query = query.eq(key, value)
+        }
+      }
+
+      const { count, error: countError } = await query
+
+      if (countError) {
+        console.error(`Errore conteggio tabella ${table}:`, countError.message)
+      }
+
+      return count ?? 0
+    },
+    [],
+  )
+
+  const loadStats = useCallback(async () => {
     const [
       users,
       verifiedUsers,
@@ -75,7 +137,7 @@ function AdminVerifichePage() {
       reviews,
     ] = await Promise.all([
       countRows('profiles'),
-      countRows('profiles', { verified: 'true' }),
+      countRows('profiles', { verified: true }),
       countRows('identity_verifications', { status: 'pending' }),
       countRows('requests', { status: 'aperta' }),
       countRows('requests', { status: 'accettata' }),
@@ -94,36 +156,86 @@ function AdminVerifichePage() {
       applications,
       reviews,
     })
-  }
+  }, [countRows])
 
-  async function loadVerifiche() {
+  const loadVerifiche = useCallback(async () => {
     setLoading(true)
     setError('')
-    setSuccess('')
 
     await loadStats()
 
-    const { data, error } = await supabase
+    const { data, error: verificationError } = await supabase
       .from('identity_verifications')
-      .select('*')
+      .select(
+        `
+          id,
+          user_id,
+          document_front_url,
+          document_back_url,
+          selfie_url,
+          status,
+          rejection_reason,
+          created_at,
+          reviewed_at
+        `,
+      )
       .order('created_at', { ascending: false })
 
-    if (error) {
-      setError(error.message)
+    if (verificationError) {
+      setError(verificationError.message)
+      setLoading(false)
+      return
+    }
+
+    const loadedVerifiche = (data ?? []) as Verification[]
+    setVerifiche(loadedVerifiche)
+
+    const userIds = [
+      ...new Set(
+        loadedVerifiche
+          .map((verifica) => verifica.user_id)
+          .filter(Boolean),
+      ),
+    ]
+
+    if (userIds.length > 0) {
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, phone, verified')
+        .in('id', userIds)
+
+      if (profilesError) {
+        console.error(
+          'Errore caricamento profili verifiche:',
+          profilesError.message,
+        )
+      } else {
+        const profilesMap: Record<string, UserProfile> = {}
+
+        for (const profile of profilesData ?? []) {
+          profilesMap[profile.id] = profile as UserProfile
+        }
+
+        setProfiles(profilesMap)
+      }
     } else {
-      setVerifiche(data ?? [])
+      setProfiles({})
+    }
 
-      const links: Record<string, FileLinks> = {}
+    const links: Record<string, FileLinks> = {}
 
-      for (const verifica of data ?? []) {
-        links[verifica.id] = {}
+    await Promise.all(
+      loadedVerifiche.map(async (verifica) => {
+        const currentLinks: FileLinks = {}
 
         if (verifica.document_front_url) {
           const { data: signed } = await supabase.storage
             .from('identity-documents')
             .createSignedUrl(verifica.document_front_url, 60 * 10)
 
-          if (signed?.signedUrl) links[verifica.id].front = signed.signedUrl
+          if (signed?.signedUrl) {
+            currentLinks.front = signed.signedUrl
+          }
         }
 
         if (verifica.document_back_url) {
@@ -131,7 +243,9 @@ function AdminVerifichePage() {
             .from('identity-documents')
             .createSignedUrl(verifica.document_back_url, 60 * 10)
 
-          if (signed?.signedUrl) links[verifica.id].back = signed.signedUrl
+          if (signed?.signedUrl) {
+            currentLinks.back = signed.signedUrl
+          }
         }
 
         if (verifica.selfie_url) {
@@ -139,94 +253,217 @@ function AdminVerifichePage() {
             .from('identity-documents')
             .createSignedUrl(verifica.selfie_url, 60 * 10)
 
-          if (signed?.signedUrl) links[verifica.id].selfie = signed.signedUrl
+          if (signed?.signedUrl) {
+            currentLinks.selfie = signed.signedUrl
+          }
         }
-      }
 
-      setFileLinks(links)
-    }
+        links[verifica.id] = currentLinks
+      }),
+    )
 
+    setFileLinks(links)
     setLoading(false)
-  }
+  }, [loadStats])
 
-  async function verificaProfilo(userId: string) {
+  useEffect(() => {
+    void loadVerifiche()
+  }, [loadVerifiche])
+
+  async function approva(verifica: Verification) {
+    if (processingId) return
+
+    const conferma = window.confirm(
+      `Confermi l’approvazione della verifica di ${
+        profiles[verifica.user_id]?.full_name ?? verifica.user_id
+      }?`,
+    )
+
+    if (!conferma) return
+
+    setProcessingId(verifica.id)
     setError('')
     setSuccess('')
+
+    const reviewedAt = new Date().toISOString()
+
+    const { data: updatedVerification, error: verificationError } =
+      await supabase
+        .from('identity_verifications')
+        .update({
+          status: 'approved',
+          rejection_reason: null,
+          reviewed_at: reviewedAt,
+        })
+        .eq('id', verifica.id)
+        .eq('user_id', verifica.user_id)
+        .eq('status', 'pending')
+        .select('id')
+        .maybeSingle()
+
+    if (verificationError) {
+      setError(verificationError.message)
+      setProcessingId('')
+      return
+    }
+
+    if (!updatedVerification) {
+      setError(
+        'La verifica non è stata aggiornata. Potrebbe essere già stata gestita.',
+      )
+      setProcessingId('')
+      return
+    }
 
     const { error: profileError } = await supabase
       .from('profiles')
       .update({ verified: true })
-      .eq('id', userId)
+      .eq('id', verifica.user_id)
 
     if (profileError) {
-      setError(profileError.message)
-      return false
-    }
-
-    setSuccess('Profilo utente verificato correttamente.')
-    return true
-  }
-
-  async function approva(verifica: Verification) {
-    setError('')
-    setSuccess('')
-
-    const { error: verificationError } = await supabase
-      .from('identity_verifications')
-      .update({
-        status: 'approved',
-        reviewed_at: new Date().toISOString(),
-      })
-      .eq('id', verifica.id)
-
-    if (verificationError) {
-      setError(verificationError.message)
+      setError(
+        `Verifica approvata, ma il profilo non è stato aggiornato: ${profileError.message}`,
+      )
+      setProcessingId('')
       return
     }
 
-    const ok = await verificaProfilo(verifica.user_id)
+    setVerifiche((current) =>
+      current.map((item) =>
+        item.id === verifica.id
+          ? {
+              ...item,
+              status: 'approved',
+              rejection_reason: null,
+              reviewed_at: reviewedAt,
+            }
+          : item,
+      ),
+    )
 
-    if (!ok) return
+    setProfiles((current) => ({
+      ...current,
+      [verifica.user_id]: {
+        ...(current[verifica.user_id] ?? {
+          id: verifica.user_id,
+          full_name: null,
+          phone: null,
+          verified: false,
+        }),
+        verified: true,
+      },
+    }))
 
-    await loadVerifiche()
-  }
+    setStats((current) => ({
+      ...current,
+      verifiedUsers: current.verifiedUsers + 1,
+      pendingVerifications: Math.max(0, current.pendingVerifications - 1),
+    }))
 
-  async function forzaVerificaProfilo(verifica: Verification) {
-    const ok = await verificaProfilo(verifica.user_id)
-
-    if (!ok) return
-
-    await loadVerifiche()
+    setSuccess('Verifica approvata e profilo verificato correttamente.')
+    setProcessingId('')
   }
 
   async function rifiuta(verifica: Verification) {
-    const motivo = window.prompt('Motivo del rifiuto:')
-    if (!motivo) return
+    if (processingId) return
 
+    const motivo = window.prompt(
+      `Inserisci il motivo del rifiuto per ${
+        profiles[verifica.user_id]?.full_name ?? verifica.user_id
+      }:`,
+    )
+
+    const motivoPulito = motivo?.trim()
+
+    if (!motivoPulito) return
+
+    const conferma = window.confirm(
+      'Confermi il rifiuto esclusivamente di questa verifica?',
+    )
+
+    if (!conferma) return
+
+    setProcessingId(verifica.id)
     setError('')
     setSuccess('')
 
-    const { error } = await supabase
-      .from('identity_verifications')
-      .update({
-        status: 'rejected',
-        rejection_reason: motivo,
-        reviewed_at: new Date().toISOString(),
-      })
-      .eq('id', verifica.id)
+    const reviewedAt = new Date().toISOString()
 
-    if (error) {
-      setError(error.message)
+    const { data: updatedVerification, error: verificationError } =
+      await supabase
+        .from('identity_verifications')
+        .update({
+          status: 'rejected',
+          rejection_reason: motivoPulito,
+          reviewed_at: reviewedAt,
+        })
+        .eq('id', verifica.id)
+        .eq('user_id', verifica.user_id)
+        .eq('status', 'pending')
+        .select('id')
+        .maybeSingle()
+
+    if (verificationError) {
+      setError(verificationError.message)
+      setProcessingId('')
       return
     }
 
-    setSuccess('Verifica rifiutata.')
-    await loadVerifiche()
-  }
+    if (!updatedVerification) {
+      setError(
+        'La verifica non è stata aggiornata. Potrebbe essere già stata gestita.',
+      )
+      setProcessingId('')
+      return
+    }
 
-  useEffect(() => {
-    void loadVerifiche()
-  }, [])
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({ verified: false })
+      .eq('id', verifica.user_id)
+
+    if (profileError) {
+      setError(
+        `Verifica rifiutata, ma il profilo non è stato aggiornato: ${profileError.message}`,
+      )
+      setProcessingId('')
+      return
+    }
+
+    setVerifiche((current) =>
+      current.map((item) =>
+        item.id === verifica.id
+          ? {
+              ...item,
+              status: 'rejected',
+              rejection_reason: motivoPulito,
+              reviewed_at: reviewedAt,
+            }
+          : item,
+      ),
+    )
+
+    setProfiles((current) => ({
+      ...current,
+      [verifica.user_id]: {
+        ...(current[verifica.user_id] ?? {
+          id: verifica.user_id,
+          full_name: null,
+          phone: null,
+          verified: false,
+        }),
+        verified: false,
+      },
+    }))
+
+    setStats((current) => ({
+      ...current,
+      pendingVerifications: Math.max(0, current.pendingVerifications - 1),
+    }))
+
+    setSuccess('È stata rifiutata esclusivamente la verifica selezionata.')
+    setProcessingId('')
+  }
 
   return (
     <div className="landing">
@@ -237,13 +474,14 @@ function AdminVerifichePage() {
           <div className="container">
             <div className="page-header">
               <p className="hero__badge">Admin</p>
-              <h1 className="page-title">Dashboard Admin</h1>
+              <h1 className="page-title">Verifiche identità</h1>
               <p className="page-subtitle">
-                Controlla utenti, richieste, candidature, recensioni e verifiche.
+                Controlla i documenti degli utenti e gestisci singolarmente
+                ogni richiesta.
               </p>
             </div>
 
-            {loading && <p>Caricamento dashboard…</p>}
+            {loading && <p>Caricamento verifiche…</p>}
             {error && <div className="alert alert--error">{error}</div>}
             {success && <div className="alert alert--success">{success}</div>}
 
@@ -259,8 +497,10 @@ function AdminVerifichePage() {
               </div>
 
               <div className="dashboard__card">
-                <p className="dashboard__label">Verifiche pending</p>
-                <p className="dashboard__value">{stats.pendingVerifications}</p>
+                <p className="dashboard__label">Verifiche in attesa</p>
+                <p className="dashboard__value">
+                  {stats.pendingVerifications}
+                </p>
               </div>
 
               <div className="dashboard__card">
@@ -270,12 +510,16 @@ function AdminVerifichePage() {
 
               <div className="dashboard__card">
                 <p className="dashboard__label">Richieste accettate</p>
-                <p className="dashboard__value">{stats.acceptedRequests}</p>
+                <p className="dashboard__value">
+                  {stats.acceptedRequests}
+                </p>
               </div>
 
               <div className="dashboard__card dashboard__card--accepted">
                 <p className="dashboard__label">Richieste completate</p>
-                <p className="dashboard__value">{stats.completedRequests}</p>
+                <p className="dashboard__value">
+                  {stats.completedRequests}
+                </p>
               </div>
 
               <div className="dashboard__card">
@@ -290,91 +534,193 @@ function AdminVerifichePage() {
             </div>
 
             <div className="page-header">
-              <p className="hero__badge">Verifiche</p>
-              <h2 className="page-title">Verifiche identità</h2>
+              <p className="hero__badge">Pratiche</p>
+              <h2 className="page-title">Richieste di verifica</h2>
+              <p className="page-subtitle">
+                Le pratiche in attesa vengono mostrate per prime.
+              </p>
             </div>
 
-            {!loading && verifiche.length === 0 && (
-              <p>Nessuna verifica trovata.</p>
+            {!loading && verificheOrdinate.length === 0 && (
+              <div className="empty-state">
+                <p>Nessuna verifica trovata.</p>
+              </div>
             )}
 
             <div className="requests-list">
-              {verifiche.map((verifica) => (
-                <article className="request-card" key={verifica.id}>
-                  <h2>Verifica utente</h2>
-                  <p>
-                    <strong>User ID:</strong> {verifica.user_id}
-                  </p>
-                  <p>
-                    <strong>Stato:</strong> {verifica.status}
-                  </p>
-                  <p>
-                    <strong>Creata il:</strong> {verifica.created_at}
-                  </p>
+              {verificheOrdinate.map((verifica) => {
+                const profile = profiles[verifica.user_id]
+                const isProcessing = processingId === verifica.id
 
-                  <div className="form-actions">
-                    {fileLinks[verifica.id]?.front && (
-                      <a
-                        className="btn btn--secondary"
-                        href={fileLinks[verifica.id].front}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Apri documento fronte
-                      </a>
-                    )}
+                return (
+                  <article className="request-card" key={verifica.id}>
+                    <div className="request-card__header">
+                      <span className="request-card__category">
+                        {profile?.full_name?.trim() || 'Utente ELPYO'}
+                      </span>
 
-                    {fileLinks[verifica.id]?.back && (
-                      <a
-                        className="btn btn--secondary"
-                        href={fileLinks[verifica.id].back}
-                        target="_blank"
-                        rel="noreferrer"
+                      <span
+                        className={
+                          verifica.status === 'approved'
+                            ? 'badge badge--accepted'
+                            : verifica.status === 'rejected'
+                              ? 'badge'
+                              : 'badge'
+                        }
                       >
-                        Apri documento retro
-                      </a>
-                    )}
-
-                    {fileLinks[verifica.id]?.selfie && (
-                      <a
-                        className="btn btn--secondary"
-                        href={fileLinks[verifica.id].selfie}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Apri selfie
-                      </a>
-                    )}
-                  </div>
-
-                  {verifica.status === 'pending' ? (
-                    <div className="form-actions">
-                      <button
-                        className="btn btn--primary"
-                        onClick={() => void approva(verifica)}
-                      >
-                        Approva
-                      </button>
-
-                      <button
-                        className="btn btn--secondary"
-                        onClick={() => void rifiuta(verifica)}
-                      >
-                        Rifiuta
-                      </button>
+                        {getStatusLabel(verifica.status)}
+                      </span>
                     </div>
-                  ) : (
+
+                    <h2 className="request-card__title">
+                      Verifica identità
+                    </h2>
+
+                    <dl className="request-card__meta">
+                      <div>
+                        <dt>Nome utente</dt>
+                        <dd>
+                          {profile?.full_name?.trim() || 'Non disponibile'}
+                        </dd>
+                      </div>
+
+                      <div>
+                        <dt>Telefono</dt>
+                        <dd>{profile?.phone || 'Non disponibile'}</dd>
+                      </div>
+
+                      <div>
+                        <dt>Profilo verificato</dt>
+                        <dd>{profile?.verified ? 'Sì' : 'No'}</dd>
+                      </div>
+
+                      <div>
+                        <dt>Invio documenti</dt>
+                        <dd>{formatDate(verifica.created_at)}</dd>
+                      </div>
+                    </dl>
+
+                    <p>
+                      <strong>ID utente:</strong> {verifica.user_id}
+                    </p>
+
+                    <p>
+                      <strong>ID pratica:</strong> {verifica.id}
+                    </p>
+
+                    {verifica.reviewed_at && (
+                      <p>
+                        <strong>Gestita il:</strong>{' '}
+                        {formatDate(verifica.reviewed_at)}
+                      </p>
+                    )}
+
+                    {verifica.rejection_reason && (
+                      <div className="alert alert--error">
+                        <strong>Motivo del rifiuto:</strong>{' '}
+                        {verifica.rejection_reason}
+                      </div>
+                    )}
+
                     <div className="form-actions">
-                      <button
-                        className="btn btn--primary"
-                        onClick={() => void forzaVerificaProfilo(verifica)}
-                      >
-                        Forza verifica profilo
-                      </button>
+                      {fileLinks[verifica.id]?.front ? (
+                        <a
+                          className="btn btn--secondary"
+                          href={fileLinks[verifica.id].front}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Apri documento fronte
+                        </a>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn btn--secondary"
+                          disabled
+                        >
+                          Fronte non disponibile
+                        </button>
+                      )}
+
+                      {fileLinks[verifica.id]?.back ? (
+                        <a
+                          className="btn btn--secondary"
+                          href={fileLinks[verifica.id].back}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Apri documento retro
+                        </a>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn btn--secondary"
+                          disabled
+                        >
+                          Retro non disponibile
+                        </button>
+                      )}
+
+                      {fileLinks[verifica.id]?.selfie ? (
+                        <a
+                          className="btn btn--secondary"
+                          href={fileLinks[verifica.id].selfie}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Apri selfie
+                        </a>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn btn--secondary"
+                          disabled
+                        >
+                          Selfie non disponibile
+                        </button>
+                      )}
                     </div>
-                  )}
-                </article>
-              ))}
+
+                    {verifica.status === 'pending' && (
+                      <div className="form-actions">
+                        <button
+                          type="button"
+                          className="btn btn--primary"
+                          onClick={() => void approva(verifica)}
+                          disabled={Boolean(processingId)}
+                        >
+                          {isProcessing
+                            ? 'Aggiornamento…'
+                            : 'Approva questa verifica'}
+                        </button>
+
+                        <button
+                          type="button"
+                          className="btn btn--secondary"
+                          onClick={() => void rifiuta(verifica)}
+                          disabled={Boolean(processingId)}
+                        >
+                          {isProcessing
+                            ? 'Aggiornamento…'
+                            : 'Rifiuta questa verifica'}
+                        </button>
+                      </div>
+                    )}
+
+                    {verifica.status === 'approved' && (
+                      <div className="alert alert--success">
+                        Questa verifica è stata approvata.
+                      </div>
+                    )}
+
+                    {verifica.status === 'rejected' && (
+                      <div className="alert alert--error">
+                        Questa verifica è stata rifiutata.
+                      </div>
+                    )}
+                  </article>
+                )
+              })}
             </div>
           </div>
         </section>

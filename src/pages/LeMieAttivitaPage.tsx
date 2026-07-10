@@ -41,17 +41,51 @@ type ExpenseDraft = {
   file: File | null
 }
 
+function formatDate(dateString: string) {
+  if (!dateString) return 'Data non disponibile'
+
+  return new Date(`${dateString}T00:00:00`).toLocaleDateString('it-IT', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+}
+
+function formatStatus(status: string | null) {
+  if (status === 'accettata' || status === 'accepted') {
+    return 'Accettata'
+  }
+
+  if (status === 'completata' || status === 'completed') {
+    return 'Completata'
+  }
+
+  if (status === 'annullata' || status === 'cancelled') {
+    return 'Annullata'
+  }
+
+  return status ?? 'Accettata'
+}
+
 function LeMieAttivitaPage() {
   const { user } = useAuth()
+
   const [requests, setRequests] = useState<HelperRequest[]>([])
   const [seekers, setSeekers] = useState<Record<string, SeekerProfile>>({})
   const [stats, setStats] = useState<ReviewStats | null>(null)
+
   const [loading, setLoading] = useState(true)
+  const [openRequestId, setOpenRequestId] = useState<string | null>(null)
+
   const [completingId, setCompletingId] = useState('')
   const [cancellingId, setCancellingId] = useState('')
   const [uploadingExpenseId, setUploadingExpenseId] = useState('')
   const [expenseFormRequestId, setExpenseFormRequestId] = useState('')
-  const [expenseDrafts, setExpenseDrafts] = useState<Record<string, ExpenseDraft>>({})
+
+  const [expenseDrafts, setExpenseDrafts] = useState<
+    Record<string, ExpenseDraft>
+  >({})
+
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
@@ -64,35 +98,46 @@ function LeMieAttivitaPage() {
     setLoading(true)
     setError('')
 
-    const { data, error } = await supabase
+    const { data, error: requestsError } = await supabase
       .from('requests')
       .select('*')
       .eq('helper_id', user.id)
       .order('created_at', { ascending: false })
 
-    if (error) {
-      setError(error.message)
+    if (requestsError) {
+      setError(requestsError.message)
     } else {
       const myRequests = data ?? []
+
       setRequests(myRequests)
 
-      const seekerIds = myRequests
-        .map((request) => request.seeker_id)
-        .filter((id): id is string => Boolean(id))
+      const seekerIds = Array.from(
+        new Set(
+          myRequests
+            .map((request) => request.seeker_id)
+            .filter((id): id is string => Boolean(id)),
+        ),
+      )
 
       if (seekerIds.length > 0) {
-        const { data: profilesData } = await supabase
+        const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
           .select('id, full_name, phone, verified')
           .in('id', seekerIds)
 
-        const profilesMap: Record<string, SeekerProfile> = {}
+        if (profilesError) {
+          setError(profilesError.message)
+        } else {
+          const profilesMap: Record<string, SeekerProfile> = {}
 
-        for (const profile of profilesData ?? []) {
-          profilesMap[profile.id] = profile
+          for (const profile of profilesData ?? []) {
+            profilesMap[profile.id] = profile
+          }
+
+          setSeekers(profilesMap)
         }
-
-        setSeekers(profilesMap)
+      } else {
+        setSeekers({})
       }
     }
 
@@ -103,7 +148,6 @@ function LeMieAttivitaPage() {
       .maybeSingle()
 
     setStats(statsData ?? null)
-
     setLoading(false)
   }, [user])
 
@@ -111,7 +155,20 @@ function LeMieAttivitaPage() {
     void loadMyAcceptedRequests()
   }, [loadMyAcceptedRequests])
 
-  function updateExpenseDraft(requestId: string, patch: Partial<ExpenseDraft>) {
+  function toggleRequest(requestId: string) {
+    setOpenRequestId((current) =>
+      current === requestId ? null : requestId,
+    )
+
+    if (openRequestId === requestId) {
+      setExpenseFormRequestId('')
+    }
+  }
+
+  function updateExpenseDraft(
+    requestId: string,
+    patch: Partial<ExpenseDraft>,
+  ) {
     setExpenseDrafts((current) => ({
       ...current,
       [requestId]: {
@@ -172,14 +229,16 @@ function LeMieAttivitaPage() {
       return
     }
 
-    const { error: insertError } = await supabase.from('request_expenses').insert({
-      request_id: requestId,
-      helper_id: user.id,
-      receipt_image_path: filePath,
-      receipt_amount: amount,
-      notes: draft.notes || null,
-      status: 'pending',
-    })
+    const { error: insertError } = await supabase
+      .from('request_expenses')
+      .insert({
+        request_id: requestId,
+        helper_id: user.id,
+        receipt_image_path: filePath,
+        receipt_amount: amount,
+        notes: draft.notes || null,
+        status: 'pending',
+      })
 
     if (insertError) {
       setError(insertError.message)
@@ -198,14 +257,16 @@ function LeMieAttivitaPage() {
       return
     }
 
-    const currentRequest = requests.find((request) => request.id === requestId)
+    const currentRequest = requests.find(
+      (request) => request.id === requestId,
+    )
 
     if (currentRequest?.seeker_id) {
       await supabase.from('notifications').insert({
         user_id: currentRequest.seeker_id,
         type: 'expense_uploaded',
         title: 'Scontrino caricato',
-        body: 'L\'helper ha caricato uno scontrino da approvare o contestare.',
+        body: "L'helper ha caricato uno scontrino da approvare o contestare.",
         is_read: false,
         link: '/le-mie-richieste',
       })
@@ -218,7 +279,9 @@ function LeMieAttivitaPage() {
     })
 
     setExpenseFormRequestId('')
-    setMessage('Scontrino caricato. Il richiedente potrà approvare o contestare la spesa.')
+    setMessage(
+      'Scontrino caricato. Il richiedente potrà approvare o contestare la spesa.',
+    )
     setUploadingExpenseId('')
   }
 
@@ -254,6 +317,7 @@ function LeMieAttivitaPage() {
       cancelledBy: user.id,
       reason: 'helper_cancelled_after_acceptance',
     })
+
     if (result.error) {
       setError(result.error)
       setCancellingId('')
@@ -267,6 +331,7 @@ function LeMieAttivitaPage() {
     )
 
     await loadMyAcceptedRequests()
+    setOpenRequestId(null)
     setCancellingId('')
   }
 
@@ -279,14 +344,20 @@ function LeMieAttivitaPage() {
           <div className="container page-container">
             <div className="page-header">
               <p className="hero__badge">Area helper</p>
+
               <h1 className="page-title">Le mie attività</h1>
+
               <p className="page-subtitle">
-                Qui trovi le richieste che hai accettato e che stai svolgendo.
+                Consulta le attività che hai accettato, gestisci i dettagli
+                e completa gli aiuti svolti.
               </p>
             </div>
 
             <div className="request-card">
-              <h2 className="request-card__title">La tua reputazione</h2>
+              <h2 className="request-card__title">
+                La tua reputazione
+              </h2>
+
               {stats ? (
                 <p>
                   ⭐ {stats.average_rating ?? 0} · {stats.review_count}{' '}
@@ -297,227 +368,334 @@ function LeMieAttivitaPage() {
               )}
             </div>
 
-            {message && <div className="alert alert--success">{message}</div>}
-            {loading && <p>Caricamento attività…</p>}
-            {error && <div className="alert alert--error">{error}</div>}
-
-            {!loading && requests.length === 0 && (
-              <div className="empty-state">
-                <p>Non hai richieste attive al momento.</p>
-                <Link to="/offro-aiuto" className="btn btn--primary">
-                  Vedi richieste disponibili
-                </Link>
+            {message && (
+              <div className="alert alert--success">
+                {message}
               </div>
             )}
 
-            {requests.length > 0 && (
-              <ul className="requests-list">
+            {loading && <p>Caricamento attività…</p>}
+
+            {error && (
+              <div className="alert alert--error">
+                {error}
+              </div>
+            )}
+
+{!loading && requests.length === 0 && (
+  <div className="empty-state">
+    <p>Non hai richieste attive al momento.</p>
+
+    <div className="form-actions">
+      <Link
+        to="/offro-aiuto"
+        className="btn btn--primary"
+      >
+        Vedi richieste disponibili
+      </Link>
+
+      <Link
+        to="/"
+        className="btn btn--secondary"
+      >
+        Torna alla Home
+      </Link>
+    </div>
+  </div>
+)}
+
+            {!loading && requests.length > 0 && (
+              <ul className="helper-requests-list helper-requests-list--compact">
                 {requests.map((request) => {
-                  const seeker = request.seeker_id ? seekers[request.seeker_id] : null
+                  const isOpen = openRequestId === request.id
+
+                  const seeker = request.seeker_id
+                    ? seekers[request.seeker_id]
+                    : null
+
                   const draft = expenseDrafts[request.id]
 
+                  const requestIsAccepted =
+                    request.status === 'accettata' ||
+                    request.status === 'accepted'
+
+                  const requestIsCompleted =
+                    request.status === 'completata' ||
+                    request.status === 'completed'
+
                   return (
-                    <li key={request.id} className="request-card">
-                      <div className="request-card__header">
-                        <span className="request-card__category">
-                          {request.category}
+                    <li
+                      key={request.id}
+                      className={`helper-request-card helper-request-card--accordion ${
+                        isOpen ? 'is-open' : ''
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        className="request-accordion__summary"
+                        onClick={() => toggleRequest(request.id)}
+                        aria-expanded={isOpen}
+                        aria-controls={`activity-details-${request.id}`}
+                      >
+                        <span className="request-accordion__chevron">
+                          {isOpen ? '▾' : '▸'}
                         </span>
-                        <span className="badge badge--accepted">
-                          {request.status ?? 'accettata'}
+
+                        <span className="request-accordion__main">
+                          <strong>{request.title}</strong>
+
+                          <small>
+                            {request.category} · {formatStatus(request.status)}
+                          </small>
                         </span>
-                      </div>
 
-                      <h2 className="request-card__title">{request.title}</h2>
-                      <p className="request-card__desc">{request.description}</p>
+                        <span className="request-accordion__reward">
+                          €{request.reward}
+                        </span>
+                      </button>
 
-                      <dl className="request-card__meta">
-                        <div>
-                          <dt>Città</dt>
-                          <dd>{request.city}</dd>
-                        </div>
+                      {isOpen && (
+                        <div
+                          id={`activity-details-${request.id}`}
+                          className="request-accordion__details"
+                        >
+                          <div className="request-card__header">
+                            <span className="request-card__category">
+                              {request.category}
+                            </span>
 
-                        <div>
-                          <dt>Data</dt>
-                          <dd>{request.request_date}</dd>
-                        </div>
+                            <span className="badge badge--accepted">
+                              {formatStatus(request.status)}
+                            </span>
+                          </div>
 
-                        <div>
-                          <dt>Compenso</dt>
-                          <dd className="request-card__compenso">
-                            €{request.reward}
-                          </dd>
-                        </div>
-                      </dl>
+                          <h2 className="request-card__title">
+                            {request.title}
+                          </h2>
 
-                      {(request.status === 'accettata' ||
-                        request.status === 'completata') && (
-                        <div className="alert alert--success">
-                          <p>
-                            <strong>Richiedente:</strong>{' '}
-                            {seeker?.full_name ?? 'Utente ELPYO'}
-                            {seeker?.verified && ' · Identità verificata'}
+                          <p className="request-card__desc">
+                            {request.description}
                           </p>
 
-                          <SafetyPanel
-                            requestId={request.id}
-                            otherUserId={request.seeker_id}
-                            otherUserName={seeker?.full_name}
-                            requestStatus={request.status}
-                          />
+                          <dl className="request-card__meta">
+                            <div>
+                              <dt>Città</dt>
+                              <dd>{request.city}</dd>
+                            </div>
 
-                          <div className="form-actions">
-                            {seeker?.phone && (
-                              <>
-                                <a
-                                  className="btn btn--secondary"
-                                  href={`tel:${seeker.phone}`}
-                                >
-                                  Chiama
-                                </a>
+                            <div>
+                              <dt>Data</dt>
+                              <dd>{formatDate(request.request_date)}</dd>
+                            </div>
 
-                                <a
-                                  className="btn btn--primary"
-                                  href={`https://wa.me/${seeker.phone.replace(/\D/g, '')}`}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                >
-                                  Contatta su WhatsApp
-                                </a>
-                              </>
-                            )}
+                            <div>
+                              <dt>Compenso</dt>
+                              <dd className="request-card__compenso">
+                                €{request.reward}
+                              </dd>
+                            </div>
+                          </dl>
 
-                            <Link
-                              to={`/chat/${request.id}`}
-                              className="btn btn--secondary"
-                            >
-                              Apri chat
-                            </Link>
-                          </div>
-                        </div>
-                      )}
-
-                      {request.status === 'accettata' && (
-                        <>
-                          <div className="form-actions">
-                            <button
-                              type="button"
-                              className="btn btn--secondary request-card__btn"
-                              style={{ background: "#079455", color: "#fff", borderColor: "#079455" }}
-                              onClick={() =>
-                                setExpenseFormRequestId(
-                                  expenseFormRequestId === request.id ? '' : request.id,
-                                )
-                              }
-                            >
-                              📷 Carica scontrino
-                            </button>
-
-                            <button
-                            type="button"
-                              className="btn btn--primary request-card__btn"
-                              onClick={() => void handleComplete(request.id)}
-                              disabled={completingId === request.id}
-                            >
-                              {completingId === request.id
-                                ? 'Completamento…'
-                                : 'Completa richiesta'}
-                            </button>
-
-                            <button
-                              type="button"
-                              className="btn btn--secondary request-card__btn"
-                              onClick={() => void handleCancel(request)}
-                              disabled={cancellingId === request.id}
-                            >
-                              {cancellingId === request.id
-                                ? 'Annullamento…'
-                                : 'Annulla accordo'}
-                            </button>
-                      </div>
-
-                          {expenseFormRequestId === request.id && (
-                            <div className="request-card">
-                              <h3 className="request-card__title">
-                                Carica scontrino
-                              </h3>
-                              <p className="page-subtitle">
-                                Inserisci la foto dello scontrino e l'importo che hai
-                                anticipato. Il richiedente potrà approvare o contestare.
+                          {(requestIsAccepted || requestIsCompleted) && (
+                            <div className="alert alert--success">
+                              <p>
+                                <strong>Richiedente:</strong>{' '}
+                                {seeker?.full_name ?? 'Utente ELPYO'}
+                                {seeker?.verified &&
+                                  ' · Identità verificata'}
                               </p>
 
-                              <label className="form-field">
-                                <span>Foto scontrino</span>
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  onChange={(event) =>
-                                    handleExpenseFileChange(request.id, event)
-                                  }
-                               />
-                              </label>
-
-                              <label className="form-field">
-                                <span>Importo spesa (€)</span>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  step="0.01"
-                                  value={draft?.amount ?? ''}
-                                  onChange={(event) =>
-                                    updateExpenseDraft(request.id, {
-                                      amount: event.target.value,
-                                    })
-                                  }
-                                  placeholder="Es. 12.47"
-                                />
-                              </label>
-
-                              <label className="form-field">
-                                <span>Note facoltative</span>
-                                <textarea
-                                  value={draft?.notes ?? ''}
-                                  onChange={(event) =>
-                                    updateExpenseDraft(request.id, {
-                                      notes: event.target.value,
-                                    })
-                                  }
-                                  placeholder="Es. pane, latte e acqua come richiesto."
-                                />
-                              </label>
+                              <SafetyPanel
+                                requestId={request.id}
+                                otherUserId={request.seeker_id}
+                                otherUserName={seeker?.full_name}
+                                requestStatus={request.status}
+                              />
 
                               <div className="form-actions">
-                                <button
-                                  type="button"
-                                  className="btn btn--primary"
-                                  onClick={() => void handleUploadExpense(request.id)}
-                                  disabled={uploadingExpenseId === request.id}
-                                >
-                                  {uploadingExpenseId === request.id
-                                    ? 'Caricamento…'
-                                    : 'Invia scontrino'}
-                                </button>
+                                {seeker?.phone && (
+                                  <>
+                                    <a
+                                      className="btn btn--secondary"
+                                      href={`tel:${seeker.phone}`}
+                                    >
+                                      Chiama
+                                    </a>
 
-                                <button
-                                  type="button"
+                                    <a
+                                      className="btn btn--primary"
+                                      href={`https://wa.me/${seeker.phone.replace(
+                                        /\D/g,
+                                        '',
+                                      )}`}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                    >
+                                      Contatta su WhatsApp
+                                    </a>
+                                  </>
+                                )}
+
+                                <Link
+                                  to={`/chat/${request.id}`}
                                   className="btn btn--secondary"
-                                  onClick={() => setExpenseFormRequestId('')}
                                 >
-                                  Chiudi
-                                </button>
+                                  Apri chat
+                                </Link>
                               </div>
                             </div>
                           )}
-                        </>
-                      )}
 
-                      {request.status === 'completata' && (
-                        <button
-                          type="button"
-                          className="btn btn--secondary request-card__btn"
-                          disabled
-                        >
-                          Richiesta completata
-                        </button>
+                          {requestIsAccepted && (
+                            <>
+                              <div className="form-actions">
+                                <button
+                                  type="button"
+                                  className="btn btn--secondary request-card__btn"
+                                  style={{
+                                    background: '#079455',
+                                    color: '#fff',
+                                    borderColor: '#079455',
+                                  }}
+                                  onClick={() =>
+                                    setExpenseFormRequestId((current) =>
+                                      current === request.id
+                                        ? ''
+                                        : request.id,
+                                    )
+                                  }
+                                >
+                                  📷 Carica scontrino
+                                </button>
+
+                                <button
+                                  type="button"
+                                  className="btn btn--primary request-card__btn"
+                                  onClick={() =>
+                                    void handleComplete(request.id)
+                                  }
+                                  disabled={completingId === request.id}
+                                >
+                                  {completingId === request.id
+                                    ? 'Completamento…'
+                                    : 'Completa richiesta'}
+                                </button>
+
+                                <button
+                                  type="button"
+                                  className="btn btn--secondary request-card__btn"
+                                  onClick={() =>
+                                    void handleCancel(request)
+                                  }
+                                  disabled={cancellingId === request.id}
+                                >
+                                  {cancellingId === request.id
+                                    ? 'Annullamento…'
+                                    : 'Annulla accordo'}
+                                </button>
+                              </div>
+
+                              {expenseFormRequestId === request.id && (
+                                <div className="request-card">
+                                  <h3 className="request-card__title">
+                                    Carica scontrino
+                                  </h3>
+
+                                  <p className="page-subtitle">
+                                    Inserisci la foto dello scontrino e
+                                    l&apos;importo che hai anticipato. Il
+                                    richiedente potrà approvare o contestare.
+                                  </p>
+
+                                  <label className="form-field">
+                                    <span>Foto scontrino</span>
+
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      onChange={(event) =>
+                                        handleExpenseFileChange(
+                                          request.id,
+                                          event,
+                                        )
+                                      }
+                                    />
+                                  </label>
+
+                                  <label className="form-field">
+                                    <span>Importo spesa (€)</span>
+
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      step="0.01"
+                                      value={draft?.amount ?? ''}
+                                      onChange={(event) =>
+                                        updateExpenseDraft(request.id, {
+                                          amount: event.target.value,
+                                        })
+                                      }
+                                      placeholder="Es. 12.47"
+                                    />
+                                  </label>
+
+                                  <label className="form-field">
+                                    <span>Note facoltative</span>
+
+                                    <textarea
+                                      value={draft?.notes ?? ''}
+                                      onChange={(event) =>
+                                        updateExpenseDraft(request.id, {
+                                          notes: event.target.value,
+                                        })
+                                      }
+                                      placeholder="Es. pane, latte e acqua come richiesto."
+                                    />
+                                  </label>
+
+                                  <div className="form-actions">
+                                    <button
+                                      type="button"
+                                      className="btn btn--primary"
+                                      onClick={() =>
+                                        void handleUploadExpense(
+                                          request.id,
+                                        )
+                                      }
+                                      disabled={
+                                        uploadingExpenseId === request.id
+                                      }
+                                    >
+                                      {uploadingExpenseId === request.id
+                                        ? 'Caricamento…'
+                                        : 'Invia scontrino'}
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      className="btn btn--secondary"
+                                      onClick={() =>
+                                        setExpenseFormRequestId('')
+                                      }
+                                    >
+                                      Chiudi
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </>
+                          )}
+
+                          {requestIsCompleted && (
+                            <button
+                              type="button"
+                              className="btn btn--secondary request-card__btn"
+                              disabled
+                            >
+                              Richiesta completata
+                            </button>
+                          )}
+                        </div>
                       )}
                     </li>
                   )
