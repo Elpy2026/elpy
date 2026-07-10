@@ -36,6 +36,7 @@ import AdminRoute from './components/AdminRoute'
 import VerifiedRoute from './components/VerifiedRoute'
 import CookieBanner from './components/CookieBanner'
 import TrackingConsent from './components/TrackingConsent'
+import ScrollToTop from './components/ScrollToTop'
 
 import './App.css'
 
@@ -43,6 +44,7 @@ function App() {
   return (
     <RequestsProvider>
       <BrowserRouter>
+      <ScrollToTop />
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/prelaunch" element={<PreLaunchPage />} />
