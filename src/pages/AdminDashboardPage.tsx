@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
@@ -20,6 +20,64 @@ type DashboardStats = {
   pendingIdentityVerifications: number
 }
 
+type DashboardCardProps = {
+  label: string
+  value: ReactNode
+  to?: string
+  accepted?: boolean
+}
+
+function DashboardCard({
+  label,
+  value,
+  to,
+  accepted = false,
+}: DashboardCardProps) {
+  const className = accepted
+    ? 'dashboard__card dashboard__card--accepted'
+    : 'dashboard__card'
+
+  const content = (
+    <>
+      <p className="dashboard__label">{label}</p>
+      <p className="dashboard__value">{value}</p>
+
+      {to && (
+        <span
+          style={{
+            display: 'block',
+            marginTop: '8px',
+            fontSize: '0.8rem',
+            fontWeight: 700,
+            color: '#f04438',
+          }}
+        >
+          Apri elenco →
+        </span>
+      )}
+    </>
+  )
+
+  if (!to) {
+    return <div className={className}>{content}</div>
+  }
+
+  return (
+    <Link
+      to={to}
+      className={className}
+      style={{
+        color: 'inherit',
+        textDecoration: 'none',
+        cursor: 'pointer',
+      }}
+      aria-label={`Apri ${label}`}
+    >
+      {content}
+    </Link>
+  )
+}
+
 function AdminDashboardPage() {
   const [stats, setStats] = useState<DashboardStats>({
     users: 0,
@@ -35,6 +93,7 @@ function AdminDashboardPage() {
     paidPenaltiesAmount: 0,
     pendingIdentityVerifications: 0,
   })
+
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -55,36 +114,49 @@ function AdminDashboardPage() {
         paidPenaltiesResult,
         pendingIdentityResult,
       ] = await Promise.all([
-        supabase.from('profiles').select('id', { count: 'exact', head: true }),
+        supabase
+          .from('profiles')
+          .select('id', { count: 'exact', head: true }),
+
         supabase
           .from('profiles')
           .select('id', { count: 'exact', head: true })
           .eq('verified', true),
+
         supabase
           .from('requests')
           .select('id', { count: 'exact', head: true })
           .eq('status', 'aperta'),
+
         supabase
           .from('requests')
           .select('id', { count: 'exact', head: true })
           .eq('status', 'accettata'),
+
         supabase
           .from('requests')
           .select('id', { count: 'exact', head: true })
           .eq('status', 'completata'),
-        supabase.from('reviews').select('id', { count: 'exact', head: true }),
+
+        supabase
+          .from('reviews')
+          .select('id', { count: 'exact', head: true }),
+
         supabase
           .from('reports')
           .select('id', { count: 'exact', head: true })
           .eq('status', 'open'),
+
         supabase
           .from('penalties')
           .select('amount')
           .eq('status', 'pending'),
+
         supabase
           .from('penalties')
           .select('amount')
           .eq('status', 'paid'),
+
         supabase
           .from('identity_verifications')
           .select('id', { count: 'exact', head: true })
@@ -144,7 +216,9 @@ function AdminDashboardPage() {
   }, [])
 
   const totalRequests =
-    stats.openRequests + stats.acceptedRequests + stats.completedRequests
+    stats.openRequests +
+    stats.acceptedRequests +
+    stats.completedRequests
 
   return (
     <div className="landing">
@@ -168,87 +242,104 @@ function AdminDashboardPage() {
             </div>
 
             {loading && <p>Caricamento dashboard...</p>}
-            {error && <div className="alert alert--error">{error}</div>}
+
+            {error && (
+              <div className="alert alert--error">
+                {error}
+              </div>
+            )}
 
             {!loading && !error && (
               <>
                 <div className="dashboard__grid">
-                  <div className="dashboard__card">
-                    <p className="dashboard__label">Utenti registrati</p>
-                    <p className="dashboard__value">{stats.users}</p>
-                  </div>
+                  <DashboardCard
+                    label="Utenti registrati"
+                    value={stats.users}
+                  />
 
-                  <div className="dashboard__card dashboard__card--accepted">
-                    <p className="dashboard__label">Utenti verificati</p>
-                    <p className="dashboard__value">{stats.verifiedUsers}</p>
-                  </div>
+                  <DashboardCard
+                    label="Utenti verificati"
+                    value={stats.verifiedUsers}
+                    accepted
+                  />
 
-                  <div className="dashboard__card">
-                    <p className="dashboard__label">Richieste totali</p>
-                    <p className="dashboard__value">{totalRequests}</p>
-                  </div>
+                  <DashboardCard
+                    label="Richieste totali"
+                    value={totalRequests}
+                  />
 
-                  <div className="dashboard__card">
-                    <p className="dashboard__label">Richieste aperte</p>
-                    <p className="dashboard__value">{stats.openRequests}</p>
-                  </div>
+                  <DashboardCard
+                    label="Richieste aperte"
+                    value={stats.openRequests}
+                    to="/offro-aiuto"
+                  />
 
-                  <div className="dashboard__card dashboard__card--accepted">
-                    <p className="dashboard__label">Richieste accettate</p>
-                    <p className="dashboard__value">{stats.acceptedRequests}</p>
-                  </div>
+                  <DashboardCard
+                    label="Richieste accettate"
+                    value={stats.acceptedRequests}
+                    accepted
+                  />
 
-                  <div className="dashboard__card">
-                    <p className="dashboard__label">Richieste completate</p>
-                    <p className="dashboard__value">{stats.completedRequests}</p>
-                  </div>
+                  <DashboardCard
+                    label="Richieste completate"
+                    value={stats.completedRequests}
+                  />
 
-                  <div className="dashboard__card">
-                    <p className="dashboard__label">Recensioni</p>
-                    <p className="dashboard__value">{stats.reviews}</p>
-                  </div>
+                  <DashboardCard
+                    label="Recensioni"
+                    value={stats.reviews}
+                  />
 
-                  <div className="dashboard__card dashboard__card--accepted">
-                    <p className="dashboard__label">Segnalazioni aperte</p>
-                    <p className="dashboard__value">{stats.openReports}</p>
-                  </div>
+                  <DashboardCard
+                    label="Segnalazioni aperte"
+                    value={stats.openReports}
+                    to="/admin/segnalazioni"
+                    accepted
+                  />
 
-                  <div className="dashboard__card">
-                    <p className="dashboard__label">Verifiche in attesa</p>
-                    <p className="dashboard__value">
-                      {stats.pendingIdentityVerifications}
-                    </p>
-                  </div>
+                  <DashboardCard
+                    label="Verifiche in attesa"
+                    value={stats.pendingIdentityVerifications}
+                    to="/admin/verifiche"
+                  />
 
-                  <div className="dashboard__card">
-                    <p className="dashboard__label">Penali pending</p>
-                    <p className="dashboard__value">{stats.pendingPenalties}</p>
-                  </div>
+                  <DashboardCard
+                    label="Penali pending"
+                    value={stats.pendingPenalties}
+                    to="/admin/pagamenti"
+                  />
 
-                  <div className="dashboard__card">
-                    <p className="dashboard__label">Importo penali pending</p>
-                    <p className="dashboard__value">
-                      €{stats.pendingPenaltiesAmount.toFixed(2)}
-                    </p>
-                  </div>
+                  <DashboardCard
+                    label="Importo penali pending"
+                    value={`€${stats.pendingPenaltiesAmount.toFixed(2)}`}
+                    to="/admin/pagamenti"
+                  />
 
-                  <div className="dashboard__card dashboard__card--accepted">
-                    <p className="dashboard__label">Penali pagate</p>
-                    <p className="dashboard__value">
-                      €{stats.paidPenaltiesAmount.toFixed(2)}
-                    </p>
-                  </div>
+                  <DashboardCard
+                    label="Penali pagate"
+                    value={`€${stats.paidPenaltiesAmount.toFixed(2)}`}
+                    to="/admin/pagamenti"
+                    accepted
+                  />
                 </div>
 
                 <div className="request-card">
-                  <h2 className="request-card__title">Azioni rapide</h2>
+                  <h2 className="request-card__title">
+                    Azioni rapide
+                  </h2>
 
                   <div className="form-actions">
-                    <Link to="/admin/verifiche" className="btn btn--primary">
+                    <Link
+                      to="/admin/verifiche"
+                      className="btn btn--primary"
+                    >
                       Verifiche identità
                     </Link>
 
-                    <Link to="/admin/notifiche" className="btn btn--secondary">
+                    <Link
+                      to="/admin/notifiche"
+                      className="btn btn--secondary"
+                    >
                       Centro notifiche
                     </Link>
 
@@ -259,12 +350,18 @@ function AdminDashboardPage() {
                       Segnalazioni
                     </Link>
 
-                    <Link to="/offro-aiuto" className="btn btn--secondary">
+                    <Link
+                      to="/offro-aiuto"
+                      className="btn btn--secondary"
+                    >
                       Richieste pubbliche
                     </Link>
 
-                    <Link to="/penali" className="btn btn--secondary">
-                      Le mie penali
+                    <Link
+                      to="/admin/pagamenti"
+                      className="btn btn--secondary"
+                    >
+                      Pagamenti e penali
                     </Link>
                   </div>
                 </div>
