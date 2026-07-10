@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { RequestsProvider } from './context/RequestsContext'
+
 import ComeFunzionaPage from './pages/ComeFunzionaPage'
 import PrivacyPage from './pages/PrivacyPage'
 import TerminiPage from './pages/TerminiPage'
@@ -10,6 +11,7 @@ import CercoAiutoPage from './pages/CercoAiutoPage'
 import OffroAiutoPage from './pages/OffroAiutoPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 import IdentityVerificationPage from './pages/IdentityVerificationPage'
 import LeMieRichiestePage from './pages/LeMieRichiestePage'
 import LeMieAttivitaPage from './pages/LeMieAttivitaPage'
@@ -42,16 +44,20 @@ function App() {
     <RequestsProvider>
       <BrowserRouter>
         <Routes>
-        <Route
-  path="/come-funziona"
-  element={<ComeFunzionaPage />}
-/>
-<Route path="/privacy" element={<PrivacyPage />} />
-<Route path="/termini" element={<TerminiPage />} />
-<Route path="/cookie-policy" element={<CookiePolicyPage />} />
-<Route path="/chi-siamo" element={<ChiSiamoPage />} />
           <Route path="/" element={<HomePage />} />
           <Route path="/prelaunch" element={<PreLaunchPage />} />
+          <Route path="/come-funziona" element={<ComeFunzionaPage />} />
+          <Route path="/chi-siamo" element={<ChiSiamoPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/termini" element={<TerminiPage />} />
+          <Route path="/cookie-policy" element={<CookiePolicyPage />} />
+
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/registrazione" element={<RegisterPage />} />
+          <Route
+            path="/reimposta-password"
+            element={<ResetPasswordPage />}
+          />
 
           <Route
             path="/cerco-aiuto"
@@ -161,10 +167,15 @@ function App() {
             }
           />
 
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/registrazione" element={<RegisterPage />} />
-          <Route path="/pagamento-successo" element={<PagamentoSuccessoPage />} />
-<Route path="/pagamento-annullato" element={<PagamentoAnnullatoPage />} />
+          <Route
+            path="/pagamento-successo"
+            element={<PagamentoSuccessoPage />}
+          />
+
+          <Route
+            path="/pagamento-annullato"
+            element={<PagamentoAnnullatoPage />}
+          />
 
           <Route
             path="/verifica-identita"
@@ -179,6 +190,7 @@ function App() {
               </AdminRoute>
             }
           />
+
           <Route
             path="/admin/notifiche"
             element={
@@ -187,14 +199,15 @@ function App() {
               </AdminRoute>
             }
           />
+
           <Route
-  path="/admin/pagamenti"
-  element={
-    <AdminRoute>
-      <AdminPagamentiPage />
-    </AdminRoute>
-  }
-/>
+            path="/admin/pagamenti"
+            element={
+              <AdminRoute>
+                <AdminPagamentiPage />
+              </AdminRoute>
+            }
+          />
 
           <Route
             path="/admin/verifiche"
@@ -214,6 +227,7 @@ function App() {
             }
           />
         </Routes>
+
         <CookieBanner />
         <TrackingConsent />
       </BrowserRouter>

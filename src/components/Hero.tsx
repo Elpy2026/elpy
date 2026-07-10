@@ -23,8 +23,8 @@ function Hero() {
             </Link>
 
             <Link to="/offro-aiuto" className="btn btn--secondary">
-              Diventa helper →
-            </Link>
+  Offri il tuo aiuto →
+</Link>
           </div>
         </div>
 
@@ -55,12 +55,12 @@ function Hero() {
           <div className="hero-final-card__content">
             <div className="hero-final-card__icon">💶</div>
             <h2>
-              Vuoi aiutare
-              <br />
-              e <span>guadagnare?</span>
-            </h2>
+  Offri
+  <br />
+  il tuo <span>aiuto</span>
+</h2>
             <p>Offri il tuo tempo e le tue competenze alle persone vicino a te.</p>
-            <span className="hero-final-card__button">Diventa helper →</span>
+            <span className="hero-final-card__button">Offri il tuo aiuto →</span>
           </div>
         </Link>
       </div>
