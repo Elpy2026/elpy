@@ -74,6 +74,20 @@ export async function createApplication(
     link: '/le-mie-richieste',
     is_read: false,
   })
+  const { error: pushError } = await supabase.functions.invoke('send-push', {
+    body: {
+      userId: requestData.seeker_id,
+      payload: {
+        title: 'Nuova candidatura ricevuta',
+        body: `Hai ricevuto una candidatura per "${requestData.title}".`,
+        url: '/le-mie-richieste',
+      },
+    },
+  })
+  
+  if (pushError) {
+    console.error('Errore invio push candidatura:', pushError)
+  }
 
   await createAdminNotification({
     type: 'new_application',

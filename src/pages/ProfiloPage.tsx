@@ -3,6 +3,7 @@ import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import PushNotificationsControl from '../components/PushNotificationsControl'
 
 function ProfiloPage() {
   const { user } = useAuth()
@@ -248,6 +249,7 @@ function ProfiloPage() {
 
             {!loading && (
               <form className="request-form" onSubmit={handleSubmit}>
+              <PushNotificationsControl />
                 <div className="request-card">
                   <h2 className="request-card__title">Incassi helper</h2>
 

@@ -24,3 +24,8 @@ dist-ssr
 *.sw?
 .env
 supabase/.temp/
+
+# File temporanei locali Supabase
+schema.sql
+supabase/functions.zip
+supabase/migrations/*.sql.bak

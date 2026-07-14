@@ -64,42 +64,6 @@ exception
   when undefined_object then null;
 end $$;
 
-drop policy if exists "Admins can read admin notifications" on public.admin_notifications;
-create policy "Admins can read admin notifications"
-  on public.admin_notifications
-  for select
-  to authenticated
-  using (
-    exists (
-      select 1
-      from public.profiles
-      where profiles.id = auth.uid()
-        and profiles.is_admin = true
-    )
-  );
-
-drop policy if exists "Admins can update admin notifications" on public.admin_notifications;
-create policy "Admins can update admin notifications"
-  on public.admin_notifications
-  for update
-  to authenticated
-  using (
-    exists (
-      select 1
-      from public.profiles
-      where profiles.id = auth.uid()
-        and profiles.is_admin = true
-    )
-  )
-  with check (
-    exists (
-      select 1
-      from public.profiles
-      where profiles.id = auth.uid()
-        and profiles.is_admin = true
-    )
-  );
-
 drop policy if exists "Authenticated users can create admin notifications" on public.admin_notifications;
 create policy "Authenticated users can create admin notifications"
   on public.admin_notifications
