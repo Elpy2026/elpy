@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
@@ -6,6 +6,8 @@ import { fetchUnreadAdminNotificationsCount } from '../lib/adminNotifications'
 
 function Header() {
   const { user, signOut } = useAuth()
+
+  const accountMenuRef = useRef<HTMLDivElement | null>(null)
 
   const [verified, setVerified] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
@@ -159,6 +161,37 @@ function Header() {
     }
   }, [loadProfileAndNotifications])
 
+  useEffect(() => {
+    if (!menuOpen) return
+
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target
+
+      if (!(target instanceof Node)) return
+
+      if (
+        accountMenuRef.current &&
+        !accountMenuRef.current.contains(target)
+      ) {
+        setMenuOpen(false)
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [menuOpen])
+
   async function handleSignOut() {
     setMenuOpen(false)
     await signOut()
@@ -196,7 +229,10 @@ function Header() {
 
         <div className="header__account">
           {user ? (
-            <div className="account-menu">
+            <div
+              ref={accountMenuRef}
+              className="account-menu"
+            >
               <button
                 type="button"
                 className="account-menu__button"
