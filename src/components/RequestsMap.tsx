@@ -72,11 +72,6 @@ function calculateDistanceKm(
   return earthRadiusKm * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)))
 }
 
-function formatDistance(distanceKm: number) {
-  if (distanceKm < 1) return `${Math.round(distanceKm * 1000)} m`
-  return `${distanceKm.toFixed(1).replace('.', ',')} km`
-}
-
 function MapAutoCenter({ latitude, longitude }: UserPosition) {
   const map = useMap()
 
@@ -179,16 +174,6 @@ export default function RequestsMap({
   const mapCenter = userPosition
     ? [userPosition.latitude, userPosition.longitude]
     : [Number(mappedRequests[0].latitude), Number(mappedRequests[0].longitude)]
-
-  const selectedDistance =
-    selectedRequest && userPosition && selectedRequest.latitude && selectedRequest.longitude
-      ? calculateDistanceKm(
-          userPosition.latitude,
-          userPosition.longitude,
-          Number(selectedRequest.latitude),
-          Number(selectedRequest.longitude),
-        )
-      : null
 
   return (
     <div>
@@ -295,63 +280,6 @@ export default function RequestsMap({
           </MarkerClusterGroup>
         </MapContainer>
       </div>
-
-      {selectedRequest && (
-        <div
-          style={{
-            marginTop: '1rem',
-            padding: '1rem',
-            borderRadius: 20,
-            background: '#ffffff',
-            border: '1px solid var(--border)',
-            boxShadow: 'var(--shadow-sm)',
-          }}
-        >
-          <p className="request-card__category">{selectedRequest.categoria}</p>
-
-          <h3 className="request-card__title" style={{ marginTop: '0.35rem' }}>
-            {selectedRequest.titolo}
-          </h3>
-
-          <p className="request-card__desc">{selectedRequest.descrizione}</p>
-
-          <dl className="request-card__meta">
-            <div>
-              <dt>Città</dt>
-              <dd>{selectedRequest.citta}</dd>
-            </div>
-
-            <div>
-              <dt>Compenso</dt>
-              <dd className="request-card__compenso">€{selectedRequest.compenso}</dd>
-            </div>
-
-            {selectedDistance !== null && (
-              <div>
-                <dt>Distanza</dt>
-                <dd>{formatDistance(selectedDistance)}</dd>
-              </div>
-            )}
-          </dl>
-
-          <div className="form-actions">
-            <a href={`#request-${selectedRequest.id}`} className="btn btn--primary">
-              Scorri alla richiesta
-            </a>
-
-            {selectedRequest.latitude && selectedRequest.longitude && (
-              <a
-                href={`https://www.google.com/maps/dir/?api=1&destination=${selectedRequest.latitude},${selectedRequest.longitude}`}
-                className="btn btn--secondary"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Apri percorso
-              </a>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   )
 }

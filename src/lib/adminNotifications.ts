@@ -219,6 +219,13 @@ export function getAdminNotificationLink(
     return '/admin/pagamenti'
   }
 
+  if (
+    notification.type.includes('application') ||
+    notification.type === 'new_request'
+  ) {
+    return '/offro-aiuto'
+  }
+
   if (notification.type.includes('review')) {
     const reviewedUserId = metadata.reviewed_user_id
 

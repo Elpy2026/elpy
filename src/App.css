@@ -6884,3 +6884,19 @@ li.request-card > .form-actions .btn:last-child::before {
   }
 
 }
+
+/* Garantisce testo bianco su tutti i pulsanti principali */
+.btn--primary,
+a.btn--primary,
+button.btn--primary,
+.btn--primary:link,
+.btn--primary:visited,
+.btn--primary:hover,
+.btn--primary:focus,
+.btn--primary:active,
+.btn--primary *,
+.alert--success .btn--primary,
+.alert--success a.btn--primary,
+.request-card .btn--primary {
+  color: #ffffff !important;
+}
