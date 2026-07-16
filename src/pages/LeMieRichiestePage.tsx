@@ -310,6 +310,25 @@ function LeMieRichiestePage() {
       return
     }
 
+    const { error: acceptedPushError } =
+      await supabase.functions.invoke('send-push', {
+        body: {
+          userId: application.helper_id,
+          payload: {
+            title: 'Candidatura accettata',
+            body: 'La tua candidatura è stata accettata. Puoi ora contattare il richiedente.',
+            url: `/chat/${application.request_id}`,
+          },
+        },
+      })
+
+    if (acceptedPushError) {
+      console.error(
+        'Errore push candidatura accettata:',
+        acceptedPushError,
+      )
+    }
+
     await supabase
       .from('request_applications')
       .update({ status: 'rejected' })
@@ -345,6 +364,25 @@ function LeMieRichiestePage() {
       link: '/offro-aiuto',
       is_read: false,
     })
+
+    const { error: rejectedPushError } =
+      await supabase.functions.invoke('send-push', {
+        body: {
+          userId: application.helper_id,
+          payload: {
+            title: 'Candidatura non selezionata',
+            body: 'La tua candidaturaon è stata selezionata. Sono disponibili altre richieste.',
+            url: '/le-mie-attivita',
+          },
+        },
+      })
+
+    if (rejectedPushError) {
+      console.error(
+        'Errore push candidatura rifiutata:',
+        rejectedPushError,
+      )
+    }
 
     setMessage('Candidatura rifiutata.')
     setRejectingApplicationId('')
