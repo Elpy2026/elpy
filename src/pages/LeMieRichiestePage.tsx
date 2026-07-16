@@ -248,8 +248,7 @@ function LeMieRichiestePage() {
         cancelled_at: null,
         cancelled_by: null,
         cancellation_reason: null,
-        cancellation_fee_status: 'none',
-        cancellation_fee_amount: 0,
+
       })
       .eq('id', application.request_id)
       .eq('status', 'aperta')

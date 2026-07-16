@@ -1,0 +1,99 @@
+/* Safety Panel responsive */
+.safety-panel,
+.safety-panel * {
+  box-sizing: border-box;
+}
+
+.safety-panel {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.safety-panel__header,
+.safety-panel__header > div,
+.safety-panel__stats,
+.safety-panel__stats > div {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.safety-panel__stats strong,
+.safety-panel__stats span,
+.safety-panel__header p {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .safety-panel {
+    padding: 20px !important;
+    border-radius: 22px !important;
+  }
+
+  .safety-panel__header {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 14px !important;
+  }
+
+  .safety-panel__header h3 {
+    font-size: 1.35rem !important;
+    line-height: 1.15 !important;
+  }
+
+  .safety-panel__header p {
+    margin: 8px 0 0 !important;
+    font-size: 0.98rem !important;
+    line-height: 1.55 !important;
+  }
+
+  .safety-panel__live {
+    align-self: flex-start !important;
+    white-space: nowrap !important;
+  }
+
+  .safety-panel__stats {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    width: 100% !important;
+  }
+
+  .safety-panel__stats > div {
+    width: 100% !important;
+    min-height: auto !important;
+    padding: 16px !important;
+    border-radius: 18px !important;
+  }
+
+  .safety-panel__stats strong {
+    display: block !important;
+    margin-top: 6px !important;
+    font-size: 1.05rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .safety-panel .form-actions {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    width: 100% !important;
+  }
+
+  .safety-panel .form-actions .btn,
+  .safety-panel > .btn,
+  .safety-panel button {
+    width: 100% !important;
+    max-width: 100% !important;
+    white-space: normal !important;
+  }
+
+  .safety-panel .leaflet-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 260px !important;
+    border-radius: 18px !important;
+  }
+}

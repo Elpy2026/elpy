@@ -1,3 +1,5 @@
+@import "./styles/components/safety-panel.css";
+
 /* Layout */
 
 .landing {
@@ -3707,11 +3709,6 @@ li.request-card > .form-actions .btn:last-child::before {
   font-size: 1.25rem;
   letter-spacing: -0.02em;
 }
-
-.request-card h3:contains("Pagamento") {
-  color: #101828;
-}
-
 /* Mobile polish */
 
 @media (max-width: 640px) {
