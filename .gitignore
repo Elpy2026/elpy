@@ -29,3 +29,9 @@ supabase/.temp/
 schema.sql
 supabase/functions.zip
 supabase/migrations/*.sql.bak
+# File locali
+.env.save
+
+# File temporanei di sviluppo
+src/slide02.html
+src/slide02.css
