@@ -292,6 +292,37 @@ const preferredConversationId =
       return
     }
 
+    const recipientId =
+      user.id === request?.seeker_id
+        ? request?.helper_id
+        : request?.seeker_id
+
+    if (recipientId && recipientId !== user.id && requestId) {
+      const preview =
+        content.length > 100
+          ? `${content.slice(0, 97)}...`
+          : content
+
+      const { error: pushError } =
+        await supabase.functions.invoke('send-push', {
+          body: {
+            userId: recipientId,
+            payload: {
+              title: 'Nuovo messaggio su ELPYO',
+              body: preview,
+              url: `/chat/${requestId}`,
+            },
+          },
+        })
+
+      if (pushError) {
+        console.error(
+          'Errore push nuovo messaggio:',
+          pushError,
+        )
+      }
+    }
+
     setSending(false)
   }
 
