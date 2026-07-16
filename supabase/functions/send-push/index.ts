@@ -1,6 +1,13 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import webpush from 'npm:web-push'
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+}
+
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL')!,
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
@@ -30,12 +37,17 @@ function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
+      ...corsHeaders,
       'Content-Type': 'application/json',
     },
   })
 }
 
 Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+
   try {
     const authorization = req.headers.get('Authorization')
     const accessToken = authorization?.replace(/^Bearer\s+/i, '')
@@ -90,9 +102,7 @@ Deno.serve(async (req) => {
         .in('role', ['helper', 'both'])
         .neq('id', user.id)
 
-      if (profilesError) {
-        throw profilesError
-      }
+      if (profilesError) throw profilesError
 
       targetUserIds = (helperProfiles ?? []).map((profile) => profile.id)
     } else if (userId) {
@@ -108,6 +118,7 @@ Deno.serve(async (req) => {
       return jsonResponse({
         success: true,
         recipients: 0,
+        subscriptions: 0,
         sent: 0,
       })
     }
@@ -117,14 +128,13 @@ Deno.serve(async (req) => {
       .select('id, user_id, endpoint, p256dh, auth')
       .in('user_id', targetUserIds)
 
-    if (subscriptionsError) {
-      throw subscriptionsError
-    }
+    if (subscriptionsError) throw subscriptionsError
 
     if (!subscriptions?.length) {
       return jsonResponse({
         success: true,
         recipients: targetUserIds.length,
+        subscriptions: 0,
         sent: 0,
       })
     }
