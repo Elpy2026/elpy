@@ -288,15 +288,7 @@ function Header() {
                       </span>
                     )}
                   </Link>
-
-                  <Link
-                    to="/penali"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Le mie penali
-                  </Link>
-
-                  <Link
+<Link
                     to="/le-mie-richieste"
                     onClick={() => setMenuOpen(false)}
                   >
@@ -309,6 +301,13 @@ function Header() {
                   >
                     Le mie attività
                   </Link>
+
+                  <Link
+                                      to="/penali"
+                                      onClick={() => setMenuOpen(false)}
+                                    >
+                                      Le mie penali
+                                    </Link>
 
                   <div className="account-menu__divider" />
 
