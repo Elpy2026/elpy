@@ -8,6 +8,10 @@ export interface HelpRequest {
   citta: string
   data: string
   compenso: string
+
+  prevedeSpese: boolean
+  spesaPrevista: number | null
+
   stato: RequestStatus
 
   createdAt: string
@@ -27,6 +31,9 @@ export interface NewHelpRequest {
   citta: string
   data: string
   compenso: string
+
+  prevedeSpese: boolean
+  spesaPrevista: string
 
   latitude?: number | null
   longitude?: number | null

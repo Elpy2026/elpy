@@ -17,6 +17,7 @@ type RequestFormState = {
   citta: string
   data: string
   compenso: string
+  spesaPrevista: string
 }
 
 const emptyForm: RequestFormState = {
@@ -26,13 +27,15 @@ const emptyForm: RequestFormState = {
   citta: '',
   data: '',
   compenso: '',
+  spesaPrevista: '',
 }
 
 function CercoAiutoPage() {
   const { user } = useAuth()
   const { refreshRequests } = useRequests()
   const navigate = useNavigate()
-  const [form, setForm] = useState(emptyForm)
+
+  const [form, setForm] = useState<RequestFormState>(emptyForm)
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [verified, setVerified] = useState(false)
@@ -40,7 +43,19 @@ function CercoAiutoPage() {
   const [error, setError] = useState('')
 
   const compensoNumber = Number(form.compenso)
-  const compensoNonValido = form.compenso !== '' && compensoNumber < MIN_COMPENSO
+
+  const compensoNonValido =
+    form.compenso !== '' &&
+    (!Number.isFinite(compensoNumber) || compensoNumber < MIN_COMPENSO)
+
+  const prevedeSpese = form.categoria === 'Spesa e commissioni'
+
+  const spesaPrevistaNumber = Number(form.spesaPrevista)
+
+  const spesaPrevistaNonValida =
+    prevedeSpese &&
+    form.spesaPrevista !== '' &&
+    (!Number.isFinite(spesaPrevistaNumber) || spesaPrevistaNumber <= 0)
 
   useEffect(() => {
     async function loadVerification() {
@@ -49,11 +64,17 @@ function CercoAiutoPage() {
         return
       }
 
-      const { data } = await supabase
+      const { data, error: verificationError } = await supabase
         .from('profiles')
         .select('verified')
         .eq('id', user.id)
         .single()
+
+      if (verificationError) {
+        setError(verificationError.message)
+        setCheckingVerification(false)
+        return
+      }
 
       setVerified(Boolean(data?.verified))
       setCheckingVerification(false)
@@ -62,40 +83,86 @@ function CercoAiutoPage() {
     void loadVerification()
   }, [user])
 
-  function handleChange(field: keyof typeof emptyForm, value: string) {
+  function handleChange(
+    field: keyof RequestFormState,
+    value: string,
+  ) {
     setError('')
-    setForm((prev) => ({ ...prev, [field]: value }))
+
+    setForm((current) => {
+      const nextForm = {
+        ...current,
+        [field]: value,
+      }
+
+      if (
+        field === 'categoria' &&
+        value !== 'Spesa e commissioni'
+      ) {
+        nextForm.spesaPrevista = ''
+      }
+
+      return nextForm
+    })
   }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
 
+    setError('')
+    setSubmitted(false)
+
     if (!verified) {
-      setError('Per pubblicare una richiesta devi prima completare la verifica identità.')
+      setError(
+        'Per pubblicare una richiesta devi prima completare la verifica identità.',
+      )
       return
     }
 
-    if (Number(form.compenso) < MIN_COMPENSO) {
-      setError('Il compenso minimo è di 5€')
+    if (
+      !Number.isFinite(compensoNumber) ||
+      compensoNumber < MIN_COMPENSO
+    ) {
+      setError('Il compenso minimo per l’helper è di 5 €.')
+      return
+    }
+
+    if (
+      prevedeSpese &&
+      (
+        form.spesaPrevista === '' ||
+        !Number.isFinite(spesaPrevistaNumber) ||
+        spesaPrevistaNumber <= 0
+      )
+    ) {
+      setError(
+        'Inserisci un importo previsto di spesa maggiore di 0 €.',
+      )
       return
     }
 
     try {
       setSubmitting(true)
-      setError('')
 
       let latitude: number | null = null
       let longitude: number | null = null
 
       if (navigator.geolocation) {
         try {
-          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, {
-              enableHighAccuracy: true,
-              timeout: 10000,
-              maximumAge: 60000,
-            })
-          })
+          const position =
+            await new Promise<GeolocationPosition>(
+              (resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(
+                  resolve,
+                  reject,
+                  {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 60000,
+                  },
+                )
+              },
+            )
 
           latitude = position.coords.latitude
           longitude = position.coords.longitude
@@ -106,7 +173,16 @@ function CercoAiutoPage() {
       }
 
       const result = await insertRequest({
-        ...form,
+        categoria: form.categoria,
+        titolo: form.titolo,
+        descrizione: form.descrizione,
+        citta: form.citta,
+        data: form.data,
+        compenso: form.compenso,
+        prevedeSpese,
+        spesaPrevista: prevedeSpese
+          ? form.spesaPrevista
+          : '',
         latitude,
         longitude,
         locationLabel: form.citta,
@@ -117,11 +193,19 @@ function CercoAiutoPage() {
       }
 
       await refreshRequests()
+
       setSubmitted(true)
       setForm(emptyForm)
-      setTimeout(() => navigate('/le-mie-richieste'), 1200)
+
+      window.setTimeout(() => {
+        navigate('/le-mie-richieste')
+      }, 1200)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Errore durante la pubblicazione')
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Errore durante la pubblicazione',
+      )
     } finally {
       setSubmitting(false)
     }
@@ -132,7 +216,10 @@ function CercoAiutoPage() {
       <Header />
 
       <main className="page-main">
-        <section className="cerco-hero" aria-labelledby="cerco-title">
+        <section
+          className="cerco-hero"
+          aria-labelledby="cerco-title"
+        >
           <div className="container cerco-hero__grid">
             <div className="page-back">
               <Link to="/" className="page-back__link">
@@ -141,15 +228,21 @@ function CercoAiutoPage() {
             </div>
 
             <div className="cerco-hero__content">
-              <p className="cerco-hero__badge">Chiedi aiuto</p>
+              <p className="cerco-hero__badge">
+                Chiedi aiuto
+              </p>
 
-              <h1 id="cerco-title" className="cerco-hero__title">
-                Hai bisogno di un <span>aiuto in zona?</span>
+              <h1
+                id="cerco-title"
+                className="cerco-hero__title"
+              >
+                Hai bisogno di un{' '}
+                <span>aiuto in zona?</span>
               </h1>
 
               <p className="cerco-hero__text">
-                Compila il form, pubblica la tua richiesta e attendi gli Helper
-                disponibili nella tua zona.
+                Compila il form, pubblica la tua richiesta e
+                attendi gli Helper disponibili nella tua zona.
               </p>
             </div>
 
@@ -159,14 +252,28 @@ function CercoAiutoPage() {
                 <p>Raccontaci di cosa hai bisogno.</p>
               </div>
 
-              {checkingVerification && <p>Controllo verifica identità…</p>}
+              {checkingVerification && (
+                <p>Controllo verifica identità…</p>
+              )}
 
               {!checkingVerification && !verified && (
                 <div className="alert alert--error">
-                  <p><strong>Verifica identità richiesta.</strong></p>
-                  <p>Per pubblicare una richiesta devi prima completare la verifica.</p>
+                  <p>
+                    <strong>
+                      Verifica identità richiesta.
+                    </strong>
+                  </p>
+
+                  <p>
+                    Per pubblicare una richiesta devi prima
+                    completare la verifica.
+                  </p>
+
                   <div className="form-actions">
-                    <Link to="/verifica-identita" className="btn btn--primary">
+                    <Link
+                      to="/verifica-identita"
+                      className="btn btn--primary"
+                    >
                       Completa verifica
                     </Link>
                   </div>
@@ -179,16 +286,31 @@ function CercoAiutoPage() {
                 </div>
               )}
 
-              {error && <div className="alert alert--error">{error}</div>}
+              {error && (
+                <div className="alert alert--error">
+                  {error}
+                </div>
+              )}
 
-              <form className="request-form request-form--cerco" onSubmit={handleSubmit}>
+              <form
+                className="request-form request-form--cerco"
+                onSubmit={handleSubmit}
+              >
                 <div className="form-field">
-                  <label htmlFor="titolo">Titolo richiesta</label>
+                  <label htmlFor="titolo">
+                    Titolo richiesta
+                  </label>
+
                   <input
                     id="titolo"
                     type="text"
                     value={form.titolo}
-                    onChange={(e) => handleChange('titolo', e.target.value)}
+                    onChange={(event) =>
+                      handleChange(
+                        'titolo',
+                        event.target.value,
+                      )
+                    }
                     placeholder="Es. Ho bisogno di una mano con la spesa"
                     required
                     disabled={submitting || !verified}
@@ -196,11 +318,19 @@ function CercoAiutoPage() {
                 </div>
 
                 <div className="form-field">
-                  <label htmlFor="descrizione">Di cosa hai bisogno?</label>
+                  <label htmlFor="descrizione">
+                    Di cosa hai bisogno?
+                  </label>
+
                   <textarea
                     id="descrizione"
                     value={form.descrizione}
-                    onChange={(e) => handleChange('descrizione', e.target.value)}
+                    onChange={(event) =>
+                      handleChange(
+                        'descrizione',
+                        event.target.value,
+                      )
+                    }
                     placeholder="Descrivi nel dettaglio la tua richiesta..."
                     rows={4}
                     required
@@ -209,16 +339,27 @@ function CercoAiutoPage() {
                 </div>
 
                 <div className="form-field">
-                  <label htmlFor="categoria">Categoria</label>
+                  <label htmlFor="categoria">
+                    Categoria
+                  </label>
+
                   <select
                     id="categoria"
                     value={form.categoria}
-                    onChange={(e) => handleChange('categoria', e.target.value)}
+                    onChange={(event) =>
+                      handleChange(
+                        'categoria',
+                        event.target.value,
+                      )
+                    }
                     required
                     disabled={submitting || !verified}
                   >
                     {CATEGORIES.map((category) => (
-                      <option key={category} value={category}>
+                      <option
+                        key={category}
+                        value={category}
+                      >
                         {category}
                       </option>
                     ))}
@@ -227,12 +368,20 @@ function CercoAiutoPage() {
 
                 <div className="form-row">
                   <div className="form-field">
-                    <label htmlFor="citta">Dove</label>
+                    <label htmlFor="citta">
+                      Dove
+                    </label>
+
                     <input
                       id="citta"
                       type="text"
                       value={form.citta}
-                      onChange={(e) => handleChange('citta', e.target.value)}
+                      onChange={(event) =>
+                        handleChange(
+                          'citta',
+                          event.target.value,
+                        )
+                      }
                       placeholder="Es. Agrigento"
                       required
                       disabled={submitting || !verified}
@@ -240,12 +389,20 @@ function CercoAiutoPage() {
                   </div>
 
                   <div className="form-field">
-                    <label htmlFor="data">Quando</label>
+                    <label htmlFor="data">
+                      Quando
+                    </label>
+
                     <input
                       id="data"
                       type="date"
                       value={form.data}
-                      onChange={(e) => handleChange('data', e.target.value)}
+                      onChange={(event) =>
+                        handleChange(
+                          'data',
+                          event.target.value,
+                        )
+                      }
                       required
                       disabled={submitting || !verified}
                     />
@@ -253,21 +410,78 @@ function CercoAiutoPage() {
                 </div>
 
                 <div className="form-field">
-                  <label htmlFor="compenso">Budget indicativo (€)</label>
+                  <label htmlFor="compenso">
+                    Compenso per l’helper (€)
+                  </label>
+
                   <input
                     id="compenso"
                     type="number"
                     min={MIN_COMPENSO}
+                    step="0.01"
                     value={form.compenso}
-                    onChange={(e) => handleChange('compenso', e.target.value)}
-                    placeholder="Es. 20"
+                    onChange={(event) =>
+                      handleChange(
+                        'compenso',
+                        event.target.value,
+                      )
+                    }
+                    placeholder="Es. 10"
                     required
                     disabled={submitting || !verified}
                   />
+
+                  <small>
+                    È il compenso offerto per il servizio e
+                    non comprende eventuali acquisti o spese
+                    anticipate dall’helper.
+                  </small>
+
                   {compensoNonValido && (
-                    <small className="form-error">Il compenso minimo è di 5€</small>
+                    <small className="form-error">
+                      Il compenso minimo è di 5 €.
+                    </small>
                   )}
                 </div>
+
+                {prevedeSpese && (
+                  <div className="form-field">
+                    <label htmlFor="spesaPrevista">
+                      Spesa prevista da anticipare (€)
+                    </label>
+
+                    <input
+                      id="spesaPrevista"
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      value={form.spesaPrevista}
+                      onChange={(event) =>
+                        handleChange(
+                          'spesaPrevista',
+                          event.target.value,
+                        )
+                      }
+                      placeholder="Es. 40"
+                      required
+                      disabled={submitting || !verified}
+                    />
+
+                    <small>
+                      È una stima separata dal compenso. La
+                      spesa effettiva sarà determinata dallo
+                      scontrino caricato dall’helper e
+                      approvato da te.
+                    </small>
+
+                    {spesaPrevistaNonValida && (
+                      <small className="form-error">
+                        Inserisci una spesa prevista maggiore
+                        di 0 €.
+                      </small>
+                    )}
+                  </div>
+                )}
 
                 <div className="form-actions form-actions--cerco">
                   <button
@@ -276,20 +490,27 @@ function CercoAiutoPage() {
                     disabled={
                       submitting ||
                       compensoNonValido ||
+                      spesaPrevistaNonValida ||
                       checkingVerification ||
                       !verified
                     }
                   >
-                    {submitting ? 'Pubblicazione in corso…' : 'Lancia la tua richiesta'}
+                    {submitting
+                      ? 'Pubblicazione in corso…'
+                      : 'Lancia la tua richiesta'}
                   </button>
 
-                  <Link to="/" className="btn btn--secondary">
+                  <Link
+                    to="/"
+                    className="btn btn--secondary"
+                  >
                     Torna alla home
                   </Link>
                 </div>
 
                 <p className="cerco-hero__safe-note">
-                  🛡 I tuoi dati sono al sicuro e non saranno condivisi.
+                  🛡 I tuoi dati sono al sicuro e non saranno
+                  condivisi.
                 </p>
               </form>
             </div>

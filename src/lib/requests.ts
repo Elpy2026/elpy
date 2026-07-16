@@ -11,6 +11,8 @@ export interface RequestRow {
   city: string
   request_date: string
   reward: number | string
+  expense_expected?: boolean | null
+  estimated_expense?: number | string | null
   status?: string | null
   created_at?: string | null
   seeker_id?: string | null
@@ -42,6 +44,12 @@ export function mapRowToHelpRequest(row: RequestRow): HelpRequest {
     citta: row.city,
     data: row.request_date,
     compenso: String(row.reward),
+        prevedeSpese: Boolean(row.expense_expected),
+    spesaPrevista:
+      row.estimated_expense === null ||
+      row.estimated_expense === undefined
+        ? null
+        : Number(row.estimated_expense),
     stato: mapStatus(row.status),
     createdAt: row.created_at ?? new Date().toISOString(),
     seekerId: row.seeker_id ?? row.user_id ?? null,
@@ -60,6 +68,11 @@ export function mapFormToRow(data: NewHelpRequest) {
     city: data.citta,
     request_date: data.data,
     reward: Number(data.compenso),
+    expense_expected: data.prevedeSpese,
+    estimated_expense:
+      data.prevedeSpese && data.spesaPrevista !== ''
+        ? Number(data.spesaPrevista)
+        : null,
     latitude: data.latitude ?? null,
     longitude: data.longitude ?? null,
     location_label: data.locationLabel ?? data.citta,
