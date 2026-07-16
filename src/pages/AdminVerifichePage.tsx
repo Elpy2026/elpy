@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { supabase } from '../lib/supabase'
+import '../styles/admin/admin-verifiche.css'
 
 type Verification = {
   id: string
@@ -84,7 +85,10 @@ function AdminVerifichePage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [fileLinks, setFileLinks] = useState<Record<string, FileLinks>>({})
-
+  const [previewFile, setPreviewFile] = useState<{
+    url: string
+    title: string
+  } | null>(null)
   const verificheOrdinate = useMemo(() => {
     return [...verifiche].sort((first, second) => {
       if (first.status === 'pending' && second.status !== 'pending') {
@@ -101,6 +105,25 @@ function AdminVerifichePage() {
       return secondDate - firstDate
     })
   }, [verifiche])
+  useEffect(() => {
+    if (!previewFile) return undefined
+  
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setPreviewFile(null)
+      }
+    }
+  
+    const previousOverflow = document.body.style.overflow
+  
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', handleKeyDown)
+  
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [previewFile])
 
   const countRows = useCallback(
     async (table: string, filters?: Record<string, string | boolean>) => {
@@ -624,14 +647,18 @@ function AdminVerifichePage() {
 
                     <div className="form-actions">
                       {fileLinks[verifica.id]?.front ? (
-                        <a
-                          className="btn btn--secondary"
-                          href={fileLinks[verifica.id].front}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          Apri documento fronte
-                        </a>
+                      <button
+                      type="button"
+                      className="btn btn--secondary"
+                      onClick={() =>
+                        setPreviewFile({
+                          url: fileLinks[verifica.id].front!,
+                          title: 'Documento fronte',
+                        })
+                      }
+                    >
+                      Visualizza documento fronte
+                    </button>
                       ) : (
                         <button
                           type="button"
@@ -643,14 +670,18 @@ function AdminVerifichePage() {
                       )}
 
                       {fileLinks[verifica.id]?.back ? (
-                        <a
-                          className="btn btn--secondary"
-                          href={fileLinks[verifica.id].back}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          Apri documento retro
-                        </a>
+                        <button
+                        type="button"
+                        className="btn btn--secondary"
+                        onClick={() =>
+                          setPreviewFile({
+                            url: fileLinks[verifica.id].back!,
+                            title: 'Documento retro',
+                          })
+                        }
+                      >
+                        Visualizza documento retro
+                      </button>
                       ) : (
                         <button
                           type="button"
@@ -662,14 +693,18 @@ function AdminVerifichePage() {
                       )}
 
                       {fileLinks[verifica.id]?.selfie ? (
-                        <a
-                          className="btn btn--secondary"
-                          href={fileLinks[verifica.id].selfie}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          Apri selfie
-                        </a>
+                        <button
+                        type="button"
+                        className="btn btn--secondary"
+                        onClick={() =>
+                          setPreviewFile({
+                            url: fileLinks[verifica.id].selfie!,
+                            title: 'Selfie di verifica',
+                          })
+                        }
+                      >
+                        Visualizza selfie
+                      </button>
                       ) : (
                         <button
                           type="button"
@@ -725,7 +760,49 @@ function AdminVerifichePage() {
           </div>
         </section>
       </main>
+      {previewFile && (
+  <div
+    className="admin-document-modal"
+    role="presentation"
+    onMouseDown={() => setPreviewFile(null)}
+  >
+    <div
+      className="admin-document-modal__dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="admin-document-modal-title"
+      onMouseDown={(event) => event.stopPropagation()}
+    >
+      <div className="admin-document-modal__header">
+        <h2 id="admin-document-modal-title">{previewFile.title}</h2>
 
+        <button
+          type="button"
+          className="btn btn--secondary admin-document-modal__close"
+          onClick={() => setPreviewFile(null)}
+        >
+          Chiudi
+        </button>
+      </div>
+
+      <div className="admin-document-modal__body">
+        {previewFile.url.toLowerCase().includes('.pdf') ? (
+          <iframe
+            src={previewFile.url}
+            title={previewFile.title}
+            className="admin-document-modal__iframe"
+          />
+        ) : (
+          <img
+            src={previewFile.url}
+            alt={previewFile.title}
+            className="admin-document-modal__image"
+          />
+        )}
+      </div>
+    </div>
+  </div>
+)}
       <Footer />
     </div>
   )

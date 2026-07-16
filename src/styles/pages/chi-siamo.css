@@ -1,0 +1,397 @@
+/* ================= CHI SIAMO PRO ================= */
+
+.about-page {
+    background:
+      radial-gradient(circle at 10% 5%, rgba(242, 85, 68, 0.12), transparent 28%),
+      radial-gradient(circle at 90% 10%, rgba(124, 58, 237, 0.12), transparent 28%),
+      #fffaf6;
+  }
+  
+  .about-main {
+    overflow: hidden;
+  }
+  
+  .about-hero {
+    position: relative;
+    padding: 110px 0 80px;
+  }
+  
+  .about-hero::before {
+    content: "";
+    position: absolute;
+    inset: 40px 7% auto auto;
+    width: 280px;
+    height: 280px;
+    border-radius: 80px;
+    background: linear-gradient(135deg, #f25544, #ffb067);
+    transform: rotate(12deg);
+    opacity: 0.16;
+    filter: blur(2px);
+  }
+  
+  .about-hero::after {
+    content: "✦";
+    position: absolute;
+    right: 15%;
+    top: 95px;
+    font-size: 96px;
+    color: rgba(242, 85, 68, 0.22);
+  }
+  
+  .about-hero__inner {
+    position: relative;
+    max-width: 980px;
+  }
+  
+  .about-kicker {
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 26px;
+    padding: 12px 20px;
+    border-radius: 999px;
+    background: #071426;
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+  }
+  
+  .about-hero h1 {
+    max-width: 920px;
+    margin: 0;
+    color: #071426;
+    font-size: clamp(3.6rem, 8vw, 7.8rem);
+    line-height: 0.92;
+    letter-spacing: -0.08em;
+    font-weight: 950;
+  }
+  
+  .about-hero p {
+    max-width: 760px;
+    margin: 34px 0 0;
+    color: #334155;
+    font-size: clamp(1.45rem, 2vw, 1.9rem);
+    line-height: 1.55;
+    font-weight: 600;
+  }
+  
+  .about-hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 42px;
+  }
+  
+  .about-hero__actions .btn,
+  .about-final .btn {
+    min-height: 58px;
+    padding-inline: 28px;
+    font-size: 1.05rem;
+    border-radius: 999px;
+  }
+  
+  .about-stories {
+    padding: 40px 0 90px;
+  }
+  
+  .about-stories__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+  }
+  
+  .about-story-card {
+    position: relative;
+    min-height: 390px;
+    padding: 34px;
+    border-radius: 38px;
+    background: #fff;
+    box-shadow: 0 28px 80px rgba(15, 23, 42, 0.1);
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    overflow: hidden;
+  }
+  
+  .about-story-card::after {
+    content: "";
+    position: absolute;
+    width: 190px;
+    height: 190px;
+    right: -70px;
+    bottom: -70px;
+    border-radius: 999px;
+    background: rgba(242, 85, 68, 0.12);
+  }
+  
+  .about-story-card:nth-child(2)::after {
+    background: rgba(124, 58, 237, 0.12);
+  }
+  
+  .about-story-card:nth-child(3)::after {
+    background: rgba(14, 165, 233, 0.12);
+  }
+  
+  .about-story-card__icon {
+    width: 84px;
+    height: 84px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 28px;
+    border-radius: 28px;
+    background: #fff2ec;
+    font-size: 2.8rem;
+  }
+  
+  .about-story-card span {
+    display: block;
+    margin-bottom: 16px;
+    color: #f25544;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 0.82rem;
+  }
+  
+  .about-story-card h2 {
+    margin: 0;
+    color: #071426;
+    font-size: clamp(2rem, 3vw, 3.1rem);
+    line-height: 1.02;
+    letter-spacing: -0.06em;
+  }
+  
+  .about-story-card p {
+    margin: 24px 0 0;
+    color: #475569;
+    font-size: 1.18rem;
+    line-height: 1.65;
+  }
+  
+  .about-manifesto {
+    padding: 110px 0;
+    background: #071426;
+    color: #fff;
+    border-radius: 64px 64px 0 0;
+  }
+  
+  .about-manifesto__inner {
+    display: grid;
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: 70px;
+    align-items: start;
+  }
+  
+  .about-big-text {
+    position: sticky;
+    top: 120px;
+  }
+  
+  .about-big-text span {
+    display: block;
+    color: #ffb067;
+    font-size: clamp(2.2rem, 5vw, 5rem);
+    line-height: 1;
+    letter-spacing: -0.07em;
+    font-weight: 950;
+  }
+  
+  .about-big-text h2 {
+    margin: 8px 0 0;
+    color: #fff;
+    font-size: clamp(4rem, 9vw, 9rem);
+    line-height: 0.86;
+    letter-spacing: -0.09em;
+    font-weight: 950;
+  }
+  
+  .about-copy-pro {
+    display: grid;
+    gap: 26px;
+  }
+  
+  .about-copy-pro p {
+    margin: 0;
+    padding: 32px;
+    border-radius: 32px;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.88);
+    font-size: clamp(1.3rem, 2vw, 1.7rem);
+    line-height: 1.6;
+    font-weight: 500;
+  }
+  
+  .about-values {
+    padding: 100px 0;
+    background: #071426;
+  }
+  
+  .about-values__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+  }
+  
+  .about-value {
+    padding: 36px;
+    border-radius: 34px;
+    background: #fffaf6;
+  }
+  
+  .about-value strong {
+    display: block;
+    margin-bottom: 22px;
+    font-size: 3rem;
+  }
+  
+  .about-value h3 {
+    margin: 0;
+    color: #071426;
+    font-size: 2rem;
+    letter-spacing: -0.05em;
+  }
+  
+  .about-value p {
+    margin: 14px 0 0;
+    color: #475569;
+    font-size: 1.18rem;
+    line-height: 1.65;
+  }
+  
+  .about-quote {
+    padding: 120px 0;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(242, 85, 68, 0.18), transparent 32%),
+      #fffaf6;
+  }
+  
+  .about-quote__inner {
+    max-width: 1100px;
+    text-align: center;
+  }
+  
+  .about-quote p {
+    margin: 0 auto;
+    max-width: 820px;
+    color: #475569;
+    font-size: clamp(1.35rem, 2vw, 1.75rem);
+    line-height: 1.55;
+    font-weight: 600;
+  }
+  
+  .about-quote blockquote {
+    margin: 36px auto;
+    color: #071426;
+    font-size: clamp(4rem, 9vw, 8.5rem);
+    line-height: 0.9;
+    letter-spacing: -0.09em;
+    font-weight: 950;
+  }
+  
+  .about-final {
+    padding: 110px 0;
+    background: linear-gradient(135deg, #f25544 0%, #ff8a4c 100%);
+    color: #fff;
+  }
+  
+  .about-final__inner {
+    max-width: 920px;
+    text-align: left;
+  }
+  
+  .about-final span {
+    display: inline-block;
+    margin-bottom: 20px;
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 1.1rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  
+  .about-final h2 {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(4rem, 9vw, 8rem);
+    line-height: 0.9;
+    letter-spacing: -0.09em;
+    font-weight: 950;
+  }
+  
+  .about-final p {
+    max-width: 760px;
+    margin: 30px 0 42px;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: clamp(1.35rem, 2vw, 1.8rem);
+    line-height: 1.55;
+    font-weight: 600;
+  }
+  
+  .about-final .btn--primary {
+    background: #071426;
+    color: #fff;
+    box-shadow: 0 24px 60px rgba(7, 20, 38, 0.28);
+  }
+  
+  @media (max-width: 900px) {
+    .about-hero {
+      padding: 76px 0 54px;
+    }
+  
+    .about-stories__grid,
+    .about-manifesto__inner,
+    .about-values__grid {
+      grid-template-columns: 1fr;
+    }
+  
+    .about-story-card {
+      min-height: auto;
+    }
+  
+    .about-big-text {
+      position: static;
+    }
+  
+    .about-manifesto {
+      padding: 72px 0;
+      border-radius: 42px 42px 0 0;
+    }
+  
+    .about-quote,
+    .about-final {
+      padding: 76px 0;
+    }
+  }
+  
+  @media (max-width: 560px) {
+    .about-hero h1 {
+      font-size: 3.4rem;
+    }
+  
+    .about-hero p,
+    .about-story-card p,
+    .about-copy-pro p,
+    .about-value p,
+    .about-quote p,
+    .about-final p {
+      font-size: 1.12rem;
+    }
+  
+    .about-hero__actions {
+      flex-direction: column;
+    }
+  
+    .about-hero__actions .btn,
+    .about-final .btn {
+      width: 100%;
+    }
+  
+    .about-story-card,
+    .about-copy-pro p,
+    .about-value {
+      padding: 26px;
+      border-radius: 28px;
+    }
+  
+    .about-quote blockquote {
+      font-size: 3.3rem;
+    }
+  }

@@ -1,0 +1,107 @@
+.admin-document-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: grid;
+    place-items: center;
+    padding: 32px;
+    background: rgba(7, 20, 38, 0.82);
+    backdrop-filter: blur(8px);
+  }
+  
+  .admin-document-modal__dialog {
+    display: flex;
+    flex-direction: column;
+    width: min(1100px, 100%);
+    max-height: calc(100vh - 64px);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 28px;
+    background: #ffffff;
+    box-shadow: 0 32px 100px rgba(7, 20, 38, 0.38);
+  }
+  
+  .admin-document-modal__header {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 18px 22px;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.1);
+    background: #ffffff;
+  }
+  
+  .admin-document-modal__header h2 {
+    margin: 0;
+    color: #071426;
+    font-size: 1.25rem;
+    line-height: 1.2;
+  }
+  
+  .admin-document-modal__close {
+    flex-shrink: 0;
+  }
+  
+  .admin-document-modal__body {
+    display: grid;
+    flex: 1;
+    min-height: 0;
+    place-items: center;
+    overflow: auto;
+    padding: 20px;
+    background: #101828;
+  }
+  
+  .admin-document-modal__image {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    max-height: calc(100vh - 190px);
+    object-fit: contain;
+    border-radius: 12px;
+    background: #ffffff;
+  }
+  
+  .admin-document-modal__iframe {
+    width: 100%;
+    height: calc(100vh - 190px);
+    min-height: 520px;
+    border: 0;
+    border-radius: 12px;
+    background: #ffffff;
+  }
+  
+  @media (max-width: 640px) {
+    .admin-document-modal {
+      padding: 10px;
+    }
+  
+    .admin-document-modal__dialog {
+      max-height: calc(100vh - 20px);
+      border-radius: 18px;
+    }
+  
+    .admin-document-modal__header {
+      align-items: flex-start;
+      padding: 14px;
+    }
+  
+    .admin-document-modal__header h2 {
+      font-size: 1.05rem;
+    }
+  
+    .admin-document-modal__body {
+      padding: 10px;
+    }
+  
+    .admin-document-modal__image {
+      max-height: calc(100vh - 145px);
+    }
+  
+    .admin-document-modal__iframe {
+      height: calc(100vh - 145px);
+      min-height: 420px;
+    }
+  }
