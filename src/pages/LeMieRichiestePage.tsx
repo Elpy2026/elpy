@@ -371,7 +371,7 @@ function LeMieRichiestePage() {
           userId: application.helper_id,
           payload: {
             title: 'Candidatura non selezionata',
-            body: 'La tua candidaturaon è stata selezionata. Sono disponibili altre richieste.',
+            body: 'La tua candidatura non è stata selezionata. Sono disponibili altre richieste.',
             url: '/le-mie-attivita',
           },
         },
