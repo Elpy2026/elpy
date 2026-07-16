@@ -164,29 +164,32 @@ Deno.serve(async (req) => {
     }
 
     const { data: requestData, error: requestError } = await supabaseAdmin
-      .from("requests")
-      .select(
-        `
-          id,
-          title,
-          cancelled_by,
-          cancellation_fee_status,
-          cancellation_fee_amount
-        `,
-      )
-      .eq("id", penalty.request_id)
-      .single();
-
-    if (requestError || !requestData) {
-      console.error("Penalty request lookup error:", requestError);
-
-      return jsonResponse(
-        {
-          error: "Richiesta collegata alla penale non trovata.",
-        },
-        404,
-      );
-    }
+    .from("requests")
+    .select("id, title")
+    .eq("id", penalty.request_id)
+    .single();
+  
+  if (requestError || !requestData) {
+    console.error("Penalty request lookup error:", requestError);
+  
+    return jsonResponse(
+      {
+        error: "Richiesta collegata alla penale non trovata.",
+      },
+      404,
+    );
+  }
+  
+  const penaltyAmount = Number(penalty.amount);
+  
+  if (!Number.isFinite(penaltyAmount) || penaltyAmount <= 0) {
+    return jsonResponse(
+      {
+        error: "Importo della penale non valido.",
+      },
+      400,
+    );
+  }
 
     if (requestData.cancelled_by !== user.id) {
       return jsonResponse(
