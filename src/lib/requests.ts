@@ -153,7 +153,7 @@ export async function insertRequest(
         },
       )
 
-      console.log('RISULTATO PUSH NUOVA RICHIESTA:', { pushResult, pushError })
+      window.alert(JSON.stringify({ pushResult, pushError }, null, 2))
 
       if (pushError) {
         console.error('Errore invio push nuova richiesta:', pushError)
