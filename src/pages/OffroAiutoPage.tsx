@@ -51,9 +51,9 @@ function OffroAiutoPage() {
     return requests
       .filter((request) => request.stato === 'aperta')
       .sort((a, b) => {
-        const firstDate = new Date(a.data + 'T00:00:00').getTime()
-        const secondDate = new Date(b.data + 'T00:00:00').getTime()
-        return secondDate - firstDate
+        const firstCreatedAt = new Date(a.createdAt ?? 0).getTime()
+        const secondCreatedAt = new Date(b.createdAt ?? 0).getTime()
+        return secondCreatedAt - firstCreatedAt
       })
   }, [requests])
 
@@ -195,6 +195,7 @@ function OffroAiutoPage() {
                 <ul className="helper-requests-list helper-requests-list--compact">
                   {displayedRequests.map((request) => {
                     const isOpen = openRequestId === request.id
+                    const isOwner = request.seekerId === user?.id
 
                     return (
                       <li
@@ -282,22 +283,28 @@ function OffroAiutoPage() {
                               </div>
 
                               <div className="form-actions">
-                                <button
-                                  type="button"
-                                  className="btn btn--primary request-card__btn"
-                                  onClick={() => void handleApplication(request.id)}
-                                  disabled={
-                                    submittingApplicationId === request.id ||
-                                    checkingVerification ||
-                                    !verified
-                                  }
-                                >
-                                  {submittingApplicationId === request.id
-                                    ? 'Invio candidatura…'
-                                    : verified
-                                      ? 'Candidati'
-                                      : 'Verifica identità per candidarti'}
-                                </button>
+                              {isOwner ? (
+  <div className="alert alert--success">
+    👤 Questa richiesta è stata pubblicata da te.
+  </div>
+) : (
+  <button
+    type="button"
+    className="btn btn--primary request-card__btn"
+    onClick={() => void handleApplication(request.id)}
+    disabled={
+      submittingApplicationId === request.id ||
+      checkingVerification ||
+      !verified
+    }
+  >
+    {submittingApplicationId === request.id
+      ? 'Invio candidatura…'
+      : verified
+        ? 'Candidati'
+        : 'Verifica identità per candidarti'}
+  </button>
+)}
                               </div>
                             </div>
                           </div>

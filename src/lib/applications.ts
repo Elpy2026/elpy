@@ -54,6 +54,11 @@ export async function createApplication(
   if (requestError || !requestData) {
     return { error: requestError?.message ?? 'Richiesta non trovata.' }
   }
+  if (requestData.seeker_id === user.id) {
+    return {
+      error: 'Non puoi candidarti a una richiesta che hai pubblicato tu.',
+    }
+  }
 
   const { error } = await supabase.from('request_applications').insert({
     request_id: application.requestId,

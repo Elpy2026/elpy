@@ -6900,3 +6900,21 @@ button.btn--primary,
 .request-card .btn--primary {
   color: #ffffff !important;
 }
+.alert--success .form-actions a[href*="profilo-helper"],
+.alert--success .form-actions a[href*="profilo-helper"]:link,
+.alert--success .form-actions a[href*="profilo-helper"]:visited,
+.alert--success .form-actions a[href*="profilo-helper"]:hover,
+.alert--success .form-actions a[href*="profilo-helper"]:focus,
+.alert--success .form-actions a[href*="profilo-helper"]:active {
+  color: #ffffff !important;
+}
+
+a[href*="/profilo-helper"].btn,
+a[href*="/profilo-helper"].btn:link,
+a[href*="/profilo-helper"].btn:visited,
+a[href*="/profilo-helper"].btn:hover,
+a[href*="/profilo-helper"].btn:focus,
+a[href*="/profilo-helper"].btn:active,
+a[href*="/profilo-helper"].btn::before {
+  color: #ffffff !important;
+}

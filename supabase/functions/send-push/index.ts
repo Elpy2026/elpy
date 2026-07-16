@@ -3,7 +3,7 @@ import webpush from 'npm:web-push'
 
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL')!,
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
 )
 
 webpush.setVapidDetails(
@@ -11,6 +11,7 @@ webpush.setVapidDetails(
   Deno.env.get('VAPID_PUBLIC_KEY')!,
   Deno.env.get('VAPID_PRIVATE_KEY')!,
 )
+
 type PushPayload = {
   title: string
   body: string
@@ -18,110 +19,172 @@ type PushPayload = {
   icon?: string
 }
 
+type PushRequestBody = {
+  userId?: string
+  audience?: 'helpers'
+  requestId?: string
+  payload: PushPayload
+}
+
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
 Deno.serve(async (req) => {
   try {
-    const { userId, payload } = await req.json() as {
-      userId: string
-      payload: PushPayload
+    const authorization = req.headers.get('Authorization')
+    const accessToken = authorization?.replace(/^Bearer\s+/i, '')
+
+    if (!accessToken) {
+      return jsonResponse({ error: 'Autenticazione mancante.' }, 401)
     }
 
-    if (!userId) {
-      return new Response(
-        JSON.stringify({ error: 'userId mancante' }),
-        {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' },
-        },
-      )
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(accessToken)
+
+    if (authError || !user) {
+      return jsonResponse({ error: 'Sessione non valida.' }, 401)
     }
-    const { data: subscriptions, error } = await supabase
-    .from('push_subscriptions')
-    .select('id,user_id,endpoint,p256dh,auth')
-    .eq('user_id', userId)
 
-    console.log("USER_ID:", userId)
-console.log("ERROR:", error)
-console.log("SUBSCRIPTIONS_COUNT:", subscriptions?.length)
-console.log("SUBSCRIPTIONS:", JSON.stringify(subscriptions, null, 2))
+    const { userId, audience, requestId, payload } =
+      (await req.json()) as PushRequestBody
 
-  if (error) {
-    throw error
-  }
+    if (!payload?.title || !payload?.body) {
+      return jsonResponse({ error: 'Payload push non valido.' }, 400)
+    }
 
-  if (!subscriptions?.length) {
-    return new Response(
-      JSON.stringify({
-        success: true,
-        sent: 0,
-      }),
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      },
-    )
-  }
-  let sent = 0
+    let targetUserIds: string[] = []
 
-  for (const subscription of subscriptions) {
-    try {
-      await webpush.sendNotification(
-        {
-          endpoint: subscription.endpoint,
-          keys: {
-            p256dh: subscription.p256dh,
-            auth: subscription.auth,
-          },
-        },
-        JSON.stringify(payload),
-      )
-
-      sent++
-    } catch (error: any) {
-      if (
-        error?.statusCode === 404 ||
-        error?.statusCode === 410
-      ) {
-        await supabase
-          .from('push_subscriptions')
-          .delete()
-          .eq('id', subscription.id)
-
-        continue
+    if (audience === 'helpers') {
+      if (!requestId) {
+        return jsonResponse({ error: 'requestId mancante.' }, 400)
       }
 
-      console.error('PUSH_SEND_ERROR:', {
-        message: error?.message,
-        statusCode: error?.statusCode,
-        body: error?.body,
-        endpoint: subscription.endpoint,
+      const { data: requestData, error: requestError } = await supabase
+        .from('requests')
+        .select('id, seeker_id')
+        .eq('id', requestId)
+        .single()
+
+      if (requestError || !requestData) {
+        return jsonResponse({ error: 'Richiesta non trovata.' }, 404)
+      }
+
+      if (requestData.seeker_id !== user.id) {
+        return jsonResponse(
+          { error: 'Non puoi inviare push per questa richiesta.' },
+          403,
+        )
+      }
+
+      const { data: helperProfiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id')
+        .in('role', ['helper', 'both'])
+        .neq('id', user.id)
+
+      if (profilesError) {
+        throw profilesError
+      }
+
+      targetUserIds = (helperProfiles ?? []).map((profile) => profile.id)
+    } else if (userId) {
+      targetUserIds = [userId]
+    } else {
+      return jsonResponse(
+        { error: 'userId oppure audience helpers richiesto.' },
+        400,
+      )
+    }
+
+    if (targetUserIds.length === 0) {
+      return jsonResponse({
+        success: true,
+        recipients: 0,
+        sent: 0,
       })
     }
-  }
-  return new Response(
-    JSON.stringify({
-      success: true,
-      sent,
-    }),
-    {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    },
-  )
-} catch (error: any) {
-  console.error(error)
 
-  return new Response(
-    JSON.stringify({
-      error: error?.message ?? 'Errore interno',
-    }),
-    {
-      status: 500,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    },
-  )
-}
+    const { data: subscriptions, error: subscriptionsError } = await supabase
+      .from('push_subscriptions')
+      .select('id, user_id, endpoint, p256dh, auth')
+      .in('user_id', targetUserIds)
+
+    if (subscriptionsError) {
+      throw subscriptionsError
+    }
+
+    if (!subscriptions?.length) {
+      return jsonResponse({
+        success: true,
+        recipients: targetUserIds.length,
+        sent: 0,
+      })
+    }
+
+    let sent = 0
+
+    for (const subscription of subscriptions) {
+      try {
+        await webpush.sendNotification(
+          {
+            endpoint: subscription.endpoint,
+            keys: {
+              p256dh: subscription.p256dh,
+              auth: subscription.auth,
+            },
+          },
+          JSON.stringify(payload),
+        )
+
+        sent += 1
+      } catch (error: unknown) {
+        const pushError = error as {
+          statusCode?: number
+          message?: string
+          body?: string
+        }
+
+        if (
+          pushError.statusCode === 404 ||
+          pushError.statusCode === 410
+        ) {
+          await supabase
+            .from('push_subscriptions')
+            .delete()
+            .eq('id', subscription.id)
+
+          continue
+        }
+
+        console.error('PUSH_SEND_ERROR:', {
+          message: pushError.message,
+          statusCode: pushError.statusCode,
+          body: pushError.body,
+          endpoint: subscription.endpoint,
+        })
+      }
+    }
+
+    return jsonResponse({
+      success: true,
+      recipients: targetUserIds.length,
+      subscriptions: subscriptions.length,
+      sent,
+    })
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : 'Errore interno'
+
+    console.error('SEND_PUSH_ERROR:', error)
+
+    return jsonResponse({ error: message }, 500)
+  }
 })

@@ -44,6 +44,8 @@ export function mapRowToHelpRequest(row: RequestRow): HelpRequest {
     compenso: String(row.reward),
     stato: mapStatus(row.status),
     createdAt: row.created_at ?? new Date().toISOString(),
+    seekerId: row.seeker_id ?? row.user_id ?? null,
+    helperId: row.helper_id ?? null,
     latitude: row.latitude ?? null,
     longitude: row.longitude ?? null,
     locationLabel: row.location_label ?? row.city,
@@ -134,6 +136,27 @@ export async function insertRequest(
         reward: Number(data.compenso),
       },
     })
+
+    if (insertedRequest?.id) {
+      const { error: pushError } = await supabase.functions.invoke(
+        'send-push',
+        {
+          body: {
+            audience: 'helpers',
+            requestId: insertedRequest.id,
+            payload: {
+              title: 'Qualcuno ha bisogno del tuo aiuto',
+              body: `${data.titolo} · ${data.citta} · €${data.compenso}`,
+              url: `/offro-aiuto?request_id=${insertedRequest.id}`,
+            },
+          },
+        },
+      )
+
+      if (pushError) {
+        console.error('Errore invio push nuova richiesta:', pushError)
+      }
+    }
   }
 
   return {
