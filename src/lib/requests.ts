@@ -138,7 +138,7 @@ export async function insertRequest(
     })
 
     if (insertedRequest?.id) {
-      const { error: pushError } = await supabase.functions.invoke(
+      const { data: pushResult, error: pushError } = await supabase.functions.invoke(
         'send-push',
         {
           body: {
@@ -152,6 +152,8 @@ export async function insertRequest(
           },
         },
       )
+
+      console.log('RISULTATO PUSH NUOVA RICHIESTA:', { pushResult, pushError })
 
       if (pushError) {
         console.error('Errore invio push nuova richiesta:', pushError)
