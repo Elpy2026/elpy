@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
+import PageBackButton from '../components/PageBackButton'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
@@ -252,6 +253,7 @@ function PenaliPage() {
   return (
     <div className="landing">
       <Header />
+      <PageBackButton />
 
       <main className="page-main">
         <section className="section page-section">

@@ -28,6 +28,7 @@ import AdminSegnalazioniPage from './pages/AdminSegnalazioniPage'
 import AdminDashboardPage from './pages/AdminDashboardPage'
 import AdminPagamentiPage from './pages/AdminPagamentiPage'
 import AdminNotifichePage from './pages/AdminNotifichePage'
+import AdminUtentiPage from './pages/AdminUtentiPage'
 import PagamentoSuccessoPage from './pages/PagamentoSuccessoPage'
 import PagamentoAnnullatoPage from './pages/PagamentoAnnullatoPage'
 import ChiSiamoPage from './pages/ChiSiamoPage'
@@ -189,6 +190,15 @@ function App() {
             element={
               <AdminRoute>
                 <AdminDashboardPage />
+              </AdminRoute>
+            }
+          />
+
+          <Route
+            path="/admin/utenti"
+            element={
+              <AdminRoute>
+                <AdminUtentiPage />
               </AdminRoute>
             }
           />

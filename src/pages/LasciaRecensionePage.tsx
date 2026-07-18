@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { supabase } from '../lib/supabase'
+import PageBackButton from '../components/PageBackButton'
 import { createReview } from '../lib/reviews'
 import { useAuth } from '../context/AuthContext'
 
@@ -130,6 +131,7 @@ function LasciaRecensionePage() {
   return (
     <div className="landing">
       <Header />
+      <PageBackButton />
 
       <main className="page-main">
         <section className="section page-section">

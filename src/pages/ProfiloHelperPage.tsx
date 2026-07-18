@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useLocation, useParams } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { supabase } from '../lib/supabase'
@@ -7,7 +7,6 @@ import { supabase } from '../lib/supabase'
 type Profile = {
   id: string
   full_name: string | null
-  role: string | null
   verified: boolean | null
   city: string | null
   bio: string | null
@@ -59,6 +58,15 @@ function getReputationBadge(
 
 function ProfiloHelperPage() {
   const { helperId } = useParams()
+  const location = useLocation()
+
+  const backTo =
+    typeof location.state === 'object' &&
+    location.state !== null &&
+    'from' in location.state &&
+    typeof location.state.from === 'string'
+      ? location.state.from
+      : '/offro-aiuto'
   const [profile, setProfile] = useState<Profile | null>(null)
   const [stats, setStats] = useState<ReviewStats | null>(null)
   const [reviews, setReviews] = useState<Review[]>([])
@@ -79,7 +87,7 @@ function ProfiloHelperPage() {
 
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('id, full_name, role, verified, city, bio, avatar_url')
+        .select('id, full_name, verified, city, bio, avatar_url')
         .eq('id', helperId)
         .single()
 
@@ -141,7 +149,7 @@ function ProfiloHelperPage() {
             {!loading && profile && (
               <>
                 <div className="page-header">
-                  <p className="hero__badge">Profilo helper</p>
+                  <p className="hero__badge">Profilo utente</p>
 
                   <img
                     src={
@@ -240,12 +248,6 @@ function ProfiloHelperPage() {
                     </p>
                   )}
 
-                  {profile.role && (
-                    <p>
-                      <strong>Ruolo:</strong> {profile.role}
-                    </p>
-                  )}
-
                   {profile.verified && (
                     <p>
                       <strong>Identità:</strong> verificata da ELPYO
@@ -294,8 +296,8 @@ function ProfiloHelperPage() {
                 </div>
 
                 <div className="page-footer-actions">
-                  <Link to="/offro-aiuto" className="btn btn--secondary">
-                    Torna alle richieste
+                  <Link to={backTo} className="btn btn--secondary">
+                    ← Torna indietro
                   </Link>
 
                   <Link

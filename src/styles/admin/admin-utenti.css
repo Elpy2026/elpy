@@ -474,3 +474,166 @@
       padding: 16px;
     }
   }
+  .admin-user-history-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 18px;
+  }
+  
+  .admin-user-history-header h3 {
+    margin-bottom: 6px;
+  }
+  
+  .admin-user-history-header p {
+    margin: 0;
+    color: #667085;
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
+  
+  .admin-user-history-header > strong {
+    display: grid;
+    min-width: 44px;
+    height: 44px;
+    place-items: center;
+    border-radius: 14px;
+    background: #fff2ec;
+    color: #d93d30;
+    font-size: 1.15rem;
+  }
+  
+  .admin-user-request-history {
+    display: grid;
+    gap: 12px;
+  }
+  
+  .admin-user-request-history__item {
+    padding: 16px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 18px;
+    background: #f9fafb;
+  }
+  
+  .admin-user-request-history__top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  
+  .admin-user-request-history__top > div {
+    min-width: 0;
+  }
+  
+  .admin-user-request-history__top > div > span {
+    display: block;
+    margin-bottom: 5px;
+    color: #f25544;
+    font-size: 0.74rem;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  
+  .admin-user-request-history__top h4 {
+    margin: 0;
+    color: #101828;
+    font-size: 1rem;
+    line-height: 1.3;
+  }
+  
+  .admin-user-request-status {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    min-height: 29px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 900;
+  }
+  
+  .admin-user-request-status--success {
+    background: #ecfdf3;
+    color: #027a48;
+  }
+  
+  .admin-user-request-status--accent {
+    background: #eef4ff;
+    color: #3538cd;
+  }
+  
+  .admin-user-request-status--warning {
+    background: #fffaeb;
+    color: #b54708;
+  }
+  
+  .admin-user-request-status--danger {
+    background: #fef3f2;
+    color: #b42318;
+  }
+  
+  .admin-user-request-history__meta {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin: 14px 0;
+  }
+  
+  .admin-user-request-history__meta > div {
+    min-width: 0;
+    padding: 10px;
+    border-radius: 12px;
+    background: #ffffff;
+  }
+  
+  .admin-user-request-history__meta dt {
+    color: #667085;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+  
+  .admin-user-request-history__meta dd {
+    margin: 4px 0 0;
+    overflow-wrap: anywhere;
+    color: #101828;
+    font-size: 0.82rem;
+    font-weight: 800;
+  }
+  
+  .admin-user-request-history__id {
+    display: block;
+    overflow-wrap: anywhere;
+    color: #667085;
+    font-size: 0.7rem;
+  }
+  
+  .admin-user-history-empty {
+    padding: 22px;
+    border: 1px dashed #d0d5dd;
+    border-radius: 16px;
+    background: #f9fafb;
+    color: #667085;
+    text-align: center;
+    font-weight: 700;
+  }
+  
+  @media (max-width: 700px) {
+    .admin-user-request-history__meta {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .admin-user-history-header,
+    .admin-user-request-history__top {
+      flex-direction: column;
+    }
+  
+    .admin-user-request-history__meta {
+      grid-template-columns: 1fr;
+    }
+  }

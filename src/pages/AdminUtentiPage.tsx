@@ -1,10 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Header from '../components/Header'
+import PageBackButton from '../components/PageBackButton'
 import Footer from '../components/Footer'
 import { supabase } from '../lib/supabase'
 import '../styles/admin/admin-utenti.css'
-
+type AdminPublishedRequest = {
+  id: string
+  category: string | null
+  title: string | null
+  city: string | null
+  reward: number
+  status: string | null
+  requestDate: string | null
+  createdAt: string | null
+}
 type AdminUser = {
   id: string
   email: string | null
@@ -31,14 +41,21 @@ type AdminUser = {
   pendingPenaltyAmount: number
 
   publishedRequests: number
-  completedActivities: number
+publishedRequestHistory: AdminPublishedRequest[]
+completedActivities: number
   applications: number
   reviews: number
   averageRating: number | null
 }
 
 type VerificationFilter = 'all' | 'verified' | 'unverified'
-type RoleFilter = 'all' | 'seeker' | 'helper' | 'both' | 'admin'
+type ActivityFilter =
+  | 'all'
+  | 'none'
+  | 'published'
+  | 'applied'
+  | 'completed'
+  | 'both'
 type StripeFilter = 'all' | 'ready' | 'not-ready'
 
 function formatDate(value: string | null) {
@@ -59,19 +76,41 @@ function formatDate(value: string | null) {
   })
 }
 
+function formatRelativeDate(value: string | null) {
+  if (!value) return 'Mai'
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return 'Non disponibile'
+  }
+
+  const differenceInMilliseconds = Date.now() - date.getTime()
+  const differenceInMinutes = Math.floor(
+    differenceInMilliseconds / (1000 * 60),
+  )
+  const differenceInHours = Math.floor(
+    differenceInMilliseconds / (1000 * 60 * 60),
+  )
+  const differenceInDays = Math.floor(
+    differenceInMilliseconds / (1000 * 60 * 60 * 24),
+  )
+
+  if (differenceInMinutes < 1) return 'Adesso'
+  if (differenceInMinutes < 60) return `${differenceInMinutes} minuti fa`
+  if (differenceInHours < 24) return `${differenceInHours} ore fa`
+  if (differenceInDays === 1) return 'Ieri'
+  if (differenceInDays < 30) return `${differenceInDays} giorni fa`
+
+  return formatDate(value)
+}
+ 
+
 function formatCurrency(value: number) {
   return value.toLocaleString('it-IT', {
     style: 'currency',
     currency: 'EUR',
   })
-}
-
-function formatRole(role: string | null, isAdmin: boolean) {
-  if (isAdmin) return 'Amministratore'
-  if (role === 'seeker') return 'Richiedente'
-  if (role === 'helper') return 'Helper'
-  if (role === 'both') return 'Entrambi'
-  return 'Non definito'
 }
 
 function isStripeReady(user: AdminUser) {
@@ -83,16 +122,66 @@ function isStripeReady(user: AdminUser) {
   )
 }
 
+function getActivityLabel(user: AdminUser) {
+  const hasPublishedRequests = user.publishedRequests > 0
+  const hasCompletedActivities = user.completedActivities > 0
+  const hasApplications = user.applications > 0
+
+  if (hasPublishedRequests && hasCompletedActivities) {
+    return 'Chiede e offre aiuto'
+  }
+
+  if (hasCompletedActivities) {
+    return 'Ha offerto aiuto'
+  }
+
+  if (hasPublishedRequests) {
+    return 'Ha chiesto aiuto'
+  }
+
+  if (hasApplications) {
+    return 'Ha inviato candidature'
+  }
+
+  return 'Nessuna attività registrata'
+}
+
+function formatRequestStatus(status: string | null) {
+  if (status === 'aperta') return 'Aperta'
+  if (status === 'accettata') return 'Accettata'
+  if (status === 'completata') return 'ompletata'
+  if (status === 'annullata') return 'Annullata'
+
+  return status || 'Stato non disponibile'
+}
+
+function getRequestStatusClass(status: string | null) {
+  if (status === 'completata') {
+    return 'admin-user-request-status admin-user-request-status--success'
+  }
+
+  if (status === 'accettata') {
+    return 'admin-user-request-status admin-user-request-status--accent'
+  }
+
+  if (status === 'annullata') {
+    return 'admin-user-request-status admin-user-request-status--danger'
+  }
+
+  return 'admin-user-request-status admin-user-request-status--warning'
+}
+
 function AdminUtentiPage() {
   const [users, setUsers] = useState<AdminUser[]>([])
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null)
+  const [copiedUserId, setCopiedUserId] = useState('')
 
   const [search, setSearch] = useState('')
   const [verificationFilter, setVerificationFilter] =
     useState<VerificationFilter>('all')
-  const [roleFilter, setRoleFilter] = useState<RoleFilter>('all')
+  const [activityFilter, setActivityFilter] =
+    useState<ActivityFilter>('all')
   const [stripeFilter, setStripeFilter] = useState<StripeFilter>('all')
-
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -201,14 +290,32 @@ function AdminUtentiPage() {
         return false
       }
 
-      if (roleFilter === 'admin' && !user.isAdmin) {
+      const hasPublishedRequests = user.publishedRequests > 0
+      const hasApplications = user.applications > 0
+      const hasCompletedActivities = user.completedActivities > 0
+
+      if (
+        activityFilter === 'none' &&
+        (hasPublishedRequests || hasApplications || hasCompletedActivities)
+      ) {
+        return false
+      }
+
+      if (activityFilter === 'published' && !hasPublishedRequests) {
+        return false
+      }
+
+      if (activityFilter === 'applied' && !hasApplications) {
+        return false
+      }
+
+      if (activityFilter === 'completed' && !hasCompletedActivities) {
         return false
       }
 
       if (
-        roleFilter !== 'all' &&
-        roleFilter !== 'admin' &&
-        user.role !== roleFilter
+        activityFilter === 'both' &&
+        (!hasPublishedRequests || !hasCompletedActivities)
       ) {
         return false
       }
@@ -229,7 +336,7 @@ function AdminUtentiPage() {
     users,
     search,
     verificationFilter,
-    roleFilter,
+    activityFilter,
     stripeFilter,
   ])
 
@@ -247,17 +354,30 @@ function AdminUtentiPage() {
     () => users.filter(isStripeReady).length,
     [users],
   )
-
+  async function handleCopyUserId(userId: string) {
+    try {
+      await navigator.clipboard.writeText(userId)
+      setCopiedUserId(userId)
+  
+      window.setTimeout(() => {
+        setCopiedUserId((currentValue) =>
+          currentValue === userId ? '' : currentValue,
+        )
+      }, 1800)
+    } catch {
+      setError('Non è stato possibile copiare l’ID utente.')
+    }
+  }
   function resetFilters() {
     setSearch('')
     setVerificationFilter('all')
-    setRoleFilter('all')
     setStripeFilter('all')
   }
 
   return (
     <div className="landing">
       <Header />
+      <PageBackButton />
 
       <main className="page-main admin-users-page">
         <section className="section page-section">
@@ -345,20 +465,21 @@ function AdminUtentiPage() {
                 </div>
 
                 <div className="form-field">
-                  <label htmlFor="role-filter">Ruolo</label>
+                  <label htmlFor="activity-filter">Attività</label>
 
                   <select
-                    id="role-filter"
-                    value={roleFilter}
+                    id="activity-filter"
+                    value={activityFilter}
                     onChange={(event) =>
-                      setRoleFilter(event.target.value as RoleFilter)
+                      setActivityFilter(event.target.value as ActivityFilter)
                     }
                   >
                     <option value="all">Tutti</option>
-                    <option value="seeker">Richiedenti</option>
-                    <option value="helper">Helper</option>
-                    <option value="both">Entrambi</option>
-                    <option value="admin">Amministratori</option>
+                    <option value="none">Nessuna attività</option>
+                    <option value="published">Ha pubblicato richieste</option>
+                    <option value="applied">Ha inviato candidature</option>
+                    <option value="completed">Ha completato attività</option>
+                    <option value="both">Ha chiesto e offerto aiuto</option>
                   </select>
                 </div>
 
@@ -464,8 +585,8 @@ function AdminUtentiPage() {
 
                       <dl className="admin-user-card__meta">
                         <div>
-                          <dt>Ruolo</dt>
-                          <dd>{formatRole(user.role, user.isAdmin)}</dd>
+                          <dt>Utilizzo</dt>
+                          <dd>{getActivityLabel(user)}</dd>
                         </div>
 
                         <div>
@@ -574,18 +695,27 @@ function AdminUtentiPage() {
                   </div>
 
                   <div>
-                    <dt>Ruolo</dt>
-                    <dd>
-                      {formatRole(selectedUser.role, selectedUser.isAdmin)}
-                    </dd>
+                    <dt>Utilizzo piattaforma</dt>
+                    <dd>{getActivityLabel(selectedUser)}</dd>
                   </div>
 
                   <div>
-                    <dt>ID utente</dt>
-                    <dd className="admin-user-detail-id">
-                      {selectedUser.id}
-                    </dd>
-                  </div>
+  <dt>ID utente</dt>
+
+  <dd className="admin-user-detail-id-row">
+    <span className="admin-user-detail-id">
+      {selectedUser.id}
+    </span>
+
+    <button
+      type="button"
+      className="admin-user-copy-button"
+      onClick={() => void handleCopyUserId(selectedUser.id)}
+    >
+      {copiedUserId === selectedUser.id ? 'Copiato ✓' : 'Copia ID'}
+    </button>
+  </dd>
+</div>
                 </dl>
               </section>
 
@@ -629,14 +759,23 @@ function AdminUtentiPage() {
                   </div>
 
                   <div>
-                    <dt>Ultimo accesso</dt>
-                    <dd>{formatDate(selectedUser.lastSignInAt)}</dd>
-                  </div>
+  <dt>Ultimo accesso</dt>
+
+  <dd className="admin-user-last-access">
+    <strong>
+      {formatRelativeDate(selectedUser.lastSignInAt)}
+    </strong>
+
+    {selectedUser.lastSignInAt && (
+      <small>{formatDate(selectedUser.lastSignInAt)}</small>
+    )}
+  </dd>
+</div>
                 </dl>
               </section>
 
               <section className="admin-user-detail-section">
-                <h3>Attività ELPYO</h3>
+              <h3>Statistiche utente</h3>
 
                 <div className="admin-user-detail-stats">
                   <div>
@@ -675,9 +814,82 @@ function AdminUtentiPage() {
                     </strong>
                   </div>
                 </div>
+                </section>
+
+
+              <section className="admin-user-detail-section">
+                <div className="admin-user-history-header">
+                  <div>
+                    <h3>Richieste pubblicate</h3>
+
+                    <p>
+                      Ultime richieste inserite dall’utente, dalla più recente.
+                    </p>
+                  </div>
+
+                  <strong>{selectedUser.publishedRequests}</strong>
+                </div>
+
+                {selectedUser.publishedRequestHistory?.length > 0 ? (
+                  <div className="admin-user-request-history">
+                    {selectedUser.publishedRequestHistory.map((request) => (
+                      <article
+                        key={request.id}
+                        className="admin-user-request-history__item"
+                      >
+                        <div className="admin-user-request-history__top">
+                          <div>
+                            <span>
+                              {request.category || 'Categoria non indicata'}
+                            </span>
+
+                            <h4>
+                           {request.title || 'Richiesta senza titolo'}
+                            </h4>
+                          </div>
+
+                          <span className={getRequestStatusClass(request.status)}>
+                            {formatRequestStatus(request.status)}
+                          </span>
+                        </div>
+
+                        <dl className="admin-user-request-history__meta">
+                          <div>
+                            <dt>Città</dt>
+                            <dd>{request.city || 'Non indicata'}</dd>
+                          </div>
+
+                          <div>
+                            <dt>Compenso</dt>
+                            <dd>{formatCurrency(request.reward)}</dd>
+                          </div>
+
+                          <div>
+                            <dt>Data richiesta</dt>
+                            <dd>{formatDate(request.requestDate)}</dd>
+                          </div>
+
+                          <div>
+                           <dt>Pubblicata il</dt>
+                            <dd>{formatDate(request.createdAt)}</dd>
+                          </div>
+                        </dl>
+
+                        <code className="admin-user-request-history__id">
+                          ID richiesta: {request.id}
+                        </code>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="admin-user-history-empty">
+                    Nessuna richiesta pubblicata da questo utente.
+                  </div>
+                )}
               </section>
 
               <div className="form-actions">
+              
                 <Link
                   to="/admin/verifiche"
                   className="btn btn--secondary"

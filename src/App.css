@@ -3478,11 +3478,6 @@ li.request-card {
   width: 100%;
 }
 
-.alert--success .form-actions a[href*="profilo-helper"]::before {
-  content: "👤";
-  margin-right: 0.45rem;
-}
-
 .alert--success .form-actions a[href*="/chat/"] {
   background: linear-gradient(135deg, #4f8cff, #2563eb);
   color: #fff;
@@ -3588,15 +3583,6 @@ li.request-card > .form-actions .btn:first-child {
   background: linear-gradient(135deg, #16a077, #057857);
 }
 
-li.request-card > .form-actions .btn:first-child::before {
-  content: "✓";
-  margin-right: 0.5rem;
-}
-
-li.request-card > .form-actions .btn:last-child::before {
-  content: "🗑️";
-  margin-right: 0.5rem;
-}
 
 /* Payment card */
 
@@ -6414,3 +6400,79 @@ a[href*="/profilo-helper"].btn:active,
 a[href*="/profilo-helper"].btn::before {
   color: #ffffff !important;
 }
+
+.btn.helper-profile-link {
+  background: linear-gradient(135deg, #f25544, #ff7a5c);
+  border: 0;
+  color: #fff !important;
+  font-weight: 800;
+  box-shadow: 0 12px 24px rgba(242,85,68,.18);
+}
+
+.btn.helper-profile-link:hover {
+  background: linear-gradient(135deg, #d93d30, #f25544);
+  color: #fff !important;
+}
+
+/* HEADER MOBILE */
+@media (max-width: 767px) {
+  .header__inner {
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    padding-block: 0.65rem;
+  }
+
+  .header__account {
+    margin-left: auto;
+  }
+
+  .header__nav {
+    order: 3;
+    display: flex;
+    width: 100%;
+    margin-left: 0;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding: 0.15rem 0 0.25rem;
+    scrollbar-width: none;
+  }
+
+  .header__nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .header__nav a {
+    flex: 0 0 auto;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--border-light);
+    border-radius: 999px;
+    background: #ffffff;
+    color: var(--text-heading);
+    font-size: 0.8rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .header__nav a:hover,
+  .header__nav a.active {
+    background: var(--green-50);
+    border-color: var(--green-200);
+    color: var(--green-700);
+  }
+
+  .account-menu__dropdown {
+    position: fixed;
+    top: 4.5rem;
+    right: 0.75rem;
+    left: 0.75rem;
+    width: auto;
+    min-width: 0;
+    max-height: calc(100vh - 5.5rem);
+    overflow-y: auto;
+  }
+
+  .account-menu__name {
+    max-width: 5rem;
+  }
+}
+

@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { supabase } from '../lib/supabase'
+import PageBackButton from '../components/PageBackButton'
 import { useAuth } from '../context/AuthContext'
 import { createAdminNotification } from '../lib/adminNotifications'
 
@@ -84,6 +85,7 @@ function SegnalaUtentePage() {
   return (
     <div className="landing">
       <Header />
+      <PageBackButton />
 
       <main className="page-main">
         <section className="section page-section">

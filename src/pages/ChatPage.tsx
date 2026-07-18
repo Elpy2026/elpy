@@ -5,6 +5,7 @@ import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import PageBackButton from '../components/PageBackButton'
 import BackButton from '../components/BackButton'
 
 type RequestData = {
@@ -329,6 +330,7 @@ const preferredConversationId =
   return (
     <div className="landing">
       <Header />
+      <PageBackButton />
 
       <main className="page-main">
         <section className="section page-section">

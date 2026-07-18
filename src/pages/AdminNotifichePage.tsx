@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Header from '../components/Header'
+import PageBackButton from '../components/PageBackButton'
 import Footer from '../components/Footer'
 import { supabase } from '../lib/supabase'
 import {
@@ -149,6 +150,7 @@ function AdminNotifichePage() {
   return (
     <div className="landing">
       <Header />
+      <PageBackButton />
 
       <main className="page-main">
         <section className="section page-section">

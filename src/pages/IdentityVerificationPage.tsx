@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { supabase } from '../lib/supabase'
+import PageBackButton from '../components/PageBackButton'
 import { useAuth } from '../context/AuthContext'
 import { createAdminNotification } from '../lib/adminNotifications'
 
@@ -88,6 +89,7 @@ function IdentityVerificationPage() {
   return (
     <div className="landing">
       <Header />
+      <PageBackButton />
       <main className="page-main">
         <section className="section page-section">
           <div className="container page-container">

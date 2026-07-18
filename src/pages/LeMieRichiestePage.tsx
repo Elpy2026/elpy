@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase'
 import { cancelAcceptedRequest } from '../lib/cancellations'
 import { createAdminNotification } from '../lib/adminNotifications'
 import { useAuth } from '../context/AuthContext'
+import PageBackButton from '../components/PageBackButton'
 import SafetyPanel from '../components/SafetyPanel'
 
 type HelperProfile = {
@@ -581,6 +582,7 @@ function LeMieRichiestePage() {
   return (
     <div className="landing">
       <Header />
+      <PageBackButton />
 
       <main className="page-main">
         <section className="section page-section">
@@ -700,9 +702,10 @@ function LeMieRichiestePage() {
                                     <div className="form-actions">
                                       <Link
                                         to={`/profilo-helper/${application.helper_id}`}
-                                        className="btn btn--secondary"
+                                        state={{ from: "/le-mie-richieste" }}
+                                        className="btn btn--secondary helper-profile-link"
                                       >
-                                        Vedi profilo helper
+                                        👤 Vedi profilo
                                       </Link>
 
                                       {application.status === 'pending' && (
@@ -774,12 +777,13 @@ function LeMieRichiestePage() {
                               )}
 
                               <div className="form-actions">
-                                <Link
-                                  to={`/profilo-helper/${request.helper_id}`}
-                                  className="btn btn--secondary"
-                                >
-                                  Vedi profilo helper
-                                </Link>
+                              <Link
+  to={`/profilo-helper/${request.helper_id}`}
+  state={{ from: '/le-mie-richieste' }}
+  className="btn btn--secondary helper-profile-link"
+>
+  👤 Vedi profilo
+</Link>
 
                                 <Link
                                   to={`/chat/${request.id}`}
@@ -986,8 +990,7 @@ function LeMieRichiestePage() {
                             to={`/recensione/${request.id}`}
                             className="btn btn--primary"
                           >
-                            Lascia recensione
-                          </Link>
+                            ⭐ Lascia recensione</Link>
                         </div>
                       )}
                     </li>

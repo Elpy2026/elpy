@@ -2,6 +2,7 @@ import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { supabase } from '../lib/supabase'
+import PageBackButton from '../components/PageBackButton'
 import { useAuth } from '../context/AuthContext'
 import PushNotificationsControl from '../components/PushNotificationsControl'
 
@@ -231,6 +232,7 @@ function ProfiloPage() {
   return (
     <div className="landing">
       <Header />
+      <PageBackButton />
 
       <main className="page-main">
         <section className="section page-section">
@@ -251,7 +253,7 @@ function ProfiloPage() {
               <form className="request-form" onSubmit={handleSubmit}>
               <PushNotificationsControl />
                 <div className="request-card">
-                  <h2 className="request-card__title">Incassi helper</h2>
+                  <h2 className="request-card__title">Pagamenti e incassi</h2>
 
                   {stripeAccountId ? (
                     <div className="alert alert--success">

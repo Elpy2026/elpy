@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Header from '../components/Header'
+import PageBackButton from '../components/PageBackButton'
 import Footer from '../components/Footer'
 import { supabase } from '../lib/supabase'
 
@@ -85,11 +86,16 @@ function AdminPagamentiPage() {
   return (
     <div className="landing">
       <Header />
+      <PageBackButton />
 
       <main className="page-main">
         <section className="section page-section">
           <div className="container page-container">
             <div className="page-header">
+              <Link to="/admin/dashboard" className="page-back__link">
+                ← Torna alla dashboard
+              </Link>
+
               <p className="hero__badge">Admin</p>
               <h1 className="page-title">Dashboard Stripe</h1>
               <p className="page-subtitle">

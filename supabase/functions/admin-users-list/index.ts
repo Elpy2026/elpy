@@ -192,7 +192,20 @@ Deno.serve(async (req) => {
 
       supabaseAdmin
         .from("requests")
-        .select("seeker_id, helper_id, status")
+        .select(
+          `
+            id,
+            seeker_id,
+            helper_id,
+            category,
+            title,
+            city,
+            reward,
+            status,
+            request_date,
+            created_at
+          `,
+        )
         .or(
           `seeker_id.in.(${userIds.join(",")}),helper_id.in.(${userIds.join(",")})`,
         ),
@@ -253,9 +266,34 @@ Deno.serve(async (req) => {
 
       const publishedRequests = (
         requestsResult.data ?? []
-      ).filter(
-        (request) => request.seeker_id === authUser.id,
-      );
+      )
+        .filter(
+          (request) => request.seeker_id === authUser.id,
+        )
+        .sort((first, second) => {
+          const firstDate = new Date(
+            first.created_at ?? 0,
+          ).getTime();
+      
+          const secondDate = new Date(
+            second.created_at ?? 0,
+          ).getTime();
+      
+          return secondDate - firstDate;
+        });
+      
+      const publishedRequestHistory = publishedRequests
+        .slice(0, 10)
+        .map((request) => ({
+          id: request.id,
+          category: request.category ?? null,
+          title: request.title ?? null,
+          city: request.city ?? null,
+          reward: Number(request.reward ?? 0),
+          status: request.status ?? null,
+          requestDate: request.request_date ?? null,
+          createdAt: request.created_at ?? null,
+        }));
 
       const completedActivities = (
         requestsResult.data ?? []
@@ -323,6 +361,7 @@ Deno.serve(async (req) => {
         ),
 
         publishedRequests: publishedRequests.length,
+        publishedRequestHistory,
         completedActivities: completedActivities.length,
         applications: applications.length,
         reviews: reviews.length,

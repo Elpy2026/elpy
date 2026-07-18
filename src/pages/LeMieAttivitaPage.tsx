@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase'
 import { completeHelpRequest } from '../lib/requests'
 import { cancelAcceptedRequest } from '../lib/cancellations'
 import { useAuth } from '../context/AuthContext'
+import PageBackButton from '../components/PageBackButton'
 import SafetyPanel from '../components/SafetyPanel'
 
 type HelperRequest = {
@@ -338,6 +339,7 @@ function LeMieAttivitaPage() {
   return (
     <div className="landing">
       <Header />
+      <PageBackButton />
 
       <main className="page-main">
         <section className="section page-section">

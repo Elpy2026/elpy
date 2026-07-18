@@ -292,21 +292,21 @@ function Header() {
                     to="/le-mie-richieste"
                     onClick={() => setMenuOpen(false)}
                   >
-                    Le mie richieste
+                    Le tue richieste
                   </Link>
 
                   <Link
                     to="/le-mie-attivita"
                     onClick={() => setMenuOpen(false)}
                   >
-                    Le mie attività
+                    I tuoi aiuti
                   </Link>
 
                   <Link
                                       to="/penali"
                                       onClick={() => setMenuOpen(false)}
                                     >
-                                      Le mie penali
+                                      Penali
                                     </Link>
 
                   <div className="account-menu__divider" />
