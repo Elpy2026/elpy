@@ -106,6 +106,7 @@ function LeMieRichiestePage() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [openReceiptUrl, setOpenReceiptUrl] = useState('')
+  
 
   async function loadMyRequests() {
     if (!user) {
@@ -579,8 +580,548 @@ function LeMieRichiestePage() {
     }
   }
 
+
+  const nuoveRichieste = requests.filter(
+    (request) => request.status === 'aperta',
+  )
+
+  const inCorso = requests.filter(
+    (request) => request.status === 'accettata',
+  )
+
+  const daCompletareOPagare = requests.filter(
+    (request) =>
+      request.status === 'completata' &&
+      (request.payment_status ?? 'not_required') !== 'paid',
+  )
+
+  const storico = requests.filter(
+    (request) =>
+      request.status === 'annullata' ||
+      request.status === 'cancellata' ||
+      (request.status === 'completata' &&
+        (request.payment_status ?? 'not_required') === 'paid'),
+  )
+
+  function renderRequestCard(request: MyRequest) {
+    const helper = request.helper_id ? helpers[request.helper_id] : null
+    const requestApplications = applications[request.id] ?? []
+    const requestExpenses = expenses[request.id] ?? []
+    const pendingExpenses = requestExpenses.filter(
+      (expense) => expense.status === 'pending',
+    )
+    const approvedExpensesTotal = requestExpenses
+      .filter((expense) => expense.status === 'approved')
+      .reduce((sum, expense) => sum + Number(expense.receipt_amount), 0)
+
+    const amounts = calculatePaymentAmounts(
+      request.reward,
+      approvedExpensesTotal,
+    )
+    const paymentStatus = request.payment_status ?? 'not_required'
+    const canPay =
+      request.status === 'completata' &&
+      paymentStatus !== 'paid' &&
+      request.expense_status !== 'pending' &&
+      request.expense_status !== 'contested'
+
+    return (
+      <li key={request.id} className="request-card">
+        <div className="request-card__header">
+          <span className="request-card__category">
+            {request.category}
+          </span>
+          <span className="badge badge--accepted">
+            {request.status ?? 'aperta'}
+          </span>
+        </div>
+
+        <h2 className="request-card__title">{request.title}</h2>
+        <p className="request-card__desc">{request.description}</p>
+
+        <dl className="request-card__meta">
+          <div>
+            <dt>Città</dt>
+            <dd>{request.city}</dd>
+          </div>
+          <div>
+            <dt>Data</dt>
+            <dd>{request.request_date}</dd>
+          </div>
+          <div>
+            <dt>Compenso</dt>
+            <dd className="request-card__compenso">
+              €{request.reward}
+            </dd>
+          </div>
+        </dl>
+
+        {request.cancellation_fee_status === 'pending' && (
+          <div className="alert alert--error">
+            Commissione ELPYO da gestire per annullamento: €
+            {request.cancellation_fee_amount ?? 0}
+          </div>
+        )}
+
+        {request.status === 'aperta' && (
+          <div className="request-card">
+            <h3>Candidature ricevute</h3>
+
+            {requestApplications.length === 0 ? (
+              <p>Nessuna candidatura ricevuta.</p>
+            ) : (
+              <ul className="requests-list">
+                {requestApplications.map((application) => {
+                  const applicant = helpers[application.helper_id]
+
+                  return (
+                    <li key={application.id} className="request-card">
+                      <p>
+                        <strong>Helper:</strong>{' '}
+                        {applicant?.full_name ?? 'Helper ELPYO'}
+                        {applicant?.verified && ' · Identità verificata'}
+                      </p>
+
+                      <p>
+                        <strong>Messaggio:</strong>{' '}
+                        {application.message || 'Nessun messaggio.'}
+                      </p>
+
+                      <p>
+                        <strong>Stato candidatura:</strong>{' '}
+                        {application.status}
+                      </p>
+
+                      <div className="form-actions">
+                        <Link
+                          to={`/profilo-helper/${application.helper_id}`}
+                          state={{ from: "/le-mie-richieste" }}
+                          className="btn btn--secondary helper-profile-link"
+                        >
+                          👤 Vedi profilo
+                        </Link>
+
+                        {application.status === 'pending' && (
+                          <>
+                            <button
+                              type="button"
+                              className="btn btn--primary"
+                              onClick={() =>
+                                void handleAcceptApplication(application)
+                              }
+                              disabled={
+                                acceptingApplicationId === application.id ||
+                                rejectingApplicationId === application.id
+                              }
+                            >
+                              {acceptingApplicationId === application.id
+                                ? 'Accettazione…'
+                                : 'Accetta candidatura'}
+                            </button>
+
+                            <button
+                              type="button"
+                              className="btn btn--secondary"
+                              onClick={() =>
+                                void handleRejectApplication(application)
+                              }
+                              disabled={
+                                acceptingApplicationId === application.id ||
+                                rejectingApplicationId === application.id
+                              }
+                            >
+                              {rejectingApplicationId === application.id
+                                ? 'Rifiuto…'
+                                : 'Rifiuta candidatura'}
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </div>
+        )}
+
+        {(request.status === 'accettata' ||
+          request.status === 'completata') &&
+          request.helper_id && (
+            <>
+              <div className="alert alert--success">
+                <p>
+                  <strong>
+                    {request.status === 'completata'
+                      ? 'Completata da:'
+                      : 'Accettata da:'}
+                  </strong>{' '}
+                  {helper?.full_name ?? 'Helper verificato'}
+                  {helper?.verified && ' · Identità verificata'}
+                </p>
+
+                {helper?.phone ? (
+                  <p>
+                    <strong>Telefono helper:</strong>{' '}
+                    <a href={`tel:${helper.phone}`}>{helper.phone}</a>
+                  </p>
+                ) : (
+                  <p>Telefono helper non disponibile.</p>
+                )}
+
+                <div className="form-actions">
+                <Link
+      to={`/profilo-helper/${request.helper_id}`}
+      state={{ from: '/le-mie-richieste' }}
+      className="btn btn--secondary helper-profile-link"
+    >
+      👤 Vedi profilo
+    </Link>
+
+                  <Link
+                    to={`/chat/${request.id}`}
+                    className="btn btn--primary"
+                  >
+                    Apri chat
+                  </Link>
+
+                  {helper?.phone && (
+                    <a
+                      className="btn btn--primary"
+                      href={`https://wa.me/${helper.phone.replace(/\D/g, '')}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Contatta su WhatsApp
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              <SafetyPanel
+                requestId={request.id}
+                otherUserId={request.helper_id}
+                otherUserName={helper?.full_name}
+                requestStatus={request.status}
+              />
+            </>
+          )}
+
+        {pendingExpenses.length > 0 && (
+          <div className="request-card">
+            <h3>📷 Scontrino in attesa di approvazione</h3>
+
+            {pendingExpenses.map((expense) => (
+              <div key={expense.id} className="request-card">
+                <p>
+                  <strong>Importo dichiarato:</strong> €
+                  {expense.receipt_amount}
+                </p>
+
+                {expense.notes && (
+                  <p>
+                    <strong>Note helper:</strong> {expense.notes}
+                  </p>
+                )}
+
+                {expenseUrls[expense.id] && (
+                  <p>
+                    <button
+                      type="button"
+                      className="btn btn--secondary"
+                      onClick={() => setOpenReceiptUrl(expenseUrls[expense.id])}
+                    >
+                      Visualizza scontrino
+                    </button>
+                  </p>
+                )}
+
+                <div className="form-actions">
+                  <button
+                    type="button"
+                    className="btn btn--primary"
+                    onClick={() =>
+                      void handleApproveExpense(request, expense)
+                    }
+                    disabled={approvingExpenseId === expense.id}
+                  >
+                    {approvingExpenseId === expense.id
+                      ? 'Approvazione…'
+                      : 'Approva spesa'}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn btn--secondary"
+                    onClick={() =>
+                      void handleContestExpense(request, expense)
+                    }
+                    disabled={contestingExpenseId === expense.id}
+                  >
+                    {contestingExpenseId === expense.id
+                      ? 'Contestazione…'
+                      : 'Contesta'}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {request.expense_status === 'contested' && (
+          <div className="alert alert--error">
+            Spesa contestata. Il pagamento resta bloccato finché la
+            contestazione non viene risolta.
+          </div>
+        )}
+
+        {request.status === 'accettata' && (
+          <div className="form-actions">
+            <button
+              type="button"
+              className="btn btn--primary"
+              onClick={() => void handleCompleteRequest(request.id)}
+              disabled={completingRequestId === request.id}
+            >
+              {completingRequestId === request.id
+                ? 'Completamento…'
+                : 'Segna come completata'}
+            </button>
+
+            <button
+              type="button"
+              className="btn btn--secondary"
+              onClick={() => void handleCancelRequest(request)}
+              disabled={cancellingRequestId === request.id}
+            >
+              {cancellingRequestId === request.id
+                ? 'Annullamento…'
+                : 'Annulla accordo'}
+            </button>
+          </div>
+        )}
+
+        {request.status === 'completata' && (
+          <>
+            {request.expense_status === 'approved' && (
+              <div className="alert alert--success">
+                <strong>✅ Spesa approvata</strong>
+                <br />
+                Lo scontrino è stato approvato e verrà aggiunto al pagamento finale.
+              </div>
+            )}
+
+            <div className="request-card">
+            <h3>Pagamento</h3>
+
+            <p>
+              <strong>Stato pagamento:</strong>{' '}
+              {paymentStatus === 'paid'
+                ? 'pagato'
+                : 'in attesa di pagamento'}
+            </p>
+
+            <p>
+              <strong>Servizio helper:</strong> €
+              {amounts.helperAmount}
+            </p>
+
+            {amounts.approvedExpenses > 0 && (
+              <p>
+                <strong>Spese approvate:</strong> €
+                {amounts.approvedExpenses.toFixed(2).replace('.', ',')}
+              </p>
+            )}
+
+            <p>
+              <strong>
+                Commissione di servizio ELPYO:
+              </strong>{' '}
+              €{amounts.platformFee.toFixed(2).replace('.', ',')}
+            </p>
+
+            <p>
+              <strong>Totale:</strong> €{amounts.total.toFixed(2).replace('.', ',')}
+            </p>
+
+            {request.expense_status === 'pending' && (
+              <div className="alert alert--error">
+                Prima di pagare devi approvare o contestare lo scontrino.
+              </div>
+            )}
+
+            {canPay ? (
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="btn btn--primary"
+                  onClick={() =>
+                    void handleStripePayment(
+                      request,
+                      approvedExpensesTotal,
+                    )
+                  }
+                  disabled={payingRequestId === request.id}
+                >
+                  {payingRequestId === request.id
+                    ? 'Pagamento…'
+                    : 'Paga richiesta'}
+                </button>
+              </div>
+            ) : paymentStatus === 'paid' ? (
+              <div className="alert alert--success">
+                Pagamento registrato correttamente.
+              </div>
+            ) : null}
+            </div>
+          </>
+        )}
+
+        {request.status === 'completata' && paymentStatus === 'paid' && (
+          <div className="form-actions">
+            <Link
+              to={`/recensione/${request.id}`}
+              className="btn btn--primary"
+            >
+              ⭐ Lascia recensione</Link>
+          </div>
+        )}
+      </li>
+    )
+  }
+
   return (
     <div className="landing">
+      <style>{`
+        .requests-dashboard {
+          display: grid;
+          gap: 24px;
+          margin-top: 28px;
+        }
+
+        .requests-dashboard__section,
+        .requests-accordion {
+          overflow: hidden;
+          border: 1px solid rgba(15, 23, 42, 0.1);
+          border-radius: 24px;
+          background: #ffffff;
+          box-shadow: 0 14px 40px rgba(15, 23, 42, 0.06);
+        }
+
+        .requests-dashboard__section--active {
+          border-color: rgba(34, 197, 94, 0.28);
+          background: linear-gradient(180deg, rgba(240, 253, 244, 0.9), #ffffff 180px);
+        }
+
+        .requests-dashboard__heading,
+        .requests-accordion__summary {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 24px;
+          padding: 24px 26px;
+        }
+
+        .requests-dashboard__heading h2,
+        .requests-accordion__summary h2 {
+          margin: 4px 0 6px;
+          font-size: clamp(1.35rem, 2vw, 1.75rem);
+        }
+
+        .requests-dashboard__heading p,
+        .requests-accordion__summary p {
+          margin: 0;
+          color: #64748b;
+        }
+
+        .requests-dashboard__eyebrow {
+          color: #ef5b4d;
+          font-size: 0.78rem;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .requests-dashboard__count {
+          display: inline-grid;
+          min-width: 42px;
+          height: 42px;
+          place-items: center;
+          flex: 0 0 auto;
+          border-radius: 999px;
+          background: #0f172a;
+          color: #ffffff;
+          font-weight: 800;
+        }
+
+        .requests-dashboard__section > .requests-list,
+        .requests-accordion__content {
+          padding: 0 20px 20px;
+        }
+
+        .requests-accordion__summary {
+          cursor: pointer;
+          list-style: none;
+          transition: background 160ms ease;
+        }
+
+        .requests-accordion__summary::-webkit-details-marker {
+          display: none;
+        }
+
+        .requests-accordion__summary:hover {
+          background: rgba(248, 250, 252, 0.9);
+        }
+
+        .requests-accordion__summary::after {
+          content: '+';
+          display: grid;
+          width: 36px;
+          height: 36px;
+          place-items: center;
+          flex: 0 0 auto;
+          border-radius: 999px;
+          background: #f1f5f9;
+          color: #0f172a;
+          font-size: 1.4rem;
+          font-weight: 500;
+        }
+
+        .requests-accordion[open] > .requests-accordion__summary::after {
+          content: '−';
+        }
+
+        .requests-accordion[open] > .requests-accordion__summary {
+          border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+        }
+
+        .requests-dashboard__empty {
+          margin: 0;
+          padding: 22px;
+          border-radius: 16px;
+          background: #f8fafc;
+          color: #64748b;
+          text-align: center;
+        }
+
+        @media (max-width: 720px) {
+          .requests-dashboard__heading,
+          .requests-accordion__summary {
+            align-items: flex-start;
+            padding: 20px;
+          }
+
+          .requests-dashboard__heading p,
+          .requests-accordion__summary p {
+            display: none;
+          }
+
+          .requests-dashboard__section > .requests-list,
+          .requests-accordion__content {
+            padding: 0 12px 12px;
+          }
+        }
+      `}</style>
       <Header />
       <PageBackButton />
 
@@ -609,394 +1150,86 @@ function LeMieRichiestePage() {
             )}
 
             {requests.length > 0 && (
-              <ul className="requests-list">
-                {requests.map((request) => {
-                  const helper = request.helper_id ? helpers[request.helper_id] : null
-                  const requestApplications = applications[request.id] ?? []
-                  const requestExpenses = expenses[request.id] ?? []
-                  const pendingExpenses = requestExpenses.filter(
-                    (expense) => expense.status === 'pending',
-                  )
-                  const approvedExpensesTotal = requestExpenses
-                    .filter((expense) => expense.status === 'approved')
-                    .reduce((sum, expense) => sum + Number(expense.receipt_amount), 0)
-
-                  const amounts = calculatePaymentAmounts(
-                    request.reward,
-                    approvedExpensesTotal,
-                  )
-                  const paymentStatus = request.payment_status ?? 'not_required'
-                  const canPay =
-                    request.status === 'completata' &&
-                    paymentStatus !== 'paid' &&
-                    request.expense_status !== 'pending' &&
-                    request.expense_status !== 'contested'
-
-                  return (
-                    <li key={request.id} className="request-card">
-                      <div className="request-card__header">
-                        <span className="request-card__category">
-                          {request.category}
-                        </span>
-                        <span className="badge badge--accepted">
-                          {request.status ?? 'aperta'}
-                        </span>
+              <div className="requests-dashboard">
+                  <section className="requests-dashboard__section requests-dashboard__section--active">
+                    <div className="requests-dashboard__heading">
+                      <div>
+                        <span className="requests-dashboard__eyebrow">Attività attive</span>
+                        <h2>In corso</h2>
+                        <p>Richieste già affidate a un helper e attualmente in svolgimento.</p>
                       </div>
+                      <span className="requests-dashboard__count">{inCorso.length}</span>
+                    </div>
 
-                      <h2 className="request-card__title">{request.title}</h2>
-                      <p className="request-card__desc">{request.description}</p>
+                    {inCorso.length > 0 ? (
+                      <ul className="requests-list">
+                        {inCorso.map(renderRequestCard)}
+                      </ul>
+                    ) : (
+                      <p className="requests-dashboard__empty">Non ci sono richieste in corso.</p>
+                    )}
+                  </section>
 
-                      <dl className="request-card__meta">
-                        <div>
-                          <dt>Città</dt>
-                          <dd>{request.city}</dd>
-                        </div>
-                        <div>
-                          <dt>Data</dt>
-                          <dd>{request.request_date}</dd>
-                        </div>
-                        <div>
-                          <dt>Compenso</dt>
-                          <dd className="request-card__compenso">
-                            €{request.reward}
-                          </dd>
-                        </div>
-                      </dl>
-
-                      {request.cancellation_fee_status === 'pending' && (
-                        <div className="alert alert--error">
-                          Commissione ELPYO da gestire per annullamento: €
-                          {request.cancellation_fee_amount ?? 0}
-                        </div>
+                  <details className="requests-accordion" open>
+                    <summary className="requests-accordion__summary">
+                      <div>
+                        <span className="requests-dashboard__eyebrow">Candidature</span>
+                        <h2>Nuove richieste</h2>
+                        <p>Richieste aperte e candidature ancora da valutare.</p>
+                      </div>
+                      <span className="requests-dashboard__count">{nuoveRichieste.length}</span>
+                    </summary>
+                    <div className="requests-accordion__content">
+                      {nuoveRichieste.length > 0 ? (
+                        <ul className="requests-list">
+                          {nuoveRichieste.map(renderRequestCard)}
+                        </ul>
+                      ) : (
+                        <p className="requests-dashboard__empty">Non ci sono nuove richieste.</p>
                       )}
+                    </div>
+                  </details>
 
-                      {request.status === 'aperta' && (
-                        <div className="request-card">
-                          <h3>Candidature ricevute</h3>
-
-                          {requestApplications.length === 0 ? (
-                            <p>Nessuna candidatura ricevuta.</p>
-                          ) : (
-                            <ul className="requests-list">
-                              {requestApplications.map((application) => {
-                                const applicant = helpers[application.helper_id]
-
-                                return (
-                                  <li key={application.id} className="request-card">
-                                    <p>
-                                      <strong>Helper:</strong>{' '}
-                                      {applicant?.full_name ?? 'Helper ELPYO'}
-                                      {applicant?.verified && ' · Identità verificata'}
-                                    </p>
-
-                                    <p>
-                                      <strong>Messaggio:</strong>{' '}
-                                      {application.message || 'Nessun messaggio.'}
-                                    </p>
-
-                                    <p>
-                                      <strong>Stato candidatura:</strong>{' '}
-                                      {application.status}
-                                    </p>
-
-                                    <div className="form-actions">
-                                      <Link
-                                        to={`/profilo-helper/${application.helper_id}`}
-                                        state={{ from: "/le-mie-richieste" }}
-                                        className="btn btn--secondary helper-profile-link"
-                                      >
-                                        👤 Vedi profilo
-                                      </Link>
-
-                                      {application.status === 'pending' && (
-                                        <>
-                                          <button
-                                            type="button"
-                                            className="btn btn--primary"
-                                            onClick={() =>
-                                              void handleAcceptApplication(application)
-                                            }
-                                            disabled={
-                                              acceptingApplicationId === application.id ||
-                                              rejectingApplicationId === application.id
-                                            }
-                                          >
-                                            {acceptingApplicationId === application.id
-                                              ? 'Accettazione…'
-                                              : 'Accetta candidatura'}
-                                          </button>
-
-                                          <button
-                                            type="button"
-                                            className="btn btn--secondary"
-                                            onClick={() =>
-                                              void handleRejectApplication(application)
-                                            }
-                                            disabled={
-                                              acceptingApplicationId === application.id ||
-                                              rejectingApplicationId === application.id
-                                            }
-                                          >
-                                            {rejectingApplicationId === application.id
-                                              ? 'Rifiuto…'
-                                              : 'Rifiuta candidatura'}
-                                          </button>
-                                        </>
-                                      )}
-                                    </div>
-                                  </li>
-                                )
-                              })}
-                            </ul>
-                          )}
-                        </div>
+                  <details className="requests-accordion">
+                    <summary className="requests-accordion__summary">
+                      <div>
+                        <span className="requests-dashboard__eyebrow">Chiusura attività</span>
+                        <h2>Da completare / Pagamento</h2>
+                        <p>Attività concluse che richiedono approvazioni o pagamento.</p>
+                      </div>
+                      <span className="requests-dashboard__count">{daCompletareOPagare.length}</span>
+                    </summary>
+                    <div className="requests-accordion__content">
+                      {daCompletareOPagare.length > 0 ? (
+                        <ul className="requests-list">
+                          {daCompletareOPagare.map(renderRequestCard)}
+                        </ul>
+                      ) : (
+                        <p className="requests-dashboard__empty">Non ci sono richieste da completare o pagare.</p>
                       )}
+                    </div>
+                  </details>
 
-                      {(request.status === 'accettata' ||
-                        request.status === 'completata') &&
-                        request.helper_id && (
-                          <>
-                            <div className="alert alert--success">
-                              <p>
-                                <strong>
-                                  {request.status === 'completata'
-                                    ? 'Completata da:'
-                                    : 'Accettata da:'}
-                                </strong>{' '}
-                                {helper?.full_name ?? 'Helper verificato'}
-                                {helper?.verified && ' · Identità verificata'}
-                              </p>
-
-                              {helper?.phone ? (
-                                <p>
-                                  <strong>Telefono helper:</strong>{' '}
-                                  <a href={`tel:${helper.phone}`}>{helper.phone}</a>
-                                </p>
-                              ) : (
-                                <p>Telefono helper non disponibile.</p>
-                              )}
-
-                              <div className="form-actions">
-                              <Link
-  to={`/profilo-helper/${request.helper_id}`}
-  state={{ from: '/le-mie-richieste' }}
-  className="btn btn--secondary helper-profile-link"
->
-  👤 Vedi profilo
-</Link>
-
-                                <Link
-                                  to={`/chat/${request.id}`}
-                                  className="btn btn--primary"
-                                >
-                                  Apri chat
-                                </Link>
-
-                                {helper?.phone && (
-                                  <a
-                                    className="btn btn--primary"
-                                    href={`https://wa.me/${helper.phone.replace(/\D/g, '')}`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                  >
-                                    Contatta su WhatsApp
-                                  </a>
-                                )}
-                              </div>
-                            </div>
-
-                            <SafetyPanel
-                              requestId={request.id}
-                              otherUserId={request.helper_id}
-                              otherUserName={helper?.full_name}
-                              requestStatus={request.status}
-                            />
-                          </>
-                        )}
-
-                      {pendingExpenses.length > 0 && (
-                        <div className="request-card">
-                          <h3>📷 Scontrino in attesa di approvazione</h3>
-
-                          {pendingExpenses.map((expense) => (
-                            <div key={expense.id} className="request-card">
-                              <p>
-                                <strong>Importo dichiarato:</strong> €
-                                {expense.receipt_amount}
-                              </p>
-
-                              {expense.notes && (
-                                <p>
-                                  <strong>Note helper:</strong> {expense.notes}
-                                </p>
-                              )}
-
-                              {expenseUrls[expense.id] && (
-                                <p>
-                                  <button
-                                    type="button"
-                                    className="btn btn--secondary"
-                                    onClick={() => setOpenReceiptUrl(expenseUrls[expense.id])}
-                                  >
-                                    Visualizza scontrino
-                                  </button>
-                                </p>
-                              )}
-
-                              <div className="form-actions">
-                                <button
-                                  type="button"
-                                  className="btn btn--primary"
-                                  onClick={() =>
-                                    void handleApproveExpense(request, expense)
-                                  }
-                                  disabled={approvingExpenseId === expense.id}
-                                >
-                                  {approvingExpenseId === expense.id
-                                    ? 'Approvazione…'
-                                    : 'Approva spesa'}
-                                </button>
-
-                                <button
-                                  type="button"
-                                  className="btn btn--secondary"
-                                  onClick={() =>
-                                    void handleContestExpense(request, expense)
-                                  }
-                                  disabled={contestingExpenseId === expense.id}
-                                >
-                                  {contestingExpenseId === expense.id
-                                    ? 'Contestazione…'
-                                    : 'Contesta'}
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                  <details className="requests-accordion">
+                    <summary className="requests-accordion__summary">
+                      <div>
+                        <span className="requests-dashboard__eyebrow">Archivio</span>
+                        <h2>Storico</h2>
+                        <p>Richieste pagate, annullate o non più attive.</p>
+                      </div>
+                      <span className="requests-dashboard__count">{storico.length}</span>
+                    </summary>
+                    <div className="requests-accordion__content">
+                      {storico.length > 0 ? (
+                        <ul className="requests-list">
+                          {storico.map(renderRequestCard)}
+                        </ul>
+                      ) : (
+                        <p className="requests-dashboard__empty">Lo storico è ancora vuoto.</p>
                       )}
-
-                      {request.expense_status === 'contested' && (
-                        <div className="alert alert--error">
-                          Spesa contestata. Il pagamento resta bloccato finché la
-                          contestazione non viene risolta.
-                        </div>
-                      )}
-
-                      {request.status === 'accettata' && (
-                        <div className="form-actions">
-                          <button
-                            type="button"
-                            className="btn btn--primary"
-                            onClick={() => void handleCompleteRequest(request.id)}
-                            disabled={completingRequestId === request.id}
-                          >
-                            {completingRequestId === request.id
-                              ? 'Completamento…'
-                              : 'Segna come completata'}
-                          </button>
-
-                          <button
-                            type="button"
-                            className="btn btn--secondary"
-                            onClick={() => void handleCancelRequest(request)}
-                            disabled={cancellingRequestId === request.id}
-                          >
-                            {cancellingRequestId === request.id
-                              ? 'Annullamento…'
-                              : 'Annulla accordo'}
-                          </button>
-                        </div>
-                      )}
-
-                      {request.status === 'completata' && (
-                        <>
-                          {request.expense_status === 'approved' && (
-                            <div className="alert alert--success">
-                              <strong>✅ Spesa approvata</strong>
-                              <br />
-                              Lo scontrino è stato approvato e verrà aggiunto al pagamento finale.
-                            </div>
-                          )}
-
-                          <div className="request-card">
-                          <h3>Pagamento</h3>
-
-                          <p>
-                            <strong>Stato pagamento:</strong>{' '}
-                            {paymentStatus === 'paid'
-                              ? 'pagato'
-                              : 'in attesa di pagamento'}
-                          </p>
-
-                          <p>
-                            <strong>Servizio helper:</strong> €
-                            {amounts.helperAmount}
-                          </p>
-
-                          {amounts.approvedExpenses > 0 && (
-                            <p>
-                              <strong>Spese approvate:</strong> €
-                              {amounts.approvedExpenses.toFixed(2).replace('.', ',')}
-                            </p>
-                          )}
-
-                          <p>
-                            <strong>
-                              Commissione di servizio ELPYO:
-                            </strong>{' '}
-                            €{amounts.platformFee.toFixed(2).replace('.', ',')}
-                          </p>
-
-                          <p>
-                            <strong>Totale:</strong> €{amounts.total.toFixed(2).replace('.', ',')}
-                          </p>
-
-                          {request.expense_status === 'pending' && (
-                            <div className="alert alert--error">
-                              Prima di pagare devi approvare o contestare lo scontrino.
-                            </div>
-                          )}
-
-                          {canPay ? (
-                            <div className="form-actions">
-                              <button
-                                type="button"
-                                className="btn btn--primary"
-                                onClick={() =>
-                                  void handleStripePayment(
-                                    request,
-                                    approvedExpensesTotal,
-                                  )
-                                }
-                                disabled={payingRequestId === request.id}
-                              >
-                                {payingRequestId === request.id
-                                  ? 'Pagamento…'
-                                  : 'Paga richiesta'}
-                              </button>
-                            </div>
-                          ) : paymentStatus === 'paid' ? (
-                            <div className="alert alert--success">
-                              Pagamento registrato correttamente.
-                            </div>
-                          ) : null}
-                          </div>
-                        </>
-                      )}
-
-                      {request.status === 'completata' && paymentStatus === 'paid' && (
-                        <div className="form-actions">
-                          <Link
-                            to={`/recensione/${request.id}`}
-                            className="btn btn--primary"
-                          >
-                            ⭐ Lascia recensione</Link>
-                        </div>
-                      )}
-                    </li>
-                  )
-                })}
-              </ul>
+                    </div>
+                  </details>
+              </div>
             )}
           </div>
         </section>
