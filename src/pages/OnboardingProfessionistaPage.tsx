@@ -6,7 +6,7 @@ import {
   type ChangeEvent,
   type FormEvent,
 } from "react";
-import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useAuth } from "../context/AuthContext";
@@ -213,7 +213,6 @@ function normalizeWebsite(value: string) {
 
 function OnboardingProfessionistaPage() {
   const { user, loading: authLoading } = useAuth();
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const requestedStep = Number(searchParams.get("step") || "1");
@@ -574,7 +573,7 @@ function OnboardingProfessionistaPage() {
         onboarding_step
       `,
         )
-        .eq("user_id", user.id)
+        .eq("user_id", user!.id)
         .maybeSingle();
 
       if (profileError) {
@@ -598,7 +597,7 @@ function OnboardingProfessionistaPage() {
         category: profile?.category ?? "",
         city: profile?.city ?? "Agrigento",
         phone: profile?.phone ?? userMetadata.phone ?? "",
-        email: profile?.email ?? user.email ?? "",
+        email: profile?.email ?? user?.email ?? "",
         website: profile?.website ?? "",
         description: profile?.description ?? "",
       });
