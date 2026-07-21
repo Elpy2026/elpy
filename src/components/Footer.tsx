@@ -7,9 +7,13 @@ function Footer() {
     <footer className="footer" id="contatti">
       <div className="container footer__inner">
         <div className="footer__brand">
-          <Link to="/" className="logo logo--image logo--footer" aria-label="ELPYO — Home">
+          <Link
+            to="/"
+            className="logo logo--image logo--footer"
+            aria-label="ELPYO — Home"
+          >
             <img
-              src="/elpy-logo-header-transparent.png"
+              src="/elpy-logo-footer.png"
               alt="ELPYO"
               className="logo__image"
             />
@@ -43,8 +47,8 @@ function Footer() {
                 <Link to="/cerco-aiuto">Cerco aiuto</Link>
               </li>
               <li>
-  <Link to="/chi-siamo">Chi siamo</Link>
-</li>
+                <Link to="/chi-siamo">Chi siamo</Link>
+              </li>
               <li>
                 <Link to="/offro-aiuto">Offro aiuto</Link>
               </li>
