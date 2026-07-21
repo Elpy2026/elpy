@@ -1,7 +1,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { RequestsProvider } from './context/RequestsContext'
-
+import ProfessionistiPage from './pages/ProfessionistiPage'
 import ComeFunzionaPage from './pages/ComeFunzionaPage'
+import OnboardingProfessionistaPage from './pages/OnboardingProfessionistaPage'
 import PrivacyPage from './pages/PrivacyPage'
 import TerminiPage from './pages/TerminiPage'
 import CookiePolicyPage from './pages/CookiePolicyPage'
@@ -32,7 +33,7 @@ import AdminUtentiPage from './pages/AdminUtentiPage'
 import PagamentoSuccessoPage from './pages/PagamentoSuccessoPage'
 import PagamentoAnnullatoPage from './pages/PagamentoAnnullatoPage'
 import ChiSiamoPage from './pages/ChiSiamoPage'
-
+import DiventaProfessionistaPage from './pages/DiventaProfessionistaPage'
 import AdminRoute from './components/AdminRoute'
 import VerifiedRoute from './components/VerifiedRoute'
 import CookieBanner from './components/CookieBanner'
@@ -53,8 +54,16 @@ function App() {
           <Route path="/chi-siamo" element={<ChiSiamoPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/termini" element={<TerminiPage />} />
+          <Route path="/professionisti" element={<ProfessionistiPage />} />
           <Route path="/cookie-policy" element={<CookiePolicyPage />} />
-
+          <Route
+  path="/onboarding-professionista"
+  element={<OnboardingProfessionistaPage />}
+/>
+          <Route
+  path="/diventa-professionista"
+  element={<DiventaProfessionistaPage />}
+/>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/registrazione" element={<RegisterPage />} />
           <Route

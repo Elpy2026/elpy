@@ -23,8 +23,8 @@ function Hero() {
             </Link>
 
             <Link to="/offro-aiuto" className="btn btn--secondary">
-  Offri il tuo aiuto →
-</Link>
+              Offri il tuo aiuto →
+            </Link>
           </div>
         </div>
 
@@ -34,33 +34,91 @@ function Hero() {
       </div>
 
       <div className="container hero-final__cards">
-        <Link to="/cerco-aiuto" className="hero-final-card hero-final-card--help">
-          <img src="/elpy-card-help.png" alt="" className="hero-final-card__bg" aria-hidden="true" />
+        <Link
+          to="/cerco-aiuto"
+          className="hero-final-card hero-final-card--help"
+        >
+          <img
+            src="/elpy-card-help.png"
+            alt=""
+            className="hero-final-card__bg"
+            aria-hidden="true"
+          />
 
           <div className="hero-final-card__content">
             <div className="hero-final-card__icon">🛡️</div>
+
             <h2>
               Hai bisogno
               <br />
               di <span>aiuto?</span>
             </h2>
-            <p>Trova qualcuno affidabile che ti aiuti a risolvere ciò che ti serve.</p>
+
+            <p>
+              Trova qualcuno affidabile che ti aiuti a risolvere ciò che ti
+              serve.
+            </p>
+
             <span className="hero-final-card__button">Trova aiuto →</span>
           </div>
         </Link>
 
-        <Link to="/offro-aiuto" className="hero-final-card hero-final-card--offer">
-          <img src="/elpy-card-offer.png" alt="" className="hero-final-card__bg" aria-hidden="true" />
+        <Link
+          to="/offro-aiuto"
+          className="hero-final-card hero-final-card--offer"
+        >
+          <img
+            src="/elpy-card-offer.png"
+            alt=""
+            className="hero-final-card__bg"
+            aria-hidden="true"
+          />
 
           <div className="hero-final-card__content">
             <div className="hero-final-card__icon">💶</div>
+
             <h2>
-  Offri
-  <br />
-  il tuo <span>aiuto</span>
-</h2>
-            <p>Offri il tuo tempo e le tue competenze alle persone vicino a te.</p>
-            <span className="hero-final-card__button">Offri il tuo aiuto →</span>
+              Offri
+              <br />
+              il tuo <span>aiuto</span>
+            </h2>
+
+            <p>
+              Offri il tuo tempo e le tue competenze alle persone vicino a te.
+            </p>
+
+            <span className="hero-final-card__button">
+              Offri il tuo aiuto →
+            </span>
+          </div>
+        </Link>
+
+        <Link
+          to="/professionisti"
+          className="hero-final-card hero-final-card--professionals"
+        >
+          <div
+            className="hero-final-card__bg hero-final-card__bg--professionals"
+            aria-hidden="true"
+          />
+
+          <div className="hero-final-card__content">
+            <div className="hero-final-card__icon">✓</div>
+
+            <h2>
+              Professionisti
+              <br />
+              <span>Verificati</span>
+            </h2>
+
+            <p>
+              Trova professionisti affidabili della tua zona oppure pubblica
+              il tuo profilo.
+            </p>
+
+            <span className="hero-final-card__button">
+              Scopri i professionisti →
+            </span>
           </div>
         </Link>
       </div>

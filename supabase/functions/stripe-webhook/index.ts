@@ -18,12 +18,233 @@ const stripe = new Stripe(stripeSecretKey, {
 
 const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
+type ProfessionalUpdate = {
+  stripe_customer_id?: string | null;
+  stripe_subscription_id?: string | null;
+  subscription_status?: string;
+  current_period_end?: string | null;
+  subscription_started_at?: string | null;
+  cancel_at_period_end?: boolean;
+  is_published?: boolean;
+  published_at?: string | null;
+  updated_at?: string;
+};
+
+function timestampToIso(timestamp?: number | null): string | null {
+  if (!timestamp) return null;
+  return new Date(timestamp * 1000).toISOString();
+}
+
+function getStripeId(
+  value:
+    | string
+    | Stripe.Customer
+    | Stripe.DeletedCustomer
+    | Stripe.Subscription
+    | Stripe.PaymentIntent
+    | null,
+): string | null {
+  if (!value) return null;
+  return typeof value === "string" ? value : value.id;
+}
+
 function getPaymentIntentId(session: Stripe.Checkout.Session) {
   if (typeof session.payment_intent === "string") {
     return session.payment_intent;
   }
 
   return session.payment_intent?.id ?? null;
+}
+
+async function updateProfessionalByUserId(
+  userId: string,
+  updates: ProfessionalUpdate,
+): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from("professional_profiles")
+    .update({
+      ...updates,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", userId);
+
+  if (error) {
+    throw new Error(
+      `Errore aggiornamento profilo professionale ${userId}: ${error.message}`,
+    );
+  }
+}
+
+async function updateProfessionalBySubscriptionId(
+  subscriptionId: string,
+  updates: ProfessionalUpdate,
+): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from("professional_profiles")
+    .update({
+      ...updates,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("stripe_subscription_id", subscriptionId);
+
+  if (error) {
+    throw new Error(
+      `Errore aggiornamento abbonamento ${subscriptionId}: ${error.message}`,
+    );
+  }
+}
+
+async function getUserIdFromSubscription(
+  subscription: Stripe.Subscription,
+): Promise<string | null> {
+  const metadataUserId =
+    subscription.metadata?.professional_user_id ||
+    subscription.metadata?.user_id;
+
+  if (metadataUserId) {
+    return metadataUserId;
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from("professional_profiles")
+    .select("user_id")
+    .eq("stripe_subscription_id", subscription.id)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(
+      `Errore ricerca profilo da subscription: ${error.message}`,
+    );
+  }
+
+  return data?.user_id ?? null;
+}
+
+async function handleProfessionalCheckout(
+  session: Stripe.Checkout.Session,
+): Promise<void> {
+  if (session.mode !== "subscription") return;
+
+  const userId =
+    session.metadata?.professional_user_id ||
+    session.metadata?.user_id ||
+    session.client_reference_id;
+
+  const customerId = getStripeId(session.customer);
+  const subscriptionId = getStripeId(session.subscription);
+
+  if (!userId) {
+    throw new Error(
+      `User ID mancante nella Checkout Session ${session.id}`,
+    );
+  }
+
+  if (!subscriptionId) {
+    throw new Error(
+      `Subscription ID mancante nella Checkout Session ${session.id}`,
+    );
+  }
+
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+
+  const isActive =
+    subscription.status === "active" ||
+    subscription.status === "trialing";
+
+  await updateProfessionalByUserId(userId, {
+    stripe_customer_id: customerId,
+    stripe_subscription_id: subscription.id,
+    subscription_status: subscription.status,
+    current_period_end: timestampToIso(subscription.current_period_end),
+    subscription_started_at: timestampToIso(subscription.start_date),
+    cancel_at_period_end: subscription.cancel_at_period_end,
+    is_published: isActive,
+    published_at: isActive ? new Date().toISOString() : null,
+  });
+}
+
+async function handleProfessionalSubscriptionUpdated(
+  subscription: Stripe.Subscription,
+): Promise<void> {
+  const userId = await getUserIdFromSubscription(subscription);
+  const isActive =
+    subscription.status === "active" ||
+    subscription.status === "trialing";
+
+  const updates: ProfessionalUpdate = {
+    stripe_customer_id: getStripeId(subscription.customer),
+    stripe_subscription_id: subscription.id,
+    subscription_status: subscription.status,
+    current_period_end: timestampToIso(subscription.current_period_end),
+    subscription_started_at: timestampToIso(subscription.start_date),
+    cancel_at_period_end: subscription.cancel_at_period_end,
+    is_published: isActive,
+  };
+
+  if (isActive) {
+    updates.published_at = new Date().toISOString();
+  }
+
+  if (userId) {
+    await updateProfessionalByUserId(userId, updates);
+    return;
+  }
+
+  await updateProfessionalBySubscriptionId(subscription.id, updates);
+}
+
+async function handleProfessionalSubscriptionDeleted(
+  subscription: Stripe.Subscription,
+): Promise<void> {
+  const userId = await getUserIdFromSubscription(subscription);
+
+  const updates: ProfessionalUpdate = {
+    stripe_customer_id: getStripeId(subscription.customer),
+    stripe_subscription_id: subscription.id,
+    subscription_status: "canceled",
+    current_period_end: timestampToIso(subscription.current_period_end),
+    cancel_at_period_end: false,
+    is_published: false,
+  };
+
+  if (userId) {
+    await updateProfessionalByUserId(userId, updates);
+    return;
+  }
+
+  await updateProfessionalBySubscriptionId(subscription.id, updates);
+}
+
+function getInvoiceSubscriptionId(invoice: Stripe.Invoice): string | null {
+  const legacyInvoice = invoice as Stripe.Invoice & {
+    subscription?: string | Stripe.Subscription | null;
+  };
+
+  return getStripeId(legacyInvoice.subscription ?? null);
+}
+
+async function handleProfessionalInvoicePaymentFailed(
+  invoice: Stripe.Invoice,
+): Promise<void> {
+  const subscriptionId = getInvoiceSubscriptionId(invoice);
+
+  if (!subscriptionId) return;
+
+  await updateProfessionalBySubscriptionId(subscriptionId, {
+    subscription_status: "past_due",
+    is_published: false,
+  });
+}
+
+async function handleProfessionalInvoicePaymentSucceeded(
+  invoice: Stripe.Invoice,
+): Promise<void> {
+  const subscriptionId = getInvoiceSubscriptionId(invoice);
+
+  if (!subscriptionId) return;
+
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  await handleProfessionalSubscriptionUpdated(subscription);
 }
 
 async function handleRequestPayment(session: Stripe.Checkout.Session) {
@@ -302,15 +523,52 @@ Deno.serve(async (req) => {
   }
 
   try {
-    if (event.type === "checkout.session.completed") {
-      const session =
-        event.data.object as Stripe.Checkout.Session;
+    switch (event.type) {
+      case "checkout.session.completed": {
+        const session =
+          event.data.object as Stripe.Checkout.Session;
 
-      if (session.metadata?.paymentType === "penalty") {
-        await handlePenaltyPayment(session);
-      } else {
-        await handleRequestPayment(session);
+        if (
+          session.mode === "subscription" ||
+          session.metadata?.subscription_type === "professional"
+        ) {
+          await handleProfessionalCheckout(session);
+        } else if (session.metadata?.paymentType === "penalty") {
+          await handlePenaltyPayment(session);
+        } else {
+          await handleRequestPayment(session);
+        }
+
+        break;
       }
+
+      case "customer.subscription.created":
+      case "customer.subscription.updated":
+        await handleProfessionalSubscriptionUpdated(
+          event.data.object as Stripe.Subscription,
+        );
+        break;
+
+      case "customer.subscription.deleted":
+        await handleProfessionalSubscriptionDeleted(
+          event.data.object as Stripe.Subscription,
+        );
+        break;
+
+      case "invoice.payment_succeeded":
+        await handleProfessionalInvoicePaymentSucceeded(
+          event.data.object as Stripe.Invoice,
+        );
+        break;
+
+      case "invoice.payment_failed":
+        await handleProfessionalInvoicePaymentFailed(
+          event.data.object as Stripe.Invoice,
+        );
+        break;
+
+      default:
+        console.log(`Evento Stripe ignorato: ${event.type}`);
     }
 
     return new Response("ok", {
