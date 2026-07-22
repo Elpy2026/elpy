@@ -5,7 +5,8 @@ import Footer from '../components/Footer'
 import { supabase } from '../lib/supabase'
 
 type ProfessionalProfile = {
-  user_id: string
+  user_id: string;
+slug: string;
   business_name: string
   category: string
   description: string | null
@@ -245,6 +246,7 @@ function ProfessionistiPage() {
       .select(
         `
           user_id,
+          slug,
           business_name,
           category,
           description,
@@ -492,35 +494,31 @@ function ProfessionistiPage() {
                         </p>
 
                         <div className="professional-result-card__actions">
-                          {professional.phone && (
-                            <a
-                              href={`tel:${professional.phone}`}
-                              className="professional-result-card__primary"
-                            >
-                              Chiama
-                            </a>
-                          )}
+  <Link
+    to={`/professionisti/${professional.slug}`}
+    className="professional-result-card__primary"
+  >
+    Vedi profilo
+  </Link>
 
-                          {professional.email && (
-                            <a
-                              href={`mailto:${professional.email}`}
-                              className="professional-result-card__secondary"
-                            >
-                              Invia email
-                            </a>
-                          )}
+  {professional.phone && (
+    <a
+      href={`tel:${professional.phone}`}
+      className="professional-result-card__secondary"
+    >
+      Chiama
+    </a>
+  )}
 
-                          {professional.website && (
-                            <a
-                              href={professional.website}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="professional-result-card__secondary"
-                            >
-                              Visita il sito
-                            </a>
-                          )}
-                        </div>
+  {professional.email && (
+    <a
+      href={`mailto:${professional.email}`}
+      className="professional-result-card__secondary"
+    >
+      Invia email
+    </a>
+  )}
+</div>
                       </div>
                     </article>
                   ))}

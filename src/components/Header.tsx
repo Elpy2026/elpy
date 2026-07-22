@@ -11,6 +11,7 @@ function Header() {
 
   const [verified, setVerified] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [isProfessional, setIsProfessional] = useState(false)
   const [fullName, setFullName] = useState('')
 
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0)
@@ -22,6 +23,7 @@ function Header() {
 
   const loadProfileAndNotifications = useCallback(async () => {
     if (!user) {
+      setIsProfessional(false)
       setVerified(false)
       setIsAdmin(false)
       setFullName('')
@@ -42,6 +44,13 @@ function Header() {
     setFullName(profileData?.full_name ?? user.email ?? 'Account')
     setVerified(Boolean(profileData?.verified))
     setIsAdmin(currentUserIsAdmin)
+    const { data: professionalProfileData } = await supabase
+  .from('professional_profiles')
+  .select('user_id')
+  .eq('user_id', user.id)
+  .maybeSingle()
+
+setIsProfessional(Boolean(professionalProfileData))
 
     const { count: notificationsCount } = await supabase
       .from('notifications')
@@ -262,6 +271,14 @@ function Header() {
                   >
                     Il mio profilo
                   </Link>
+                  {isProfessional && (
+  <Link
+    to="/professionista/dashboard"
+    onClick={() => setMenuOpen(false)}
+  >
+    La mia attività professionale
+  </Link>
+)}
 
                   <Link
                     to="/messaggi"

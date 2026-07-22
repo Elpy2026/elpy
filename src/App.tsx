@@ -2,12 +2,14 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { RequestsProvider } from './context/RequestsContext'
 import ProfessionistiPage from './pages/ProfessionistiPage'
 import ComeFunzionaPage from './pages/ComeFunzionaPage'
+import DashboardProfessionistaPage from './pages/DashboardProfessionistaPage'
 import OnboardingProfessionistaPage from './pages/OnboardingProfessionistaPage'
 import PrivacyPage from './pages/PrivacyPage'
 import TerminiPage from './pages/TerminiPage'
 import CookiePolicyPage from './pages/CookiePolicyPage'
 import HomePage from './pages/HomePage'
 import PreLaunchPage from './pages/PreLaunchPage'
+import ProfiloProfessionistaPubblicoPage from "./pages/ProfiloProfessionistaPubblicoPage";
 import CercoAiutoPage from './pages/CercoAiutoPage'
 import OffroAiutoPage from './pages/OffroAiutoPage'
 import LoginPage from './pages/LoginPage'
@@ -55,10 +57,18 @@ function App() {
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/termini" element={<TerminiPage />} />
           <Route path="/professionisti" element={<ProfessionistiPage />} />
+          <Route
+  path="/professionisti/:slug"
+  element={<ProfiloProfessionistaPubblicoPage />}
+/>
           <Route path="/cookie-policy" element={<CookiePolicyPage />} />
           <Route
   path="/onboarding-professionista"
   element={<OnboardingProfessionistaPage />}
+/>
+<Route
+  path="/professionista/dashboard"
+  element={<DashboardProfessionistaPage />}
 />
           <Route
   path="/diventa-professionista"

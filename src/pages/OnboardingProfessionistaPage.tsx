@@ -6,7 +6,12 @@ import {
   type ChangeEvent,
   type FormEvent,
 } from "react";
-import { Link, Navigate, useSearchParams } from "react-router-dom";
+import {
+  Link,
+  Navigate,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useAuth } from "../context/AuthContext";
@@ -210,8 +215,22 @@ function normalizeWebsite(value: string) {
 
   return `https://${trimmedValue}`;
 }
+function createProfessionalSlug(
+  businessName: string,
+  category: string,
+  city: string,
+) {
+  return `${businessName}-${category}-${city}`
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
 
 function OnboardingProfessionistaPage() {
+  const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -681,6 +700,37 @@ function OnboardingProfessionistaPage() {
     const email = stepOneForm.email.trim();
 
     const description = stepOneForm.description.trim();
+    const baseSlug = createProfessionalSlug(
+      businessName,
+      category,
+      city,
+    );
+    
+    let slug = baseSlug;
+    let suffix = 2;
+    
+    while (true) {
+      const { data: existingProfile, error: slugCheckError } = await supabase
+        .from("professional_profiles")
+        .select("user_id")
+        .eq("slug", slug)
+        .neq("user_id", user.id)
+        .maybeSingle();
+    
+      if (slugCheckError) {
+        console.error("Errore controllo slug:", slugCheckError);
+        setError("Non è stato possibile verificare l’indirizzo del profilo.");
+        setSaving(false);
+        return;
+      }
+    
+      if (!existingProfile) {
+        break;
+      }
+    
+      slug = `${baseSlug}-${suffix}`;
+      suffix += 1;
+    }
 
     if (!businessName) {
       setError("Inserisci il nome della tua attività.");
@@ -722,6 +772,7 @@ function OnboardingProfessionistaPage() {
           business_name: businessName,
           category,
           city,
+          slug,
           phone,
           email,
           website: normalizeWebsite(stepOneForm.website),
@@ -894,12 +945,19 @@ function OnboardingProfessionistaPage() {
       <main className="professional-wizard-page">
         <section className="professional-wizard">
           <div className="container">
-            <Link
-              to="/diventa-professionista"
-              className="professional-wizard__back"
-            >
-              ← Torna indietro
-            </Link>
+          <button
+
+type="button"
+
+className="professional-wizard__back"
+
+onClick={() => navigate(-1)}
+
+>
+
+← Torna indietro
+
+</button>
 
             <div className="professional-wizard__layout">
               <aside className="professional-wizard__sidebar">
