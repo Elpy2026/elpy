@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-    Link,
-    Navigate,
-    useNavigate,
-  } from "react-router-dom";
+  Link,
+  Navigate,
+} from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useAuth } from "../context/AuthContext";
@@ -115,19 +114,6 @@ function isSubscriptionActive(status: string | null) {
 }
 
 function normalizeWebsiteUrl(value: string) {
-    function normalizeWhatsAppNumber(value: string) {
-        let phoneNumber = value.replace(/\D/g, "");
-      
-        if (phoneNumber.startsWith("00")) {
-          phoneNumber = phoneNumber.slice(2);
-        }
-      
-        if (!phoneNumber.startsWith("39")) {
-          phoneNumber = `39${phoneNumber}`;
-        }
-      
-        return phoneNumber;
-      }
   const cleanValue = value.trim();
 
   if (!cleanValue) {
