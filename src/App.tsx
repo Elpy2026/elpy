@@ -4,6 +4,7 @@ import ProfessionistiPage from './pages/ProfessionistiPage'
 import ComeFunzionaPage from './pages/ComeFunzionaPage'
 import DashboardProfessionistaPage from './pages/DashboardProfessionistaPage'
 import OnboardingProfessionistaPage from './pages/OnboardingProfessionistaPage'
+import ProfessionistiCategoriaPage from "./pages/ProfessionistiCategoriaPage";
 import PrivacyPage from './pages/PrivacyPage'
 import TerminiPage from './pages/TerminiPage'
 import CookiePolicyPage from './pages/CookiePolicyPage'
@@ -58,7 +59,15 @@ function App() {
           <Route path="/termini" element={<TerminiPage />} />
           <Route path="/professionisti" element={<ProfessionistiPage />} />
           <Route
-  path="/professionisti/:slug"
+  path="/professionisti/:categoria/:citta"
+  element={<ProfessionistiCategoriaPage />}
+/>
+          <Route
+  path="/professionisti/:categoria"
+  element={<ProfessionistiCategoriaPage />}
+/>
+          <Route
+  path="/professionista/:slug"
   element={<ProfiloProfessionistaPubblicoPage />}
 />
           <Route path="/cookie-policy" element={<CookiePolicyPage />} />

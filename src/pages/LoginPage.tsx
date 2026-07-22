@@ -1,3 +1,4 @@
+import { Helmet } from 'react-helmet-async'
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
@@ -16,6 +17,8 @@ function LoginPage() {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
 
+  const canonicalUrl = `${window.location.origin}/login`
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
 
@@ -25,8 +28,6 @@ function LoginPage() {
 
     try {
       await signIn(email.trim(), password)
-
-      // Dopo il login l’utente viene sempre riportato alla home.
       navigate('/', { replace: true })
     } catch (err) {
       setError(
@@ -62,9 +63,7 @@ function LoginPage() {
           redirectTo: redirectUrl,
         })
 
-      if (resetError) {
-        throw resetError
-      }
+      if (resetError) throw resetError
 
       setMessage(
         'Ti abbiamo inviato un’email con il link per reimpostare la password. Controlla anche la cartella spam.',
@@ -81,118 +80,139 @@ function LoginPage() {
   }
 
   return (
-    <div className="landing">
-      <Header />
+    <>
+      <Helmet>
+        <title>Login | Accedi a ELPYO</title>
 
-      <main className="page-main">
-        <section className="section page-section">
-          <div className="container page-container">
-            <div className="page-header">
-              <p className="hero__badge">Login</p>
+        <meta
+          name="description"
+          content="Accedi al tuo account ELPYO per trovare professionisti, pubblicare richieste di aiuto e gestire la tua attività."
+        />
 
-              <h1 className="page-title">Accedi a ELPYO</h1>
+        <link rel="canonical" href={canonicalUrl} />
 
-              <p className="page-subtitle">
-                Accedi per pubblicare richieste o offrire il tuo aiuto.
-              </p>
-            </div>
+        <meta property="og:title" content="Login | ELPYO" />
+        <meta
+          property="og:description"
+          content="Accedi al tuo account ELPYO."
+        />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:type" content="website" />
+      </Helmet>
 
-            {message && (
-              <div className="alert alert--success">
-                {message}
-              </div>
-            )}
+      <div className="landing">
+        <Header />
 
-            {error && (
-              <div className="alert alert--error">
-                {error}
-              </div>
-            )}
+        <main className="page-main">
+          <section className="section page-section">
+            <div className="container page-container">
+              <div className="page-header">
+                <p className="hero__badge">Login</p>
 
-            <form className="request-form" onSubmit={handleSubmit}>
-              <div className="form-field">
-                <label htmlFor="email">Email</label>
+                <h1 className="page-title">Accedi a ELPYO</h1>
 
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  autoComplete="email"
-                  required
-                  disabled={loading || resetLoading}
-                />
+                <p className="page-subtitle">
+                  Accedi per pubblicare richieste o offrire il tuo aiuto.
+                </p>
               </div>
 
-              <div className="form-field">
-                <label htmlFor="password">Password</label>
+              {message && (
+                <div className="alert alert--success">
+                  {message}
+                </div>
+              )}
 
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  autoComplete="current-password"
-                  required
-                  disabled={loading || resetLoading}
-                />
-              </div>
+              {error && (
+                <div className="alert alert--error">
+                  {error}
+                </div>
+              )}
 
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  marginTop: '-0.25rem',
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={() => void handleForgotPassword()}
-                  disabled={loading || resetLoading}
+              <form className="request-form" onSubmit={handleSubmit}>
+                <div className="form-field">
+                  <label htmlFor="email">Email</label>
+
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    autoComplete="email"
+                    required
+                    disabled={loading || resetLoading}
+                  />
+                </div>
+
+                <div className="form-field">
+                  <label htmlFor="password">Password</label>
+
+                  <input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    autoComplete="current-password"
+                    required
+                    disabled={loading || resetLoading}
+                  />
+                </div>
+
+                <div
                   style={{
-                    padding: 0,
-                    border: 0,
-                    background: 'transparent',
-                    color: '#ef4f43',
-                    font: 'inherit',
-                    fontWeight: 700,
-                    cursor:
-                      loading || resetLoading
-                        ? 'not-allowed'
-                        : 'pointer',
-                    textDecoration: 'underline',
-                    textUnderlineOffset: '4px',
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    marginTop: '-0.25rem',
                   }}
                 >
-                  {resetLoading
-                    ? 'Invio email in corso…'
-                    : 'Hai dimenticato la password?'}
-                </button>
-              </div>
+                  <button
+                    type="button"
+                    onClick={() => void handleForgotPassword()}
+                    disabled={loading || resetLoading}
+                    style={{
+                      padding: 0,
+                      border: 0,
+                      background: 'transparent',
+                      color: '#ef4f43',
+                      font: 'inherit',
+                      fontWeight: 700,
+                      cursor:
+                        loading || resetLoading
+                          ? 'not-allowed'
+                          : 'pointer',
+                      textDecoration: 'underline',
+                      textUnderlineOffset: '4px',
+                    }}
+                  >
+                    {resetLoading
+                      ? 'Invio email in corso…'
+                      : 'Hai dimenticato la password?'}
+                  </button>
+                </div>
 
-              <div className="form-actions">
-                <button
-                  className="btn btn--primary"
-                  type="submit"
-                  disabled={loading || resetLoading}
-                >
-                  {loading ? 'Accesso in corso…' : 'Accedi'}
-                </button>
+                <div className="form-actions">
+                  <button
+                    className="btn btn--primary"
+                    type="submit"
+                    disabled={loading || resetLoading}
+                  >
+                    {loading ? 'Accesso in corso…' : 'Accedi'}
+                  </button>
 
-                <Link
-                  className="btn btn--secondary"
-                  to="/registrazione"
-                >
-                  Crea account
-                </Link>
-              </div>
-            </form>
-          </div>
-        </section>
-      </main>
+                  <Link
+                    className="btn btn--secondary"
+                    to="/registrazione"
+                  >
+                    Crea account
+                  </Link>
+                </div>
+              </form>
+            </div>
+          </section>
+        </main>
 
-      <Footer />
-    </div>
+        <Footer />
+      </div>
+    </>
   )
 }
 

@@ -1,3 +1,4 @@
+import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
@@ -24,127 +25,196 @@ const stories = [
 ]
 
 function ChiSiamoPage() {
+  const canonicalUrl = `${window.location.origin}/chi-siamo`
+
+  const seoTitle =
+    'Chi siamo | ELPYO - La community che mette in movimento l’aiuto'
+
+  const seoDescription =
+    'Scopri la missione di ELPYO: mettere in contatto chi ha bisogno di aiuto con persone disponibili e professionisti della propria città.'
+
+  const organizationSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'ELPYO',
+    url: window.location.origin,
+    slogan: 'Help in Motion',
+    description: seoDescription,
+  }
+
   return (
-    <div className="landing about-page">
-      <Header />
+    <>
+      <Helmet>
+        <title>{seoTitle}</title>
 
-      <main className="about-main">
-        <section className="about-hero">
-          <div className="container about-hero__inner">
-            <span className="about-kicker">Chi siamo</span>
+        <meta
+          name="description"
+          content={seoDescription}
+        />
 
-            <h1>Aiutarsi non dovrebbe essere complicato.</h1>
+        <link
+          rel="canonical"
+          href={canonicalUrl}
+        />
 
-            <p>
-              ELPYO è la comunità locale che mette in contatto chi ha bisogno
-              di una mano con chi è disposto ad offrirla.
-            </p>
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={seoTitle} />
+        <meta property="og:description" content={seoDescription} />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:site_name" content="ELPYO" />
 
-            <div className="about-hero__actions">
-              <Link to="/registrazione" className="btn btn--primary">
+        <script type="application/ld+json">
+          {JSON.stringify(organizationSchema)}
+        </script>
+      </Helmet>
+
+      <div className="landing about-page">
+        <Header />
+
+        <main className="about-main">
+          <section className="about-hero">
+            <div className="container about-hero__inner">
+              <span className="about-kicker">Chi siamo</span>
+
+              <h1>Aiutarsi non dovrebbe essere complicato.</h1>
+
+              <p>
+                ELPYO è la comunità locale che mette in contatto chi ha bisogno
+                di una mano con chi è disposto ad offrirla.
+              </p>
+
+              <div className="about-hero__actions">
+                <Link to="/registrazione" className="btn btn--primary">
+                  Entra nella community →
+                </Link>
+
+                <Link to="/come-funziona" className="btn btn--secondary">
+                  Scopri come funziona
+                </Link>
+              </div>
+            </div>
+          </section>
+
+          <section className="about-stories">
+            <div className="container about-stories__grid">
+              {stories.map((item) => (
+                <article className="about-story-card" key={item.title}>
+                  <div className="about-story-card__icon">
+                    {item.icon}
+                  </div>
+
+                  <span>{item.label}</span>
+
+                  <h2>{item.title}</h2>
+
+                  <p>{item.text}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className="about-manifesto">
+            <div className="container about-manifesto__inner">
+              <div className="about-big-text">
+                <span>E poi...</span>
+
+                <h2>ci siamo tutti noi.</h2>
+              </div>
+
+              <div className="about-copy-pro">
+                <p>
+                  C’è chi cerca un passaggio, chi ha bisogno di una mano in
+                  giardino, chi deve portare fuori il cane e chi,
+                  semplicemente, vorrebbe che la giornata fosse un po’ meno
+                  complicata.
+                </p>
+
+                <p>
+                  ELPYO nasce per mettere in contatto persone vere con bisogni
+                  veri. E con la voglia di darsi una mano.
+                </p>
+
+                <p>
+                  Chi ha bisogno di un aiuto trova qualcuno che può offrirlo.
+                  Chi ha tempo, competenze o semplicemente un po’ di buona
+                  volontà può trasformarli in un’opportunità.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section className="about-values">
+            <div className="container about-values__grid">
+              <div className="about-value">
+                <strong>📍</strong>
+
+                <h3>Vicino a casa</h3>
+
+                <p>
+                  La tua città, il tuo quartiere, persone reali intorno a te.
+                </p>
+              </div>
+
+              <div className="about-value">
+                <strong>⚡</strong>
+
+                <h3>Semplice</h3>
+
+                <p>
+                  Senza moduli infiniti, telefonate improbabili o passaggi
+                  inutili.
+                </p>
+              </div>
+
+              <div className="about-value">
+                <strong>🤝</strong>
+
+                <h3>Umano</h3>
+
+                <p>Una comunità dove ognuno mette quello che può.</p>
+              </div>
+            </div>
+          </section>
+
+          <section className="about-quote">
+            <div className="container about-quote__inner">
+              <p>C’è un vecchio detto che è il nostro motto:</p>
+
+              <blockquote>
+                Chi è ricco di amici è scarso di guai.
+              </blockquote>
+
+              <p>
+                Noi crediamo che oggi quegli amici possano essere anche una
+                comunità.
+              </p>
+            </div>
+          </section>
+
+          <section className="about-final">
+            <div className="container about-final__inner">
+              <span>ELPYO. Help in Motion.</span>
+
+              <h2>Iscriviti. Partecipa.</h2>
+
+              <p>
+                Perché più siamo, più persone possiamo aiutare. E più ci
+                aiutiamo, più opportunità nascono.
+              </p>
+
+              <Link
+                to="/registrazione"
+                className="btn btn--primary"
+              >
                 Entra nella community →
               </Link>
-              <Link to="/come-funziona" className="btn btn--secondary">
-                Scopri come funziona
-              </Link>
             </div>
-          </div>
-        </section>
+          </section>
+        </main>
 
-        <section className="about-stories">
-          <div className="container about-stories__grid">
-            {stories.map((item) => (
-              <article className="about-story-card" key={item.title}>
-                <div className="about-story-card__icon">{item.icon}</div>
-                <span>{item.label}</span>
-                <h2>{item.title}</h2>
-                <p>{item.text}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="about-manifesto">
-          <div className="container about-manifesto__inner">
-            <div className="about-big-text">
-              <span>E poi...</span>
-              <h2>ci siamo tutti noi.</h2>
-            </div>
-
-            <div className="about-copy-pro">
-              <p>
-                C’è chi cerca un passaggio, chi ha bisogno di una mano in
-                giardino, chi deve portare fuori il cane e chi, semplicemente,
-                vorrebbe che la giornata fosse un po’ meno complicata.
-              </p>
-
-              <p>
-                ELPYO nasce per mettere in contatto persone vere con bisogni
-                veri. E con la voglia di darsi una mano.
-              </p>
-
-              <p>
-                Chi ha bisogno di un aiuto trova qualcuno che può offrirlo. Chi
-                ha tempo, competenze o semplicemente un po’ di buona volontà può
-                trasformarli in un’opportunità.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <section className="about-values">
-          <div className="container about-values__grid">
-            <div className="about-value">
-              <strong>📍</strong>
-              <h3>Vicino a casa</h3>
-              <p>La tua città, il tuo quartiere, persone reali intorno a te.</p>
-            </div>
-
-            <div className="about-value">
-              <strong>⚡</strong>
-              <h3>Semplice</h3>
-              <p>Senza moduli infiniti, telefonate improbabili o passaggi inutili.</p>
-            </div>
-
-            <div className="about-value">
-              <strong>🤝</strong>
-              <h3>Umano</h3>
-              <p>Una comunità dove ognuno mette quello che può.</p>
-            </div>
-          </div>
-        </section>
-
-        <section className="about-quote">
-          <div className="container about-quote__inner">
-            <p>C’è un vecchio detto che è il nostro motto:</p>
-            <blockquote>
-              Chi è ricco di amici è scarso di guai.
-            </blockquote>
-            <p>
-              Noi crediamo che oggi quegli amici possano essere anche una
-              comunità.
-            </p>
-          </div>
-        </section>
-
-        <section className="about-final">
-          <div className="container about-final__inner">
-            <span>ELPYO. Help in Motion.</span>
-            <h2>Iscriviti. Partecipa.</h2>
-            <p>
-              Perché più siamo, più persone possiamo aiutare. E più ci aiutiamo,
-              più opportunità nascono.
-            </p>
-
-            <Link to="/registrazione" className="btn btn--primary">
-              Entra nella community →
-            </Link>
-          </div>
-        </section>
-      </main>
-
-      <Footer />
-    </div>
+        <Footer />
+      </div>
+    </>
   )
 }
 

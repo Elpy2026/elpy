@@ -1,9 +1,50 @@
+import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 
 function ComeFunzionaPage() {
+  const canonicalUrl = `${window.location.origin}/come-funziona`
+
+  const seoTitle =
+    'Come funziona ELPYO | Trova aiuto o offri il tuo supporto'
+
+  const seoDescription =
+    'Scopri come funziona ELPYO: pubblica una richiesta, ricevi candidature dagli Helper oppure aiuta le persone della tua città.'
+
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: seoTitle,
+    description: seoDescription,
+    url: canonicalUrl,
+  }
   return (
+  <>
+    <Helmet>
+      <title>{seoTitle}</title>
+
+      <meta
+        name="description"
+        content={seoDescription}
+      />
+
+      <link
+        rel="canonical"
+        href={canonicalUrl}
+      />
+
+      <meta property="og:type" content="website" />
+      <meta property="og:title" content={seoTitle} />
+      <meta property="og:description" content={seoDescription} />
+      <meta property="og:url" content={canonicalUrl} />
+      <meta property="og:site_name" content="ELPYO" />
+
+      <script type="application/ld+json">
+        {JSON.stringify(structuredData)}
+      </script>
+    </Helmet>
+
     <div className="landing">
       <Header />
 
@@ -208,7 +249,8 @@ function ComeFunzionaPage() {
       </main>
 
       <Footer />
-    </div>
+      </div>
+  </>
   )
 }
 

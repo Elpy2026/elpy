@@ -4,6 +4,7 @@ import {
   useNavigate,
   useParams,
 } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { supabase } from "../lib/supabase";
@@ -261,10 +262,105 @@ function ProfiloProfessionistaPubblicoPage() {
   const whatsappUrl = whatsappNumber
     ? `https://wa.me/${whatsappNumber}`
     : "";
+    const canonicalUrl = `${window.location.origin}/professionista/${slug}`;
 
-  return (
-    <>
-      <Header />
+    const seoTitle = profile.category && profile.city
+      ? `${businessName} | ${profile.category} a ${profile.city} | ELPYO`
+      : `${businessName} | Professionista verificato ELPYO`;
+  
+    const seoDescription = profile.description?.trim()
+      ? profile.description.trim().slice(0, 160)
+      : `Scopri servizi, contatti e informazioni di ${businessName}${
+          profile.category ? `, ${profile.category}` : ""
+        }${profile.city ? ` a ${profile.city}` : ""} su ELPYO.`;
+  
+    const socialImage =
+      profile.cover_url ||
+      profile.logo_url ||
+      profile.image_url ||
+      `${window.location.origin}/elpy-logo-header-transparent.png`;
+      const structuredData = {
+        "@context": "https://schema.org",
+        "@type": "LocalBusiness",
+        name: businessName,
+        description: seoDescription,
+        url: canonicalUrl,
+        image: socialImage,
+        ...(profile.category && {
+          additionalType: profile.category,
+        }),
+        ...(profile.city && {
+          address: {
+            "@type": "PostalAddress",
+            addressLocality: profile.city,
+            addressCountry: "IT",
+          },
+        }),
+        ...(profile.phone && {
+          telephone: profile.phone,
+        }),
+        ...(profile.email && {
+          email: profile.email,
+        }),
+        ...(websiteUrl && {
+          sameAs: [websiteUrl],
+        }),
+        ...(profile.services &&
+          profile.services.length > 0 && {
+            makesOffer: profile.services.map((service) => ({
+              "@type": "Offer",
+              itemOffered: {
+                "@type": "Service",
+                name: service,
+              },
+            })),
+          }),
+      };
+      return (
+        <>
+          <Helmet>
+            <title>{seoTitle}</title>
+      
+            <meta
+              name="description"
+              content={seoDescription}
+            />
+      
+            <link
+              rel="canonical"
+              href={canonicalUrl}
+            />
+      
+            <meta property="og:type" content="profile" />
+            <meta property="og:title" content={seoTitle} />
+            <meta property="og:description" content={seoDescription} />
+            <meta property="og:url" content={canonicalUrl} />
+            <meta property="og:image" content={socialImage} />
+            <meta property="og:site_name" content="ELPYO" />
+            <meta property="og:locale" content="it_IT" />
+      
+            <meta
+              name="twitter:card"
+              content="summary_large_image"
+            />
+            <meta
+              name="twitter:title"
+              content={seoTitle}
+            />
+            <meta
+              name="twitter:description"
+              content={seoDescription}
+            />
+            <meta
+              name="twitter:image"
+              content={socialImage}
+            />
+            <script type="application/ld+json">
+  {JSON.stringify(structuredData)}
+</script>
+          </Helmet>
+      
+          <Header />
 
       <main className="professional-dashboard-page professional-public-page">
         <div className="professional-dashboard-container">

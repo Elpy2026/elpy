@@ -8792,3 +8792,437 @@ a[href*="/profilo-helper"].btn::before {
     background: #ffffff;
   }
 }
+/* Landing SEO professionisti per categoria */
+
+.professionals-hero {
+  padding: 72px 24px;
+  background:
+    radial-gradient(circle at 10% 20%, rgba(36, 211, 171, 0.12), transparent 32%),
+    radial-gradient(circle at 90% 10%, rgba(126, 239, 170, 0.14), transparent 30%),
+    linear-gradient(180deg, #fbfffd 0%, #f5fbf8 100%);
+}
+
+.professionals-hero__content {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+}
+
+.professionals-hero__eyebrow {
+  margin: 0 0 16px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0d9f78;
+}
+
+.professionals-hero h1 {
+  max-width: 760px;
+  margin: 0;
+  font-size: clamp(42px, 6vw, 72px);
+  line-height: 0.98;
+  letter-spacing: -0.045em;
+  color: #465164;
+}
+
+.professionals-hero__content > p:last-child {
+  max-width: 680px;
+  margin: 24px 0 0;
+  font-size: 19px;
+  line-height: 1.7;
+  color: #647083;
+}
+
+.professionals-search-section {
+  padding: 64px 24px 88px;
+  background: #ffffff;
+}
+
+.professionals-search-section__content {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+}
+
+.professionals-results-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.professionals-results-header__eyebrow {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0d9f78;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.professionals-results-header h2 {
+  margin: 0;
+  font-size: clamp(32px, 4vw, 48px);
+  line-height: 1.05;
+  color: #465164;
+}
+
+.professionals-results-header > span {
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: #eefaf5;
+  font-size: 14px;
+  font-weight: 700;
+  color: #15815f;
+}
+
+.professionals-empty,
+.professionals-status {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 22px;
+  padding: 28px;
+  border: 1px solid #dfe7e3;
+  border-radius: 22px;
+  background: #fbfdfc;
+  box-shadow: 0 14px 40px rgba(31, 50, 44, 0.06);
+}
+
+.professionals-empty__icon,
+.professionals-status__icon {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  border-radius: 18px;
+  background: #e8fbf3;
+  color: #0d9f78;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.professionals-empty h3,
+.professionals-status h3 {
+  margin: 0 0 6px;
+  font-size: 24px;
+  color: #465164;
+}
+
+.professionals-empty p,
+.professionals-status p {
+  margin: 0;
+  line-height: 1.6;
+  color: #758094;
+}
+
+.professionals-empty__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 20px;
+  border-radius: 14px;
+  background: #0ca878;
+  color: #ffffff;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 10px 24px rgba(12, 168, 120, 0.22);
+}
+
+.professionals-empty__button:hover {
+  background: #098e66;
+}
+
+.professionals-results {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.professional-result-card {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 22px;
+  padding: 24px;
+  border: 1px solid #e3e9e6;
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow: 0 12px 36px rgba(31, 50, 44, 0.06);
+}
+
+.professional-result-card__image {
+  display: grid;
+  width: 96px;
+  height: 96px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #eaf9f3;
+  color: #0d9f78;
+  font-size: 32px;
+  font-weight: 800;
+}
+
+.professional-result-card__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.professional-result-card__verified {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0d9f78;
+}
+
+.professional-result-card h3 {
+  margin: 0 0 8px;
+  font-size: 24px;
+  color: #465164;
+}
+
+.professional-result-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+  color: #7a8495;
+}
+
+.professional-result-card__content > p {
+  margin: 0;
+  line-height: 1.6;
+  color: #667286;
+}
+
+.professional-result-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.professional-result-card__primary,
+.professional-result-card__secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.professional-result-card__primary {
+  background: #0ca878;
+  color: #ffffff;
+}
+
+.professional-result-card__secondary {
+  border: 1px solid #dbe4e0;
+  color: #465164;
+  background: #ffffff;
+}
+
+.professionals-search-section__content > div:last-child {
+  margin-top: 28px !important;
+}
+
+.professionals-search-section__content > div:last-child a {
+  color: #526174;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+@media (max-width: 780px) {
+  .professionals-hero {
+    padding: 54px 20px;
+  }
+
+  .professionals-search-section {
+    padding: 44px 20px 64px;
+  }
+
+  .professionals-results-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .professionals-results {
+    grid-template-columns: 1fr;
+  }
+
+  .professionals-empty,
+  .professionals-status {
+    grid-template-columns: 1fr;
+    text-align: left;
+  }
+
+  .professionals-empty__button {
+    width: 100%;
+  }
+
+  .professional-result-card {
+    grid-template-columns: 1fr;
+  }
+}
+.seo-breadcrumb{
+  width:min(1180px,100%);
+  margin:24px auto 0;
+  padding:0 24px;
+
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+
+  font-size:14px;
+  color:#7c8898;
+}
+
+.seo-breadcrumb a{
+  color:#5d6d82;
+  text-decoration:none;
+}
+
+.seo-breadcrumb a:hover{
+  color:#0ca878;
+}
+/* Contenuto SEO e FAQ landing professionisti */
+
+.professionals-seo-content {
+  padding: 24px 24px 96px;
+  background: #ffffff;
+}
+
+.professionals-seo-content__inner {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
+  gap: 32px;
+  align-items: start;
+}
+
+.professionals-seo-content__intro,
+.professionals-faq {
+  padding: 32px;
+  border: 1px solid #e2e9e5;
+  border-radius: 24px;
+  background: #fbfdfc;
+  box-shadow: 0 16px 44px rgba(31, 50, 44, 0.06);
+}
+
+.professionals-seo-content__eyebrow {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0d9f78;
+}
+
+.professionals-seo-content h2 {
+  margin: 0 0 18px;
+  font-size: clamp(28px, 4vw, 40px);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  color: #465164;
+}
+
+.professionals-seo-content__intro > p:not(.professionals-seo-content__eyebrow) {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.75;
+  color: #667286;
+}
+
+.professionals-seo-content__intro > p + p {
+  margin-top: 16px;
+}
+
+.professionals-faq__list {
+  display: grid;
+  gap: 12px;
+}
+
+.professionals-faq__item {
+  overflow: hidden;
+  border: 1px solid #dfe7e3;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.professionals-faq__item summary {
+  position: relative;
+  padding: 18px 52px 18px 18px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 16px;
+  font-weight: 750;
+  line-height: 1.45;
+  color: #465164;
+}
+
+.professionals-faq__item summary::-webkit-details-marker {
+  display: none;
+}
+
+.professionals-faq__item summary::after {
+  content: '+';
+  position: absolute;
+  top: 50%;
+  right: 18px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  transform: translateY(-50%);
+  border-radius: 9px;
+  background: #e9faf3;
+  color: #0d9f78;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.professionals-faq__item[open] summary::after {
+  content: '−';
+}
+
+.professionals-faq__item p {
+  margin: 0;
+  padding: 0 18px 18px;
+  line-height: 1.65;
+  color: #6d788a;
+}
+
+.professionals-faq__item[open] summary {
+  color: #0b8e69;
+}
+
+@media (max-width: 900px) {
+  .professionals-seo-content__inner {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .professionals-seo-content {
+    padding: 8px 20px 64px;
+  }
+
+  .professionals-seo-content__intro,
+  .professionals-faq {
+    padding: 24px 20px;
+    border-radius: 20px;
+  }
+
+  .professionals-seo-content h2 {
+    font-size: 30px;
+  }
+}

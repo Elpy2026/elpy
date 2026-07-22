@@ -1,8 +1,11 @@
+import { Helmet } from 'react-helmet-async'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Header from '../components/Header'
+import { categories, cities } from '../data/professionisti'
 import Footer from '../components/Footer'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../context/AuthContext'
 
 type ProfessionalProfile = {
   user_id: string;
@@ -26,89 +29,6 @@ type SearchableSelectProps = {
   value: string
   onChange: (value: string) => void
 }
-
-const categories = [
-  'Architetti',
-  'Avvocati',
-  'Babysitter',
-  'Barbieri',
-  'Carpentieri',
-  'Commercialisti',
-  'Consulenti del lavoro',
-  'Consulenti finanziari',
-  'Dentisti',
-  'Designer',
-  'Dietisti',
-  'Elettricisti',
-  'Estetiste',
-  'Falegnami',
-  'Fisioterapisti',
-  'Fotografi',
-  'Geometri',
-  'Giardinieri',
-  'Grafici',
-  'Idraulici',
-  'Imbianchini',
-  'Infermieri',
-  'Informatici',
-  'Insegnanti privati',
-  'Installatori di climatizzatori',
-  'Make-up artist',
-  'Manutentori',
-  'Massaggiatori',
-  'Meccanici',
-  'Mediatori immobiliari',
-  'Montatori di mobili',
-  'Muratori',
-  'Nutrizionisti',
-  'Parrucchieri',
-  'Personal trainer',
-  'Piastrellisti',
-  'Psicologi',
-  'Pulizie domestiche',
-  'Riparatori di elettrodomestici',
-  'Sarti',
-  'Social media manager',
-  'Tecnici informatici',
-  'Traduttori',
-  'Veterinari',
-  'Videomaker',
-  'Web designer',
-]
-
-const cities = [
-  'Agrigento',
-  'Favara',
-  'Porto Empedocle',
-  'Canicattì',
-  'Licata',
-  'Sciacca',
-  'Raffadali',
-  'Aragona',
-  'Ribera',
-  'Palma di Montechiaro',
-  'Palermo',
-  'Catania',
-  'Messina',
-  'Siracusa',
-  'Ragusa',
-  'Trapani',
-  'Caltanissetta',
-  'Enna',
-  'Acireale',
-  'Gela',
-  'Marsala',
-  'Mazara del Vallo',
-  'Milano',
-  'Roma',
-  'Torino',
-  'Napoli',
-  'Bologna',
-  'Firenze',
-  'Bari',
-  'Genova',
-  'Verona',
-]
 
 function SearchableSelect({
   label,
@@ -223,15 +143,65 @@ function SearchableSelect({
     </div>
   )
 }
+const canonicalUrl = `${window.location.origin}/professionisti`
 
+const seoTitle =
+  'Professionisti Verificati | Trova professionisti nella tua città | ELPYO'
+
+const seoDescription =
+  'Trova professionisti verificati nella tua città. Idraulici, elettricisti, avvocati, fisioterapisti, personal trainer e tanti altri servizi locali su ELPYO.'
+
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: seoTitle,
+  description: seoDescription,
+  url: canonicalUrl,
+}
 function ProfessionistiPage() {
+  const { user } = useAuth()
+
+  const [isProfessional, setIsProfessional] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState('')
   const [selectedCity, setSelectedCity] = useState('')
   const [professionals, setProfessionals] = useState<ProfessionalProfile[]>([])
   const [hasSearched, setHasSearched] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [searchError, setSearchError] = useState('')
+  useEffect(() => {
+    if (!user) {
+      setIsProfessional(false)
+      return
+    }
 
+    async function checkProfessionalProfile() {
+      const { data, error } = await supabase
+        .from('professional_profiles')
+        .select('user_id')
+        .eq('user_id', user!.id)
+        .maybeSingle()
+
+      if (error) {
+        console.error(
+          'Errore verifica profilo professionista:',
+          error,
+        )
+
+        setIsProfessional(false)
+        return
+      }
+
+      setIsProfessional(Boolean(data))
+    }
+
+    void checkProfessionalProfile()
+  }, [user])
+
+  const professionalCtaPath = !user
+    ? '/login?redirect=/onboarding-professionista'
+    : isProfessional
+      ? '/professionista/dashboard'
+      : '/onboarding-professionista'
   const handleSearch = async () => {
     if (!selectedCategory || !selectedCity || isLoading) {
       return
@@ -297,6 +267,30 @@ function ProfessionistiPage() {
 
   return (
     <>
+      <Helmet>
+        <title>{seoTitle}</title>
+  
+        <meta
+          name="description"
+          content={seoDescription}
+        />
+  
+        <link
+          rel="canonical"
+          href={canonicalUrl}
+        />
+  
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={seoTitle} />
+        <meta property="og:description" content={seoDescription} />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:site_name" content="ELPYO" />
+  
+        <script type="application/ld+json">
+          {JSON.stringify(structuredData)}
+        </script>
+      </Helmet>
+  
       <Header />
 
       <main className="professionals-page">
@@ -349,26 +343,26 @@ function ProfessionistiPage() {
             </div>
 
             <div className="professionals-hero__panel">
-              <span className="professionals-hero__panel-icon">✓</span>
+  <span className="professionals-hero__panel-icon">✓</span>
 
-              <h2>Sei un professionista?</h2>
+  <h2>Sei un professionista?</h2>
 
-              <p>
-                Crea il tuo profilo, presenta i tuoi servizi e fatti trovare
-                dagli utenti della tua zona.
-              </p>
+  <p>
+    Crea il tuo profilo, presenta i tuoi servizi e fatti trovare
+    dagli utenti della tua zona.
+  </p>
 
-              <Link
-                to="/diventa-professionista"
-                className="professionals-hero__panel-button"
-              >
-                Diventa Professionista
-              </Link>
+  <Link
+    to={professionalCtaPath}
+    className="professionals-hero__panel-button"
+  >
+    Diventa Professionista
+  </Link>
 
-              <small>
-                Abbonamento mensile revocabile in qualsiasi momento.
-              </small>
-            </div>
+  <small>
+    Abbonamento mensile revocabile in qualsiasi momento.
+  </small>
+</div>
           </div>
         </section>
 
@@ -495,7 +489,7 @@ function ProfessionistiPage() {
 
                         <div className="professional-result-card__actions">
   <Link
-    to={`/professionisti/${professional.slug}`}
+    to={`/professionista/${professional.slug}`}
     className="professional-result-card__primary"
   >
     Vedi profilo
@@ -541,7 +535,10 @@ function ProfessionistiPage() {
                     </p>
                   </div>
 
-                  <Link to="/login" className="professionals-empty__button">
+                  <Link
+  to={professionalCtaPath}
+  className="professionals-empty__button"
+>
                     Pubblica il tuo profilo
                   </Link>
                 </div>
@@ -560,7 +557,10 @@ function ProfessionistiPage() {
                   </p>
                 </div>
 
-                <Link to="/login" className="professionals-empty__button">
+                <Link
+  to={professionalCtaPath}
+  className="professionals-empty__button"
+>
                   Pubblica il tuo profilo
                 </Link>
               </div>
@@ -581,7 +581,10 @@ function ProfessionistiPage() {
               </p>
             </div>
 
-            <Link to="/login" className="professionals-cta__button">
+            <Link
+  to={professionalCtaPath}
+  className="professionals-cta__button"
+>
               Inizia ora
             </Link>
           </div>
