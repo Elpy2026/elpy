@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { RequestsProvider } from './context/RequestsContext'
 import ProfessionistiPage from './pages/ProfessionistiPage'
+import EventiPage from './pages/EventiPage'
 import ComeFunzionaPage from './pages/ComeFunzionaPage'
 import DashboardProfessionistaPage from './pages/DashboardProfessionistaPage'
 import OnboardingProfessionistaPage from './pages/OnboardingProfessionistaPage'
@@ -52,6 +53,7 @@ function App() {
       <ScrollToTop />
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/eventi" element={<EventiPage />} />
           <Route path="/prelaunch" element={<PreLaunchPage />} />
           <Route path="/come-funziona" element={<ComeFunzionaPage />} />
           <Route path="/chi-siamo" element={<ChiSiamoPage />} />

@@ -176,7 +176,18 @@ export type TeatroPirandelloEvent = {
         endYear: publicationYear + 1,
       };
     }
-  
+    const startYear = Number(seasonMatch[1]);
+    let endYear = Number(seasonMatch[2]);
+    
+    if (endYear < 100) {
+      endYear = Math.floor(startYear / 100) * 100 + endYear;
+    }
+    
+    return {
+      startYear,
+      endYear,
+    };
+    }
   function parseDateLine(
     line: string,
     years: SeasonYears,
@@ -319,6 +330,16 @@ export type TeatroPirandelloEvent = {
       "avviso pubblico",
       "manifestazione di interesse",
       "comunicato stampa",
+      "campagna abbonamenti",
+"abbonamenti",
+"prelazione",
+"botteghino",
+"conferenza stampa",
+"bando",
+"convocazione",
+"assemblea",
+"verbale",
+"affidamento",
       "applausi",
       "pubblico resta",
       "conquista il teatro",
@@ -490,6 +511,13 @@ export type TeatroPirandelloEvent = {
       }
   
       const title = normalizeTitle(lines[titleIndex]);
+      if (
+        /in definizione/i.test(title) ||
+        /da definire/i.test(title) ||
+        /coming soon/i.test(title)
+      ) {
+        continue;
+      }
   
       if (!title) {
         continue;
@@ -537,7 +565,13 @@ export type TeatroPirandelloEvent = {
     text: string,
     publicationYear: number,
   ): ParsedDateRange | null {
-    const years = extractSeasonYears(text, publicationYear);
+    const years: SeasonYears = {
+
+  startYear: publicationYear,
+
+  endYear: publicationYear,
+
+};
     const lines = htmlToLines(text);
   
     for (const line of lines) {
@@ -593,8 +627,31 @@ export type TeatroPirandelloEvent = {
     const title = stripHtml(post.title.rendered);
     const fullText = `${post.title.rendered}\n${post.excerpt.rendered}\n${post.content.rendered}`;
     const plainText = stripHtml(fullText);
+    const lowerContent = plainText.toLowerCase();
+
+if (
+  lowerContent.includes("sold out") ||
+  lowerContent.includes("ha incantato") ||
+  lowerContent.includes("ha conquistato") ||
+  lowerContent.includes("si è concluso") ||
+  lowerContent.includes("grande successo") ||
+  lowerContent.includes("successo delle precedenti stagioni") ||
+  lowerContent.includes("due repliche") ||
+  lowerContent.includes("applausi del pubblico")
+) {
+  return null;
+}
     const publicationYear = new Date(post.date).getFullYear();
     const dates = extractDateFromText(fullText, publicationYear);
+    if (
+      dates &&
+      (
+        title.toLowerCase().startsWith("chiude la stagione") ||
+        title.toLowerCase().includes("torna al teatro pirandello")
+      )
+    ) {
+      return null;
+    }
   
     if (!isRealStandaloneEvent(title, plainText, dates)) {
       return null;

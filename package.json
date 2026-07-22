@@ -9,7 +9,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "sitemap": "node scripts/generate-sitemap.mjs",
-    "import:test": "tsx scripts/import-events/test.ts"
+    "import:test": "tsx scripts/import-events/test.ts",
+    "import:events": "tsx scripts/import-events/import.ts",
+    "import:all": "tsx scripts/import-events/importAll.ts"
   },
   "dependencies": {
     "@stripe/stripe-js": "^9.8.0",

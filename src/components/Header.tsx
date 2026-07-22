@@ -233,6 +233,7 @@ setIsProfessional(Boolean(professionalProfileData))
           <Link to="/cerco-aiuto">Cerco aiuto</Link>
           <Link to="/offro-aiuto">Offro aiuto</Link>
           <Link to="/come-funziona">Come funziona</Link>
+          <Link to="/eventi">Eventi</Link>
           <Link to="/chi-siamo">Chi siamo</Link>
         </nav>
 
