@@ -35,6 +35,9 @@ export type ImportedEvent = {
   city: string;
   province: string;
   venue: string;
+  address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   startDate: string;
   endDate: string;
   imageUrl: string | null;
@@ -121,9 +124,9 @@ export async function importEventsToDatabase(
       city: event.city,
       province: event.province,
       venue: event.venue,
-      address: null,
-      latitude: null,
-      longitude: null,
+      address: event.address ?? null,
+      latitude: event.latitude ?? null,
+      longitude: event.longitude ?? null,
       start_date: toAllDayTimestamp(event.startDate),
       end_date: toAllDayTimestamp(event.endDate),
       all_day: true,
@@ -164,7 +167,7 @@ export async function importEventsToDatabase(
     });
 
     if (error) {
-      fail += 1;
+      failed += 1;
       console.error(
         `Errore inserimento "${event.title}": ${error.message}`,
       );
