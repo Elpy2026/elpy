@@ -1,0 +1,163 @@
+.events-banner{
+
+    position:fixed;
+    
+    left:50%;
+    
+    bottom:22px;
+    
+    transform:translateX(-50%);
+    
+    width:min(900px,calc(100% - 32px));
+    
+    z-index:999;
+    
+    animation:bannerUp .35s ease;
+    
+    }
+    
+    @keyframes bannerUp{
+    
+    from{
+    
+    opacity:0;
+    
+    transform:translate(-50%,40px);
+    
+    }
+    
+    to{
+    
+    opacity:1;
+    
+    transform:translate(-50%,0);
+    
+    }
+    
+    }
+    
+    .events-banner__content{
+    
+    display:flex;
+    
+    align-items:center;
+    
+    gap:18px;
+    
+    padding:18px 22px;
+    
+    border-radius:18px;
+    
+    background:#ffffff;
+    
+    box-shadow:0 20px 60px rgba(0,0,0,.16);
+    
+    border:1px solid #ececec;
+    
+    }
+    
+    .events-banner__icon{
+    
+    font-size:34px;
+    
+    }
+    
+    .events-banner__text{
+    
+    flex:1;
+    
+    }
+    
+    .events-banner__text strong{
+    
+    display:block;
+    
+    font-size:18px;
+    
+    margin-bottom:4px;
+    
+    }
+    
+    .events-banner__text p{
+    
+    margin:0;
+    
+    color:#666;
+    
+    font-size:14px;
+    
+    }
+    
+    .events-banner__button{
+    
+    padding:12px 20px;
+    
+    background:#5b46d8;
+    
+    color:white;
+    
+    text-decoration:none;
+    
+    border-radius:10px;
+    
+    font-weight:700;
+    
+    transition:.2s;
+    
+    }
+    
+    .events-banner__button:hover{
+    
+    background:#4835bd;
+    
+    }
+    
+    .events-banner__close{
+    
+    border:none;
+    
+    background:none;
+    
+    font-size:20px;
+    
+    cursor:pointer;
+    
+    opacity:.6;
+    
+    }
+    
+    .events-banner__close:hover{
+    
+    opacity:1;
+    
+    }
+    
+    @media(max-width:700px){
+    
+    .events-banner__content{
+    
+    flex-direction:column;
+    
+    align-items:flex-start;
+    
+    }
+    
+    .events-banner__button{
+    
+    width:100%;
+    
+    text-align:center;
+    
+    }
+    
+    .events-banner__close{
+    
+    position:absolute;
+    
+    top:10px;
+    
+    right:14px;
+    
+    }
+    
+    }
