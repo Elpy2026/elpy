@@ -1,7 +1,6 @@
 import { Helmet } from 'react-helmet-async'
 import Header from '../components/Header'
 import Hero from '../components/Hero'
-import EventsPromoBanner from '../components/EventsPromoBanner'
 import Dashboard from '../components/Dashboard'
 import Categories from '../components/Categories'
 import Trust from '../components/Trust'
