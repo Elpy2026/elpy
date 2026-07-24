@@ -70,6 +70,19 @@ function VerifiedRoute({ children }: { children: React.ReactNode }) {
                     Accedi
                   </Link>
                 </div>
+
+                <div style={{ marginTop: "1rem", display: "flex", justifyContent: "center" }}>
+                  <button
+                    type="button"
+                    className="btn btn--primary"
+                    style={{ maxWidth: "240px" }}
+                    onClick={() => window.history.back()}
+                  >
+                    ← Torna indietro
+                  </button>
+                </div>
+
+
               </div>
             </div>
           </section>
