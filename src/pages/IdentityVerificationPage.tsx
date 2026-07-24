@@ -106,17 +106,17 @@ function IdentityVerificationPage() {
 
             <form className="request-form" onSubmit={handleSubmit}>
               <div className="form-field">
-                <label htmlFor="front">Documento fronte</label>
+                <label htmlFor="front">Fronte documento di identità o patente in corso di validità</label>
                 <input id="front" type="file" accept="image/*,.pdf" onChange={(e) => setFront(e.target.files?.[0] ?? null)} required disabled={loading} />
               </div>
 
               <div className="form-field">
-                <label htmlFor="back">Documento retro</label>
+                <label htmlFor="back">Retro documento di identità o patente in corso di validità</label>
                 <input id="back" type="file" accept="image/*,.pdf" onChange={(e) => setBack(e.target.files?.[0] ?? null)} required disabled={loading} />
               </div>
 
               <div className="form-field">
-                <label htmlFor="selfie">Selfie</label>
+                <label htmlFor="selfie">Selfie che mostra chiaramente il volto e il documento</label>
                 <input id="selfie" type="file" accept="image/*" onChange={(e) => setSelfie(e.target.files?.[0] ?? null)} required disabled={loading} />
               </div>
 
