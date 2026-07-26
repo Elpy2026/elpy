@@ -41,6 +41,7 @@ export async function createApplication(
     return { error: existingError.message }
   }
 
+
   if (existingApplication) {
     return { error: 'Ti sei già candidato a questa richiesta.' }
   }
@@ -79,7 +80,7 @@ export async function createApplication(
     link: '/le-mie-richieste',
     is_read: false,
   })
-  const { error: pushError } = await supabase.functions.invoke('send-push', {
+  const { data: pushData, error: pushError } = await supabase.functions.invoke('send-push', {
     body: {
       userId: requestData.seeker_id,
       payload: {
@@ -90,6 +91,8 @@ export async function createApplication(
     },
   })
   
+  alert(JSON.stringify({ pushData, pushError }, null, 2))
+
   if (pushError) {
     console.error('Errore invio push candidatura:', pushError)
   }

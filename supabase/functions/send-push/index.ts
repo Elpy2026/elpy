@@ -133,6 +133,8 @@ Deno.serve(async (req) => {
     if (!subscriptions?.length) {
       return jsonResponse({
         success: true,
+        currentUser: user.id,
+        targetUserIds,
         recipients: targetUserIds.length,
         subscriptions: 0,
         sent: 0,
@@ -140,6 +142,13 @@ Deno.serve(async (req) => {
     }
 
     let sent = 0
+    const failures: Array<{
+      userId: string
+      statusCode: number | null
+      message: string | null
+      body: string | null
+      endpointHost: string
+    }> = []
 
     for (const subscription of subscriptions) {
       try {
@@ -161,6 +170,14 @@ Deno.serve(async (req) => {
           message?: string
           body?: string
         }
+
+        failures.push({
+          userId: subscription.user_id,
+          statusCode: pushError.statusCode ?? null,
+          message: pushError.message ?? null,
+          body: pushError.body ?? null,
+          endpointHost: new URL(subscription.endpoint).hostname,
+        })
 
         if (
           pushError.statusCode === 404 ||
@@ -185,9 +202,18 @@ Deno.serve(async (req) => {
 
     return jsonResponse({
       success: true,
+      currentUser: user.id,
+      targetUserIds,
+      subscriptionUserIds: (subscriptions ?? []).map(
+        (subscription) => subscription.user_id,
+      ),
       recipients: targetUserIds.length,
       subscriptions: subscriptions.length,
       sent,
+      failed: failures.length,
+      failures,
+      vapidPublicKeyPrefix:
+        Deno.env.get('VAPID_PUBLIC_KEY')?.slice(0, 16) ?? null,
     })
   } catch (error: unknown) {
     const message =
