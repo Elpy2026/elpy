@@ -96,15 +96,13 @@ Deno.serve(async (req) => {
         )
       }
 
-      const { data: helperProfiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id')
-        .in('role', ['helper', 'both'])
-        .neq('id', user.id)
-
-      if (profilesError) throw profilesError
-
-      targetUserIds = (helperProfiles ?? []).map((profile) => profile.id)
+      const { data: allProfiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id')
+    
+    if (profilesError) throw profilesError
+    
+    targetUserIds = (allProfiles ?? []).map((profile) => profile.id)
     } else if (userId) {
       targetUserIds = [userId]
     } else {

@@ -91,7 +91,6 @@ export async function createApplication(
     },
   })
   
-  alert(JSON.stringify({ pushData, pushError }, null, 2))
 
   if (pushError) {
     console.error('Errore invio push candidatura:', pushError)
