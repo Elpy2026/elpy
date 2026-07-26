@@ -80,7 +80,7 @@ export async function createApplication(
     link: '/le-mie-richieste',
     is_read: false,
   })
-  const { data: pushData, error: pushError } = await supabase.functions.invoke('send-push', {
+  const { error: pushError } = await supabase.functions.invoke('send-push', {
     body: {
       userId: requestData.seeker_id,
       payload: {

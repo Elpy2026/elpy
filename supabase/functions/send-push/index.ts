@@ -198,7 +198,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    return jsonResponse({
+    const pushResult = {
       success: true,
       currentUser: user.id,
       targetUserIds,
@@ -212,7 +212,12 @@ Deno.serve(async (req) => {
       failures,
       vapidPublicKeyPrefix:
         Deno.env.get('VAPID_PUBLIC_KEY')?.slice(0, 16) ?? null,
-    })
+    }
+    
+    console.log('PUSH_RESULT:', JSON.stringify(pushResult))
+    
+    return jsonResponse(pushResult)
+  
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : 'Errore interno'
