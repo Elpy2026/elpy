@@ -9226,3 +9226,19 @@ a[href*="/profilo-helper"].btn::before {
     font-size: 30px;
   }
 }
+
+.btn--danger{
+  background:#dc2626;
+  border-color:#dc2626;
+  color:#fff !important;
+}
+
+.btn--danger:hover{
+  background:#b91c1c;
+  border-color:#b91c1c;
+  color:#fff !important;
+}
+
+.btn--danger *{
+  color:#fff !important;
+}

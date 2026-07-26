@@ -103,6 +103,7 @@ function LeMieRichiestePage() {
   const [contestingExpenseId, setContestingExpenseId] = useState('')
   const [payingRequestId, setPayingRequestId] = useState('')
   const [cancellingRequestId, setCancellingRequestId] = useState('')
+  const [deletingRequestId, setDeletingRequestId] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [openReceiptUrl, setOpenReceiptUrl] = useState('')
@@ -421,6 +422,31 @@ function LeMieRichiestePage() {
     await loadMyRequests()
   }
 
+  async function handleDeleteRequest(request: MyRequest) {
+    const confirmed = window.confirm('Sei sicuro di voler eliminare questa richiesta?')
+    if (!confirmed) return
+
+    setError('')
+    setMessage('')
+    setDeletingRequestId(request.id)
+
+    const { error } = await supabase
+      .from('requests')
+      .delete()
+      .eq('id', request.id)
+      .eq('status', 'aperta')
+
+    setDeletingRequestId('')
+
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    setMessage('Richiesta eliminata con successo.')
+    await loadMyRequests()
+  }
+
   async function handleCompleteRequest(requestId: string) {
     setError('')
     setMessage('')
@@ -664,7 +690,21 @@ function LeMieRichiestePage() {
         )}
 
         {request.status === 'aperta' && (
-          <div className="request-card">
+          <>
+            <div className="form-actions">
+              <button
+                type="button"
+                className="btn btn--danger"
+                onClick={() => void handleDeleteRequest(request)}
+                disabled={deletingRequestId === request.id}
+              >
+                {deletingRequestId === request.id
+                  ? 'Eliminazione…'
+                  : 'Elimina richiesta'}
+              </button>
+            </div>
+
+            <div className="request-card">
             <h3>Candidature ricevute</h3>
 
             {requestApplications.length === 0 ? (
@@ -742,7 +782,8 @@ function LeMieRichiestePage() {
                 })}
               </ul>
             )}
-          </div>
+            </div>
+        </>
         )}
 
         {(request.status === 'accettata' ||

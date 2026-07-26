@@ -76,6 +76,7 @@ export function mapFormToRow(data: NewHelpRequest) {
     latitude: data.latitude ?? null,
     longitude: data.longitude ?? null,
     location_label: data.locationLabel ?? data.citta,
+    status: 'aperta',
   }
 }
 
