@@ -369,10 +369,21 @@ function ProfiloPage() {
                   </SettingsSection>
 
                   <SettingsSection
+                    id="notifications"
+                    icon="🔔"
+                    title="Notifiche"
+                    description="Gestisci gli avvisi ricevuti da ELPYO."
+                    isOpen={openSection === 'notifications'}
+                    onToggle={() => toggleSection('notifications')}
+                  >
+                    <PushNotificationsControl />
+                  </SettingsSection>
+
+                  <SettingsSection
                     id="security"
                     icon="🛡️"
-                    title="Sicurezza e identità"
-                    description="Password e stato della verifica personale."
+                    title="Cambio password"
+                    description="Modifica la password del tuo account."
                     badge={verified ? 'Verificata' : 'Da verificare'}
                     isOpen={openSection === 'security'}
                     onToggle={() => toggleSection('security')}
@@ -565,16 +576,6 @@ function ProfiloPage() {
                     </label>
                   </SettingsSection>
 
-                  <SettingsSection
-                    id="notifications"
-                    icon="🔔"
-                    title="Notifiche"
-                    description="Gestisci gli avvisi ricevuti da ELPYO."
-                    isOpen={openSection === 'notifications'}
-                    onToggle={() => toggleSection('notifications')}
-                  >
-                    <PushNotificationsControl />
-                  </SettingsSection>
                 </div>
 
                 <div className="profile-settings__save">

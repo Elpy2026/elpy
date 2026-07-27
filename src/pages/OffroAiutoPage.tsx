@@ -81,7 +81,13 @@ function OffroAiutoPage() {
 
   const displayedRequests = useMemo(() => {
     return requests
-      .filter((request) => request.stato === 'aperta')
+      .filter((request) => {
+        const isOpen = request.stato === 'aperta'
+        const isOwnRequest =
+          Boolean(user?.id) && request.seekerId === user?.id
+
+        return isOpen && !isOwnRequest
+      })
       .sort((first, second) => {
         const firstCreatedAt =
           new Date(first.createdAt ?? 0).getTime()
@@ -91,7 +97,7 @@ function OffroAiutoPage() {
 
         return secondCreatedAt - firstCreatedAt
       })
-  }, [requests])
+  }, [requests, user?.id])
 
   function handleApplicationMessageChange(
     requestId: string,
@@ -173,7 +179,8 @@ function OffroAiutoPage() {
                 candidarti.
               </p>
 
-              <div className="helper-hero__points">
+              {!user && (
+                <div className="helper-hero__points">
                 <div className="helper-hero__point">
                   <span>🔎</span>
 
@@ -208,7 +215,8 @@ function OffroAiutoPage() {
                     </p>
                   </div>
                 </div>
-              </div>
+                </div>
+              )}
             </div>
 
             <div className="helper-hero__panel">

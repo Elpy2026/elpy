@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { fetchUnreadAdminNotificationsCount } from '../lib/adminNotifications'
+import { userHasPendingPenalties } from '../lib/penalties'
 
 function Header() {
   const { user, signOut } = useAuth()
@@ -12,6 +13,7 @@ function Header() {
   const [verified, setVerified] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [isProfessional, setIsProfessional] = useState(false)
+  const [hasPendingPenalties, setHasPendingPenalties] = useState(false)
   const [fullName, setFullName] = useState('')
 
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0)
@@ -24,6 +26,7 @@ function Header() {
   const loadProfileAndNotifications = useCallback(async () => {
     if (!user) {
       setIsProfessional(false)
+      setHasPendingPenalties(false)
       setVerified(false)
       setIsAdmin(false)
       setFullName('')
@@ -51,6 +54,11 @@ function Header() {
   .maybeSingle()
 
 setIsProfessional(Boolean(professionalProfileData))
+
+    const penaltyResult = await userHasPendingPenalties()
+    setHasPendingPenalties(
+      penaltyResult.error ? false : penaltyResult.blocked,
+    )
 
     const { count: notificationsCount } = await supabase
       .from('notifications')
@@ -281,18 +289,7 @@ setIsProfessional(Boolean(professionalProfileData))
   </Link>
 )}
 
-                  <Link
-                    to="/messaggi"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Messaggi
 
-                    {unreadMessagesCount > 0 && (
-                      <span className="account-menu__inline-badge">
-                        {unreadMessagesCount}
-                      </span>
-                    )}
-                  </Link>
 
                   <Link
                     to="/notifiche"
@@ -303,6 +300,17 @@ setIsProfessional(Boolean(professionalProfileData))
                     {unreadNotificationsCount > 0 && (
                       <span className="account-menu__inline-badge">
                         {unreadNotificationsCount}
+                      </span>
+                    )}
+                  </Link>\n\n                  <Link
+                    to="/messaggi"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Messaggi
+
+                    {unreadMessagesCount > 0 && (
+                      <span className="account-menu__inline-badge">
+                        {unreadMessagesCount}
                       </span>
                     )}
                   </Link>
@@ -320,12 +328,14 @@ setIsProfessional(Boolean(professionalProfileData))
                     I tuoi aiuti
                   </Link>
 
-                  <Link
-                                      to="/penali"
-                                      onClick={() => setMenuOpen(false)}
-                                    >
-                                      Penali
-                                    </Link>
+                  {hasPendingPenalties && (
+                    <Link
+                      to="/penali"
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      Penali
+                    </Link>
+                  )}
 
                   <div className="account-menu__divider" />
 
