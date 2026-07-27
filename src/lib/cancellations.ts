@@ -13,6 +13,13 @@ type CancelRequestParams = {
   reason: string
 }
 
+type RequestParticipants = {
+  id: string
+  title: string
+  seeker_id: string
+  helper_id: string | null
+}
+
 function calculateCancellationFee(reward: number | string) {
   const amount = Number(reward)
 
@@ -49,6 +56,50 @@ export async function cancelAcceptedRequest({
   error: string | null
   feeAmount: number
 }> {
+  const { data: rawRequestData, error: requestError } = await supabase
+    .from('requests')
+    .select('id, title, seeker_id, helper_id')
+    .eq('id', requestId)
+    .eq('status', 'accettata')
+    .maybeSingle()
+
+  if (requestError) {
+    return {
+      error: requestError.message,
+      feeAmount: 0,
+    }
+  }
+
+  const requestData = rawRequestData as RequestParticipants | null
+
+  if (!requestData) {
+    return {
+      error: 'La richiesta non risulta più accettata.',
+      feeAmount: 0,
+    }
+  }
+
+  const cancelledBySeeker = cancelledBy === requestData.seeker_id
+  const cancelledByHelper = cancelledBy === requestData.helper_id
+
+  if (!cancelledBySeeker && !cancelledByHelper) {
+    return {
+      error: 'Non sei autorizzato ad annullare questo accordo.',
+      feeAmount: 0,
+    }
+  }
+
+  const recipientId = cancelledBySeeker
+    ? requestData.helper_id
+    : requestData.seeker_id
+
+  if (!recipientId) {
+    return {
+      error: 'Non è stato possibile individuare il destinatario.',
+      feeAmount: 0,
+    }
+  }
+
   const isFreeCancellation = isWithinFreeCancellationWindow(acceptedAt)
   const feeAmount = isFreeCancellation ? 0 : calculateCancellationFee(reward)
   const cancelledAt = new Date().toISOString()
@@ -104,6 +155,58 @@ export async function cancelAcceptedRequest({
         feeAmount,
       }
     }
+  }
+
+  const notificationTitle = cancelledBySeeker
+    ? 'Accordo annullato dal richiedente'
+    : 'Accordo annullato dall’helper'
+
+  const notificationBody = cancelledBySeeker
+    ? `Il richiedente ha annullato l’accordo per “${requestData.title}”.`
+    : `L’helper ha annullato l’accordo per “${requestData.title}”.`
+
+  const notificationUrl = cancelledBySeeker
+    ? '/le-mie-attivita'
+    : '/le-mie-richieste'
+
+  const { error: notificationError } = await supabase
+    .from('notifications')
+    .insert({
+      user_id: recipientId,
+      type: 'agreement_cancelled',
+      title: notificationTitle,
+      body: notificationBody,
+      link: notificationUrl,
+      is_read: false,
+    })
+
+  if (notificationError) {
+    console.error(
+      'Errore creazione notifica annullamento:',
+      notificationError,
+    )
+  }
+
+  const { data: pushResult, error: pushError } =
+    await supabase.functions.invoke('send-push', {
+      body: {
+        userId: recipientId,
+        requestId,
+        payload: {
+          title: notificationTitle,
+          body: notificationBody,
+          url: notificationUrl,
+        },
+      },
+    })
+
+  console.log('RISULTATO PUSH ANNULLAMENTO:', {
+    pushResult,
+    pushError,
+  })
+
+  if (pushError) {
+    console.error('Errore push annullamento accordo:', pushError)
   }
 
   return {

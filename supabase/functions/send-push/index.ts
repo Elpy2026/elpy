@@ -300,10 +300,10 @@ Deno.serve(async (req) => {
     } = await supabase
       .from('push_subscriptions')
       .select(
-        'id, user_id, endpoint, p256dh, auth_key',
+        'id, user_id, endpoint, p256dh, auth',
       )
       .in('user_id', targetUserIds)
-      .eq('is_active', true)
+
 
     if (subscriptionsError) {
       throw subscriptionsError
@@ -338,7 +338,7 @@ Deno.serve(async (req) => {
             endpoint: subscription.endpoint,
             keys: {
               p256dh: subscription.p256dh,
-              auth: subscription.auth_key,
+              auth: subscription.auth,
             },
           },
           JSON.stringify(payload),
