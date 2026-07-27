@@ -19,6 +19,8 @@ type RequestData = {
 
 type Conversation = {
   id: string
+  seeker_id: string
+  helper_id: string
 }
 
 type Message = {
@@ -47,6 +49,8 @@ const preferredConversationId =
 
   const [request, setRequest] = useState<RequestData | null>(null)
   const [conversationId, setConversationId] = useState('')
+  const [activeConversation, setActiveConversation] =
+    useState<Conversation | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(true)
@@ -141,7 +145,7 @@ const preferredConversationId =
 
       const { data: conversationsData, error: conversationError } = await supabase
         .from('conversations')
-        .select('id')
+        .select('id, seeker_id, helper_id')
         .eq('request_id', requestId)
 
       if (conversationError) {
@@ -183,7 +187,7 @@ const preferredConversationId =
             seeker_id: requestData.seeker_id,
             helper_id: requestData.helper_id,
           })
-          .select('id')
+          .select('id, seeker_id, helper_id')
           .single()
 
         if (createError || !newConversation) {
@@ -196,6 +200,7 @@ const preferredConversationId =
       }
 
       setConversationId(conversation.id)
+      setActiveConversation(conversation)
       await loadMessages(conversation.id)
       setLoading(false)
     }
@@ -294,9 +299,9 @@ const preferredConversationId =
     }
 
     const recipientId =
-      user.id === request?.seeker_id
-        ? request?.helper_id
-        : request?.seeker_id
+      user.id === activeConversation?.seeker_id
+        ? activeConversation?.helper_id
+        : activeConversation?.seeker_id
 
     if (recipientId && recipientId !== user.id && requestId) {
       const preview =
