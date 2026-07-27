@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import Header from '../components/Header'
 import { categories, cities } from '../data/professionisti'
 import Footer from '../components/Footer'
+import PageBackButton from '../components/PageBackButton'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
@@ -294,6 +295,10 @@ function ProfessionistiPage() {
       <Header />
 
       <main className="professionals-page">
+        <div className="container">
+          <PageBackButton />
+        </div>
+
         <section className="professionals-hero">
           <div className="container professionals-hero__inner">
             <div className="professionals-hero__content">
