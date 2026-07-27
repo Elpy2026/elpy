@@ -316,6 +316,7 @@ function LeMieRichiestePage() {
       await supabase.functions.invoke('send-push', {
         body: {
           userId: application.helper_id,
+          requestId: application.request_id,
           payload: {
             title: 'Candidatura accettata',
             body: 'La tua candidatura è stata accettata. Puoi ora contattare il richiedente.',
@@ -371,6 +372,7 @@ function LeMieRichiestePage() {
       await supabase.functions.invoke('send-push', {
         body: {
           userId: application.helper_id,
+          requestId: application.request_id,
           payload: {
             title: 'Candidatura non selezionata',
             body: 'La tua candidatura non è stata selezionata. Sono disponibili altre richieste.',

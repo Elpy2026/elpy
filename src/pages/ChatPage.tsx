@@ -308,6 +308,7 @@ const preferredConversationId =
         await supabase.functions.invoke('send-push', {
           body: {
             userId: recipientId,
+            requestId,
             payload: {
               title: 'Nuovo messaggio su ELPYO',
               body: preview,

@@ -83,6 +83,7 @@ export async function createApplication(
   const { error: pushError } = await supabase.functions.invoke('send-push', {
     body: {
       userId: requestData.seeker_id,
+      requestId: application.requestId,
       payload: {
         title: 'Nuova candidatura ricevuta',
         body: `Hai ricevuto una candidatura per "${requestData.title}".`,
