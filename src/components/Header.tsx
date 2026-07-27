@@ -302,7 +302,9 @@ setIsProfessional(Boolean(professionalProfileData))
                         {unreadNotificationsCount}
                       </span>
                     )}
-                  </Link>\n\n                  <Link
+                  </Link>
+
+                  <Link
                     to="/messaggi"
                     onClick={() => setMenuOpen(false)}
                   >

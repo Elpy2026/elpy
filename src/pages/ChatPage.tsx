@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import PageBackButton from '../components/PageBackButton'
 import BackButton from '../components/BackButton'
+import './ChatPage.css'
 
 type RequestData = {
   id: string
@@ -361,62 +362,64 @@ const preferredConversationId =
                   </p>
                 </div>
 
-                <div className="request-card">
-                  <h2 className="request-card__title">Conversazione</h2>
+                <section className="chat-page__shell">
+                  <header className="chat-page__header">
+                    <span className="chat-page__eyebrow">Chat privata</span>
+                    <h2>Conversazione</h2>
+                  </header>
 
-                  {messages.length === 0 ? (
-                    <p>Nessun messaggio ancora. Inizia tu la conversazione.</p>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      {messages.map((message) => {
+                  <div className="chat-page__messages">
+                    {messages.length === 0 ? (
+                      <div className="chat-page__empty">
+                        <strong>Nessun messaggio ancora</strong>
+                        <span>Inizia tu la conversazione.</span>
+                      </div>
+                    ) : (
+                      messages.map((message) => {
                         const isMine = message.sender_id === user?.id
 
                         return (
-                          <div
+                          <article
                             key={message.id}
-                            style={{
-                              alignSelf: isMine ? 'flex-end' : 'flex-start',
-                              maxWidth: '85%',
-                              padding: '0.75rem 1rem',
-                              borderRadius: 14,
-                              background: isMine ? 'var(--green-50)' : '#fff',
-                              border: '1px solid var(--border)',
-                              boxShadow: 'var(--shadow-sm)',
-                            }}
+                            className={
+                              isMine
+                                ? 'chat-page__message chat-page__message--mine'
+                                : 'chat-page__message chat-page__message--other'
+                            }
                           >
-                            <strong>{isMine ? 'Tu' : 'Altro utente'}</strong>
-                            <p style={{ margin: '0.35rem 0' }}>{message.content}</p>
-                            <small style={{ color: 'var(--text-muted)' }}>
+                            <strong className="chat-page__author">
+                              {isMine ? 'Tu' : 'Altro utente'}
+                            </strong>
+                            <p className="chat-page__text">{message.content}</p>
+                            <small className="chat-page__meta">
                               {formatMessageTime(message.created_at)}
                               {isMine && message.read_at ? ' · letto' : ''}
                             </small>
-                          </div>
+                          </article>
                         )
-                      })}
-                      <div ref={messagesEndRef} />
-                    </div>
-                  )}
+                      })
+                    )}
+                    <div ref={messagesEndRef} />
+                  </div>
 
-                  <form onSubmit={handleSendMessage} style={{ marginTop: '1.25rem' }}>
-                    <div className="form-field">
-                      <textarea
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        rows={4}
-                        placeholder="Scrivi un messaggio..."
-                        disabled={sending}
-                      />
-                    </div>
-
+                  <form className="chat-page__composer" onSubmit={handleSendMessage}>
+                    <textarea
+                      className="chat-page__textarea"
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      rows={3}
+                      placeholder="Scrivi un messaggio..."
+                      disabled={sending}
+                    />
                     <button
                       type="submit"
-                      className="btn btn--primary"
+                      className="btn btn--primary chat-page__send"
                       disabled={sending || !newMessage.trim()}
                     >
                       {sending ? 'Invio…' : 'Invia messaggio'}
                     </button>
                   </form>
-                </div>
+                </section>
               </>
             )}
           </div>
