@@ -1,16 +1,17 @@
 import { Helmet } from 'react-helmet-async'
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { useCallback, useState, type FormEvent } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import TurnstileWidget from '../components/TurnstileWidget'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import RegistrationCompletion from '../components/RegistrationCompletion'
-import { trackRegistration } from '../lib/registrationTracking'
+import { prepareRegistrationThankYou, REGISTRATION_THANK_YOU_PATH } from '../lib/registrationTracking'
 
 function RegisterPage() {
   const { user, loading: authLoading } = useAuth()
+  const navigate = useNavigate()
 
   const [front, setFront] = useState<File | null>(null)
   const [back, setBack] = useState<File | null>(null)
@@ -25,7 +26,6 @@ function RegisterPage() {
   const [turnstileToken, setTurnstileToken] = useState('')
   const [turnstileResetKey, setTurnstileResetKey] = useState(0)
   const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState('')
   const [error, setError] = useState(() => {
     const params = new URLSearchParams(window.location.hash.slice(1))
     return params.has('error') ? 'Il link di conferma non è valido o è scaduto. Richiedi una nuova email di conferma.' : ''
@@ -49,9 +49,8 @@ function RegisterPage() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    if (loading || message) return
+    if (loading) return
     setError('')
-    setMessage('')
 
     if (!acceptedTerms || !acceptedPrivacy) {
       setError(
@@ -89,13 +88,9 @@ function RegisterPage() {
         }
         throw new Error(details || 'Registrazione non riuscita. Controlla i dati o accedi se hai già un account.')
       }
-      trackRegistration(data.registrationId)
+      prepareRegistrationThankYou(data.registrationId)
       setPassword('')
-
-      setMessage(
-        'Registrazione completata. Documenti ricevuti. Apri il link nella tua email per confermare l’account: entrerai già connesso e potrai collegare il conto per ricevere i compensi.',
-      )
-
+      navigate(REGISTRATION_THANK_YOU_PATH, { replace: true, state: { registrationCompleted: true } })
 
     } catch (err) {
       resetTurnstile()
@@ -109,10 +104,6 @@ function RegisterPage() {
       setLoading(false)
     }
   }
-
-  useEffect(() => {
-    if (message) document.getElementById('registration-status')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  }, [message])
 
   if (authLoading) return <p role="status">Verifica dell’accesso in corso…</p>
   if (user) return <RegistrationCompletion />
@@ -170,12 +161,6 @@ function RegisterPage() {
                 </ol>
                 <p>Carica i documenti qui sotto prima di registrarti. Dopo la conferma email potrai collegare il conto. Potrai iniziare a guadagnare quando identità e conto saranno verificati.</p>
               </div>
-
-              {message && (
-                <div id="registration-status" role="status" className="alert alert--success">
-                  {message}
-                </div>
-              )}
 
               {error && (
                 <div className="alert alert--error">
@@ -249,7 +234,7 @@ function RegisterPage() {
                   />
                 </div>
 
-                <fieldset disabled={loading || Boolean(message)}>
+                <fieldset disabled={loading}>
                   <legend>Documento di riconoscimento obbligatorio</legend>
                   <p>Carica un documento in corso di validità e un selfie per verificare la tua identità e tutelare tutti gli utilizzatori di ELPYO. JPG, PNG o PDF per il documento; JPG o PNG per il selfie. Massimo 5 MB per file.</p>
                   <div className="form-field">
@@ -353,7 +338,6 @@ function RegisterPage() {
                     className="btn btn--primary"
                     type="submit"
                     disabled={
-                      Boolean(message) ||
                       loading ||
                       !acceptedTerms ||
                       !acceptedPrivacy ||

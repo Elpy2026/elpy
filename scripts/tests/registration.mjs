@@ -64,22 +64,65 @@ for (const failure of ['public-bucket', 'upload', 'identity_verifications', 'ema
 }
 console.log('Registration: success, captcha, spoofed file, duplicate email, private bucket, uploads, database and email failure checks passed.')
 
-const trackingSource = readFileSync('src/lib/registrationTracking.ts', 'utf8').replace(/^import .*\n/gm, '').replaceAll('export function', 'function')
+const trackingSource = readFileSync('src/lib/registrationTracking.ts', 'utf8')
+  .replace(/^import .*\n/gm, '').replaceAll('export function', 'function').replaceAll('export const', 'const')
 const storage = new Map()
 let consent = false
 const dataLayer = []
-const context = vm.createContext({
-  canUseMarketing: () => consent,
-  loadGoogleTagManager: () => {},
-  window: { dataLayer },
-  sessionStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value), removeItem: key => storage.delete(key) },
-})
-vm.runInContext(ts.transpileModule(trackingSource, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText, context)
-vm.runInContext("trackRegistration('registration-1')", context)
+const location = { pathname: '/registrazione' }
+const createContext = () => {
+  const context = vm.createContext({
+    canUseMarketing: () => consent,
+    loadGoogleTagManager: () => {},
+    window: { dataLayer, location },
+    sessionStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value), removeItem: key => storage.delete(key) },
+  })
+  vm.runInContext(ts.transpileModule(trackingSource, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText, context)
+  return context
+}
+let context = createContext()
+const execute = code => vm.runInContext(code, context)
+// A direct visit without a successful server response must never convert.
+location.pathname = '/registrazione/grazie'
+consent = true
+execute('flushRegistrationConversion()')
+assert.equal(dataLayer.length, 0)
+// Success only prepares a receipt; the form itself must no longer fire a conversion.
+location.pathname = '/registrazione'
+execute("prepareRegistrationThankYou('registration-1'); flushRegistrationConversion()")
+assert.equal(dataLayer.length, 0)
+// Consent remains required on the thank-you page.
+location.pathname = '/registrazione/grazie'
+consent = false
+execute('flushRegistrationConversion()')
 assert.equal(dataLayer.length, 0)
 consent = true
-vm.runInContext('flushRegistrationConversion(); flushRegistrationConversion()', context)
+execute('flushRegistrationConversion(); flushRegistrationConversion()')
 assert.equal(dataLayer.length, 1)
 assert.equal(dataLayer[0].event, 'community_signup')
 assert.equal(dataLayer[0].event_id, 'registration-1')
-console.log('Tracking: no conversion before marketing consent; one existing GTM Lead event after consent, without personal data.')
+// Simulate a page reload: new module instance, same tab storage.
+context = createContext()
+execute('flushRegistrationConversion()')
+execute("prepareRegistrationThankYou('registration-1'); flushRegistrationConversion()")
+assert.equal(dataLayer.length, 1)
+// Visiting home and confirming the email do not fire events.
+location.pathname = '/'
+execute("prepareRegistrationThankYou('registration-2'); flushRegistrationConversion()")
+assert.equal(dataLayer.length, 1)
+location.pathname = '/registrazione'
+execute('flushRegistrationConversion()')
+assert.equal(dataLayer.length, 1)
+location.pathname = '/registrazione/grazie'
+execute('flushRegistrationConversion()')
+assert.equal(dataLayer.length, 2)
+assert.equal(dataLayer[1].event_id, 'registration-2')
+// Expired and legacy receipts cannot generate another event.
+storage.set('elpyo-registration-conversion', JSON.stringify({ id: 'old', createdAt: Date.now() - 31 * 60 * 1000 }))
+execute('flushRegistrationConversion()')
+storage.set('elpyo-registration-conversion', 'old-pre-thank-you-registration-id')
+execute('flushRegistrationConversion()')
+assert.equal(dataLayer.length, 2)
+execute("sessionStorage.setItem = () => { throw new Error('blocked') }; prepareRegistrationThankYou('blocked'); flushRegistrationConversion()")
+assert.equal(dataLayer.length, 2)
+console.log('Tracking: success-only thank-you conversion, consent, refresh/repeated effects deduplication, home/email visits, expiration, legacy receipts and blocked storage checks passed.')
