@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabase'
 import '../styles/admin/admin-dashboard.css'
 
 type DashboardStats = {
+  prelaunchUsers: number | null
   users: number
   verifiedUsers: number
   newUsersLast7Days: number
@@ -47,6 +48,7 @@ type DashboardCardProps = {
 }
 
 const initialStats: DashboardStats = {
+  prelaunchUsers: null,
   users: 0,
   verifiedUsers: 0,
   newUsersLast7Days: 0,
@@ -163,6 +165,7 @@ function AdminDashboardPage() {
     const thirtyDaysAgo = getIsoDateDaysAgo(30)
 
     const [
+      prelaunchResult,
       usersResult,
       verifiedUsersResult,
       newUsersLast7DaysResult,
@@ -183,6 +186,7 @@ function AdminDashboardPage() {
 
       pendingIdentityResult,
     ] = await Promise.all([
+      supabase.from('profiles').select('id', { count: 'exact', head: true }).not('joined_prelaunch_at', 'is', null),
       supabase
         .from('profiles')
         .select('id', { count: 'exact', head: true }),
@@ -299,6 +303,7 @@ function AdminDashboardPage() {
     )
 
     setStats({
+      prelaunchUsers: prelaunchResult.error ? null : (prelaunchResult.count ?? 0),
       users: usersResult.count ?? 0,
       verifiedUsers: verifiedUsersResult.count ?? 0,
       newUsersLast7Days: newUsersLast7DaysResult.count ?? 0,
@@ -450,6 +455,12 @@ function AdminDashboardPage() {
                   </div>
 
                   <div className="admin-dashboard-grid admin-dashboard-grid--primary">
+                    <DashboardCard
+                      label="Preiscritti"
+                      value={stats.prelaunchUsers ?? 'Non disponibile'}
+                      description="Iscritti alla fase di prelancio"
+                      to="/admin/utenti?iscrizione=prelancio"
+                    />
                     <DashboardCard
                       label="Utenti registrati"
                       value={stats.users}
