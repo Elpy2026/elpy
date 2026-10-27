@@ -34,6 +34,7 @@ import AdminDashboardPage from './pages/AdminDashboardPage'
 import AdminPagamentiPage from './pages/AdminPagamentiPage'
 import AdminNotifichePage from './pages/AdminNotifichePage'
 import AdminUtentiPage from './pages/AdminUtentiPage'
+import AdminPreIscrittiPage from './pages/AdminPreIscrittiPage'
 import PagamentoSuccessoPage from './pages/PagamentoSuccessoPage'
 import PagamentoAnnullatoPage from './pages/PagamentoAnnullatoPage'
 import ChiSiamoPage from './pages/ChiSiamoPage'
@@ -226,6 +227,7 @@ function App() {
             }
           />
 
+          <Route path="/admin/pre-iscritti" element={<AdminRoute><AdminPreIscrittiPage /></AdminRoute>} />
           <Route
             path="/admin/utenti"
             element={

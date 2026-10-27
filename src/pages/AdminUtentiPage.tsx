@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import Header from '../components/Header'
 import PageBackButton from '../components/PageBackButton'
 import Footer from '../components/Footer'
@@ -172,9 +172,6 @@ function getRequestStatusClass(status: string | null) {
 }
 
 function AdminUtentiPage() {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const prelaunchOnly = searchParams.get('iscrizione') === 'prelancio'
-  const [prelaunchIds, setPrelaunchIds] = useState<Set<string>>(new Set())
   const [users, setUsers] = useState<AdminUser[]>([])
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null)
   const [copiedUserId, setCopiedUserId] = useState('')
@@ -229,14 +226,6 @@ function AdminUtentiPage() {
         throw new Error('La funzione admin non ha restituito un elenco valido.')
       }
 
-      const ids = new Set<string>()
-      for (let offset = 0; ; offset += 1000) {
-        const result = await supabase.from('profiles').select('id').not('joined_prelaunch_at', 'is', null).order('id').range(offset, offset + 999)
-        if (result.error) throw new Error(`Impossibile caricare i preiscritti: ${result.error.message}`)
-        for (const profile of result.data) ids.add(profile.id)
-        if (result.data.length < 1000) break
-      }
-      setPrelaunchIds(ids)
       setUsers(data.users as AdminUser[])
     } catch (loadError) {
       setError(
@@ -277,7 +266,6 @@ function AdminUtentiPage() {
     const normalizedSearch = search.trim().toLowerCase()
 
     return users.filter((user) => {
-      if (prelaunchOnly && !prelaunchIds.has(user.id)) return false
       const searchValues = [
         user.fullName,
         user.email,
@@ -346,8 +334,6 @@ function AdminUtentiPage() {
     })
   }, [
     users,
-    prelaunchOnly,
-    prelaunchIds,
     search,
     verificationFilter,
     activityFilter,
@@ -404,13 +390,7 @@ function AdminUtentiPage() {
 
                 <p className="hero__badge">Amministrazione</p>
 
-                <h1 className="page-title">{prelaunchOnly ? 'Preiscritti' : 'Utenti iscritti'}</h1>
-                <label>Iscrizione{' '}
-                  <select value={prelaunchOnly ? 'prelancio' : 'tutti'} onChange={event => setSearchParams(event.target.value === 'prelancio' ? { iscrizione: 'prelancio' } : {})}>
-                    <option value="tutti">Tutti gli iscritti</option>
-                    <option value="prelancio">Solo preiscritti</option>
-                  </select>
-                </label>
+                <h1 className="page-title">Utenti iscritti</h1>
 
                 <p className="page-subtitle">
                   Cerca un iscritto e controlla rapidamente profilo, verifica,
