@@ -1,16 +1,20 @@
 import { Helmet } from 'react-helmet-async'
-import { useCallback, useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import TurnstileWidget from '../components/TurnstileWidget'
+import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { verifyTurnstileToken } from '../lib/turnstile'
+import RegistrationCompletion from '../components/RegistrationCompletion'
+import { trackRegistration } from '../lib/registrationTracking'
 
 function RegisterPage() {
-  const { signUp } = useAuth()
-  const navigate = useNavigate()
+  const { user, loading: authLoading } = useAuth()
 
+  const [front, setFront] = useState<File | null>(null)
+  const [back, setBack] = useState<File | null>(null)
+  const [selfie, setSelfie] = useState<File | null>(null)
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -22,7 +26,10 @@ function RegisterPage() {
   const [turnstileResetKey, setTurnstileResetKey] = useState(0)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
+  const [error, setError] = useState(() => {
+    const params = new URLSearchParams(window.location.hash.slice(1))
+    return params.has('error') ? 'Il link di conferma non è valido o è scaduto. Richiedi una nuova email di conferma.' : ''
+  })
 
   const canonicalUrl = `${window.location.origin}/registrazione`
 
@@ -42,6 +49,7 @@ function RegisterPage() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
+    if (loading || message) return
     setError('')
     setMessage('')
 
@@ -60,21 +68,35 @@ function RegisterPage() {
     setLoading(true)
 
     try {
-      await verifyTurnstileToken(turnstileToken)
-
-      await signUp(email, password, fullName, 'both', phone, {
-        acceptedTerms,
-        acceptedPrivacy,
-        marketingConsent,
-      })
+      if (!front || !back || !selfie) throw new Error('Carica fronte, retro del documento e selfie.')
+      if ([front, back, selfie].some(file => file.size > 5 * 1024 * 1024 || !file.size)) {
+        throw new Error('Ogni file deve avere una dimensione tra 1 byte e 5 MB.')
+      }
+      const body = new FormData()
+      Object.entries({ email, password, fullName, phone, turnstileToken,
+        acceptedTerms: String(acceptedTerms), acceptedPrivacy: String(acceptedPrivacy),
+        marketingConsent: String(marketingConsent),
+      }).forEach(([key, value]) => body.append(key, value))
+      body.append('front', front)
+      body.append('back', back)
+      body.append('selfie', selfie)
+      const { data, error: registrationError } = await supabase.functions.invoke('register-with-documents', { body })
+      if (registrationError || !data?.success) {
+        let details = data?.error
+        if (registrationError && 'context' in registrationError && registrationError.context instanceof Response) {
+          const response = await registrationError.context.json().catch(() => null)
+          details = response?.error
+        }
+        throw new Error(details || 'Registrazione non riuscita. Controlla i dati o accedi se hai già un account.')
+      }
+      trackRegistration(data.registrationId)
+      setPassword('')
 
       setMessage(
-        'Registrazione completata. Controlla la tua email per confermare l’account.',
+        'Registrazione completata. Documenti ricevuti. Apri il link nella tua email per confermare l’account: entrerai già connesso e potrai collegare il conto per ricevere i compensi.',
       )
 
-      window.setTimeout(() => {
-        navigate('/login')
-      }, 1800)
+
     } catch (err) {
       resetTurnstile()
 
@@ -87,6 +109,13 @@ function RegisterPage() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (message) document.getElementById('registration-status')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [message])
+
+  if (authLoading) return <p role="status">Verifica dell’accesso in corso…</p>
+  if (user) return <RegistrationCompletion />
 
   return (
     <>
@@ -132,8 +161,18 @@ function RegisterPage() {
                 </p>
               </div>
 
+              <div className="request-form" style={{ marginBottom: '1.5rem' }}>
+                <h2>Per iniziare a guadagnare, partiamo dalla sicurezza</h2>
+                <ol>
+                  <li><strong>Inserisci i tuoi dati e carica i documenti.</strong> Dopo l’invio riceverai un link email per accedere e completare il conto.</li>
+                  <li><strong>Carica un documento di riconoscimento valido e un selfie.</strong> La verifica dell’identità aiuta a prevenire profili falsi e abusi, per la sicurezza di chi offre e di chi cerca aiuto.</li>
+                  <li><strong>Collega un conto valido tramite Stripe.</strong> Serve per ricevere i compensi degli aiuti che completi. Per pagare un aiuto inserirai il metodo di pagamento al momento del pagamento.</li>
+                </ol>
+                <p>Carica i documenti qui sotto prima di registrarti. Dopo la conferma email potrai collegare il conto. Potrai iniziare a guadagnare quando identità e conto saranno verificati.</p>
+              </div>
+
               {message && (
-                <div className="alert alert--success">
+                <div id="registration-status" role="status" className="alert alert--success">
                   {message}
                 </div>
               )}
@@ -208,6 +247,27 @@ function RegisterPage() {
                     required
                     disabled={loading}
                   />
+                </div>
+
+                <fieldset disabled={loading || Boolean(message)}>
+                  <legend>Documento di riconoscimento obbligatorio</legend>
+                  <p>Carica un documento in corso di validità e un selfie per verificare la tua identità e tutelare tutti gli utilizzatori di ELPYO. JPG, PNG o PDF per il documento; JPG o PNG per il selfie. Massimo 5 MB per file.</p>
+                  <div className="form-field">
+                    <label htmlFor="document-front">Fronte del documento</label>
+                    <input id="document-front" type="file" accept="image/jpeg,image/png,application/pdf" required onChange={e => setFront(e.target.files?.[0] ?? null)} />
+                  </div>
+                  <div className="form-field">
+                    <label htmlFor="document-back">Retro del documento</label>
+                    <input id="document-back" type="file" accept="image/jpeg,image/png,application/pdf" required onChange={e => setBack(e.target.files?.[0] ?? null)} />
+                  </div>
+                  <div className="form-field">
+                    <label htmlFor="document-selfie">Selfie con volto e documento visibili</label>
+                    <input id="document-selfie" type="file" accept="image/jpeg,image/png" required onChange={e => setSelfie(e.target.files?.[0] ?? null)} />
+                  </div>
+                </fieldset>
+                <div className="form-field">
+                  <h2>Un conto valido per ricevere i compensi</h2>
+                  <p>Dopo aver confermato l’email, collega il tuo conto bancario tramite Stripe. Serve per farti pagare per gli aiuti completati. Il conto sarà attivo solo dopo le verifiche di Stripe.</p>
                 </div>
 
                 <div className="legal-consents">
@@ -293,10 +353,11 @@ function RegisterPage() {
                     className="btn btn--primary"
                     type="submit"
                     disabled={
+                      Boolean(message) ||
                       loading ||
                       !acceptedTerms ||
                       !acceptedPrivacy ||
-                      !turnstileToken
+                      !turnstileToken || !front || !back || !selfie
                     }
                   >
                     {loading

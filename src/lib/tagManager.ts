@@ -62,10 +62,12 @@ export function initTrackingConsentListener() {
   updateGoogleConsent()
   loadGoogleTagManager()
 
-  window.addEventListener('elpyo-cookie-preferences-updated', () => {
+  const onPreferencesUpdated = () => {
     updateGoogleConsent()
     loadGoogleTagManager()
-  })
+  }
+  window.addEventListener('elpyo-cookie-preferences-updated', onPreferencesUpdated)
+  return () => window.removeEventListener('elpyo-cookie-preferences-updated', onPreferencesUpdated)
 }
 
 declare global {
