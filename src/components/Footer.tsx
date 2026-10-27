@@ -13,7 +13,7 @@ function Footer() {
             aria-label="ELPYO — Home"
           >
             <img
-              src="/elpy-logo-footer.png"
+              src="/elpy-logo-footer-transparent-v2.png"
               alt="ELPYO"
               className="logo__image"
             />

@@ -1,10 +1,10 @@
 import { Helmet } from 'react-helmet-async'
 import Header from '../components/Header'
 import Hero from '../components/Hero'
-import Dashboard from '../components/Dashboard'
 import Categories from '../components/Categories'
 import Trust from '../components/Trust'
 import Footer from '../components/Footer'
+import './HomePage.css'
 
 function HomePage() {
   const canonicalUrl = `${window.location.origin}/`
@@ -40,14 +40,13 @@ function HomePage() {
         <meta name="twitter:card" content="summary_large_image" />
       </Helmet>
 
-      <div className="landing">
+      <div className="landing home-v2">
         <Header />
 
         <main>
           <Hero />
-          <Dashboard />
-          <Categories />
           <Trust />
+          <Categories />
         </main>
 
         <Footer />
