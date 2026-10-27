@@ -1,38 +1,27 @@
 import { Link } from 'react-router-dom'
+import BrandIllustrationIcon from './BrandIllustrationIcon'
 
 const categories = [
-  { title: 'Commissioni e spesa', image: '/category-spesa.png' },
-  { title: 'Salute e accompagnamenti', image: '/category-salute.png' },
-  { title: 'Mobilità e spostamenti', image: '/category-mobilita.png' },
-  { title: 'Casa e piccoli lavori', image: '/category-casa.png' },
-  { title: 'Pratiche e documenti', image: '/category-documenti.png' },
-  { title: 'Altro', image: '/category-altro.png' },
+  { title: 'Commissioni e spesa', icon: 'basket', text: 'Le cose da sbrigare' },
+  { title: 'Salute e accompagnamenti', icon: 'heart', text: 'Una presenza vicina' },
+  { title: 'Mobilità e spostamenti', icon: 'car', text: 'Arrivare, insieme' },
+  { title: 'Casa e piccoli lavori', icon: 'house', text: 'La cura di casa' },
+  { title: 'Pratiche e documenti', icon: 'document', text: 'Un pensiero in meno' },
+  { title: 'Altro', icon: 'sparkle', text: 'Raccontaci cosa serve' },
 ]
 
-function Categories() {
-  return (
-    <section id="categorie" className="help-needs" aria-labelledby="categories-title">
-      <div className="container">
-  <h2 id="categories-title" className="help-needs__title">
-    Di cosa hai bisogno?
-  </h2>
-
-  <p className="help-needs__subtitle">
-    Scrivi di cosa hai bisogno e seleziona il tuo helper
-  </p>
-
-  <div className="help-needs__grid">
-          {categories.map((category) => (
-            <Link key={category.title} to="/cerco-aiuto" className="help-needs__card">
-              <img src={category.image} alt="" className="help-needs__image" />
-              <h3>{category.title}</h3>
-              <span className="help-needs__arrow">→</span>
-            </Link>
-          ))}
-        </div>
+export default function Categories() {
+  return <section id="categorie" className="home-needs" aria-labelledby="categories-title">
+    <div className="container">
+      <div className="home-section-heading">
+        <p className="home-eyebrow">Ogni giorno, una mano diversa</p>
+        <h2 id="categories-title">Di cosa hai bisogno?</h2>
+        <p>Scrivi di cosa hai bisogno e seleziona il tuo helper.</p>
       </div>
-    </section>
-  )
+      <div className="home-needs__grid">{categories.map((category, index) => <Link key={category.title} to="/cerco-aiuto" className="home-need">
+        <span className="home-need__icon"><BrandIllustrationIcon group="categories" index={index} /></span>
+        <h3>{category.title}</h3><p>{category.text}</p><span className="home-need__arrow" aria-hidden="true">↗</span>
+      </Link>)}</div>
+    </div>
+  </section>
 }
-
-export default Categories

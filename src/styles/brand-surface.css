@@ -1,0 +1,33 @@
+/* Organic shapes echo the original ELPYO smartphone illustration. */
+.landing {
+  background-color:#fffaf7;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='1100' viewBox='0 0 1200 1100'%3E%3Cpath fill='%23f25544' opacity='.075' d='M-90 80C100-70 310 70 250 255S-20 500 55 650-170 860-190 590Z'/%3E%3Cpath fill='%23ffad8e' opacity='.14' d='M-80 140C100 20 200 120 150 290S-80 550-10 700-180 800-170 580Z'/%3E%3Cpath fill='%237c3aed' opacity='.065' d='M1220 280C1060 160 925 330 1000 490s-70 220-100 380 220 220 340 80Z'/%3E%3Cpath fill='%23a98af2' opacity='.085' d='M1260 390c-180-90-240 70-150 190s-150 220-70 330 230 30 270-60Z'/%3E%3Ccircle cx='288' cy='115' r='12' fill='%23f25544' opacity='.19'/%3E%3Ccircle cx='915' cy='740' r='16' fill='%237c3aed' opacity='.13'/%3E%3Ccircle cx='1080' cy='188' r='9' fill='%2300b9ab' opacity='.22'/%3E%3Ccircle cx='190' cy='900' r='8' fill='%2300b9ab' opacity='.17'/%3E%3C/svg%3E");
+  background-repeat:repeat-y;
+  background-position:center top;
+  background-size:max(100%,1200px) auto;
+}
+.landing .page-main { background-color:transparent; }
+.home-v2.home-v2 { background-color:#fffaf7; }
+.home-v2 .home-hero { background:linear-gradient(180deg,#fff7f144,#fffdfa22); }
+.home-v2 .home-trust { background:transparent; }
+.home-v2 .home-needs { background:linear-gradient(135deg,#fff1e990,#f7efff90); }
+/* Preserve the original logo pixels; multiply makes its white canvas disappear. */
+.header .logo.logo--image { background:transparent; border:0; border-radius:0; box-shadow:none; }
+.header .logo__image { mix-blend-mode:multiply; }
+.brand-register-float {
+  position:fixed; right:max(24px,env(safe-area-inset-right)); top:calc(16px + env(safe-area-inset-top)); bottom:auto; z-index:120;
+  display:inline-flex; align-items:center; gap:24px; padding:15px 23px; border:1px solid #ffffff80; border-radius:999px;
+  color:#fff; background:linear-gradient(135deg,#ff8a73,#f25544); box-shadow:0 10px 30px #b93e3540;
+  text-decoration:none; font-family:var(--font-sans); font-size:15px; font-weight:800;
+  transition:transform .18s,box-shadow .18s;
+}
+.brand-register-float > span:last-child { font-size:22px; line-height:1; }
+.brand-register-float:hover { transform:translateY(-3px); box-shadow:0 14px 35px #b93e3550; }
+.brand-register-float:focus-visible { outline:3px solid #7c3aed; outline-offset:4px; }
+body:has(.cc-banner) .brand-register-float { visibility:hidden; }
+#home-registration-title { scroll-margin-top:120px; }
+@media (max-width:760px) { .brand-register-float { right:16px; top:calc(12px + env(safe-area-inset-top)); bottom:auto; padding:13px 20px; } }
+@media (prefers-reduced-motion:reduce) { .brand-register-float { transition:none; } }
+
+.footer .logo.logo--image { height:auto; overflow:visible; background:transparent; border:0; box-shadow:none; }
+.footer .logo.logo--image .logo__image { width:155px; max-width:155px; height:auto; object-fit:contain; }

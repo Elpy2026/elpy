@@ -1,0 +1,13 @@
+.registration-form__details { display:contents; }
+.registration-form__continue { display:none; }
+@media (max-width:760px) {
+  .registration-form[data-expanded='false'] .registration-form__details { display:none; }
+  .registration-form .registration-form__continue {
+    grid-column:1/-1; display:flex; justify-content:space-between; align-items:center; gap:16px;
+    width:100%; padding:13px 16px; margin:2px 0 0; border:1px solid #ebdff8; border-radius:12px;
+    background:#f7f1ff; color:#6e39b2; font-family:inherit; font-size:13px; font-weight:750;
+    cursor:pointer; text-align:left;
+  }
+  .registration-form[data-expanded='true'] .registration-form__continue { display:none; }
+  .registration-form__continue:focus-visible { outline:3px solid #7c3aed; outline-offset:3px; }
+}
