@@ -6,7 +6,7 @@ The confirmation link uses Supabase's existing session detection and returns to 
 
 ## Required before production
 
-1. Obtain explicit approval to deploy the public `register-with-documents` function. It intentionally accepts unauthenticated submissions and uses a server-only service key, with Turnstile verification. Automatic review blocked deployment pending this approval.
+1. The user explicitly approved `register-with-documents`; it was deployed on 2026-10-27. Live OPTIONS returns the expected www.elpyo.com origin; incomplete submissions return 400 and invalid Turnstile tokens return 403. The function intentionally accepts unauthenticated submissions and uses a server-only service key, with Turnstile verification.
 2. Check the production `SITE_URL` is `https://www.elpyo.com`, the auth redirect allowlist includes `https://www.elpyo.com/registrazione?confermata=1`, and the confirmation email template uses `{{ .ConfirmationURL }}`. Verify the link opens an authenticated session.
 3. Deploy the function before releasing the frontend. Existing `TURNSTILE_SECRET_KEY`, `SERVICE_ROLE_KEY`/`SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_ANON_KEY` are required; their presence was checked. The existing identity-documents bucket was checked as private.
 4. Perform an authorized real signup with valid documents and confirm receipt in the admin verification queue and the user's inbox. Test the link in a fresh browser session, then the Stripe account link. Do not create Stripe financial accounts automatically.
@@ -22,4 +22,4 @@ Both repositories use `GTM-NCT6F36S`. Its published container version 4 initiali
 - Full production build (including sitemap generation) and TypeScript passed.
 - ESLint on changed frontend modules passed.
 - `node scripts/tests/registration.mjs`: success, bot rejection, spoofed files, duplicate email, private bucket, upload/database/email rollback, and consent/deduplication checks passed with mocked services.
-- No production signup, email-link login, Stripe onboarding or live Meta conversion has been tested yet. The new function has not been deployed, and the campaign has not been changed.
+- No production signup, email-link login, Stripe onboarding or live Meta conversion has been tested yet. The new function is deployed. The frontend remains in PR #4 pending separate release approval requested by automatic review. The campaign has not been changed. An administrator-generated login-link test for a real account was also blocked by automatic review; no such link was generated.
