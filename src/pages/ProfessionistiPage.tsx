@@ -361,7 +361,7 @@ function ProfessionistiPage() {
     to={professionalCtaPath}
     className="professionals-hero__panel-button"
   >
-    Diventa Professionista
+    Crea un account professionista
   </Link>
 
   <small>

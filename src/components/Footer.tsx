@@ -1,12 +1,23 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 function Footer() {
+  const { pathname } = useLocation()
+  const { user, loading } = useAuth()
+  const scrollToRegistration = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    const form = document.getElementById('home-registration-title') ?? document.querySelector('.registration-form')
+    if ((pathname === '/' || pathname === '/registrazione') && form) {
+      event.preventDefault()
+      form.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })
+    }
+  }
   const year = new Date().getFullYear()
 
   return (
     <footer className="footer" id="contatti">
       <div className="container footer__inner">
         <div className="footer__brand">
+          <div className="footer__brand-actions">
           <Link
             to="/"
             className="logo logo--image logo--footer"
@@ -18,6 +29,8 @@ function Footer() {
               className="logo__image"
             />
           </Link>
+          {!user && !loading && <Link to="/registrazione" className="footer__register" onClick={scrollToRegistration}>Registrati <span aria-hidden="true">↗</span></Link>}
+          </div>
 
           <p className="footer__tagline">
             La piattaforma che connette chi ha bisogno con chi ha voglia di dare una mano.
@@ -53,7 +66,7 @@ function Footer() {
                 <Link to="/offro-aiuto">Offro aiuto</Link>
               </li>
               <li>
-                <Link to="/registrazione">Registrati</Link>
+                <Link to="/registrazione" onClick={scrollToRegistration}>Registrati</Link>
               </li>
             </ul>
           </div>

@@ -25,9 +25,31 @@
 .brand-register-float:hover { transform:translateY(-3px); box-shadow:0 14px 35px #b93e3550; }
 .brand-register-float:focus-visible { outline:3px solid #7c3aed; outline-offset:4px; }
 body:has(.cc-banner) .brand-register-float { visibility:hidden; }
-#home-registration-title { scroll-margin-top:120px; }
+#home-registration-title { scroll-margin-top:160px; }
 @media (max-width:760px) { .brand-register-float { right:16px; top:calc(12px + env(safe-area-inset-top)); bottom:auto; padding:13px 20px; } }
 @media (prefers-reduced-motion:reduce) { .brand-register-float { transition:none; } }
 
 .footer .logo.logo--image { height:auto; overflow:visible; background:transparent; border:0; box-shadow:none; }
 .footer .logo.logo--image .logo__image { width:155px; max-width:155px; height:auto; object-fit:contain; }
+
+/* Clip decoration without creating a nested vertical scroll container. */
+@supports (overflow: clip) {
+  .landing { overflow-x:clip; overflow-y:visible; }
+}
+.footer__brand-actions { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.footer__register { display:inline-flex; align-items:center; justify-content:center; gap:10px; padding:11px 17px; border-radius:999px; background:#f25544; color:#fff; font-weight:750; text-decoration:none; white-space:nowrap; }
+.footer__register:focus-visible { outline:3px solid #bda0f5; outline-offset:4px; }
+.footer__inner > *, .footer__nav > * { min-width:0; }
+.footer__nav { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.footer__tagline, .footer__col a { overflow-wrap:anywhere; }
+@media (min-width:640px) { .footer__nav { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media (max-width:760px) {
+  .footer__brand { width:100%; max-width:none; }
+  .footer__nav { gap:24px 16px; }
+  .footer__brand-actions .logo__image { max-width:140px !important; }
+  .registration-form, .registration-form fieldset, .registration-form .form-field { min-width:0; max-width:100%; }
+  .registration-form { scroll-margin-top:110px; }
+  .registration-form input:not([type=checkbox]), .registration-form select, .registration-form textarea,
+  .home-register__scroll .form-field input:not([type=checkbox]) { font-size:16px !important; width:100%; min-width:0; max-width:100%; }
+  .registration-form legend { max-width:100%; white-space:normal; overflow-wrap:anywhere; }
+}
