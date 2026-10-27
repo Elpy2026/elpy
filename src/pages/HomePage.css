@@ -124,7 +124,7 @@
 @media (max-width:760px) { .home-story__art > img { object-fit:contain; object-position:center bottom; } }
 .brand-illustration { display:block; width:84px; height:84px; flex-shrink:0; overflow:hidden; }
 .home-trust-card:nth-child(n) .home-trust-card__icon { width:94px; height:94px; background:transparent; border-radius:0; margin-bottom:14px; }
-.home-trust-card__icon .brand-illustration { width:94px; height:94px; }
+.home-v2 .home-trust-card .home-trust-card__icon > svg.brand-illustration { width:94px !important; height:94px !important; max-width:none; max-height:none; }
 .home-need__icon { width:94px; height:94px; margin-bottom:14px; }
 .home-need__icon::before { display:none; }
 .home-need__icon .brand-illustration { width:100%; height:100%; }
