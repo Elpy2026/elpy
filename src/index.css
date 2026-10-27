@@ -38,10 +38,12 @@
 }
 
 html {
+  overflow-x: hidden;
   scroll-behavior: smooth;
 }
 
 body {
+  overflow-x: hidden;
   margin: 0;
   font-family: var(--font-sans);
   font-size: 1rem;
@@ -164,3 +166,9 @@ button {
 .btn--success *{
   color:#fff !important;
 }
+
+/* Contain horizontal decoration without another scroll area. */
+@supports (overflow: clip) {
+  html, body { overflow-x: clip; }
+}
+#root, .landing { min-width:0; max-width:100%; }
