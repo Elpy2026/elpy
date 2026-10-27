@@ -16,6 +16,7 @@ import CercoAiutoPage from './pages/CercoAiutoPage'
 import OffroAiutoPage from './pages/OffroAiutoPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
+import RegistrationThankYouPage from './pages/RegistrationThankYouPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import IdentityVerificationPage from './pages/IdentityVerificationPage'
 import LeMieRichiestePage from './pages/LeMieRichiestePage'
@@ -87,6 +88,7 @@ function App() {
 />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/registrazione" element={<RegisterPage />} />
+          <Route path="/registrazione/grazie" element={<RegistrationThankYouPage />} />
           <Route
             path="/reimposta-password"
             element={<ResetPasswordPage />}
