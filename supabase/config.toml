@@ -119,3 +119,8 @@ entrypoint = "./functions/import-events/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/import-events/*.html" ]
+
+[functions.register-with-documents]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/register-with-documents/index.ts"
