@@ -186,7 +186,7 @@ function AdminDashboardPage() {
 
       pendingIdentityResult,
     ] = await Promise.all([
-      supabase.from('profiles').select('id', { count: 'exact', head: true }).not('joined_prelaunch_at', 'is', null),
+      supabase.functions.invoke('admin-waitlist-list', { body: {} }),
       supabase
         .from('profiles')
         .select('id', { count: 'exact', head: true }),
@@ -303,7 +303,7 @@ function AdminDashboardPage() {
     )
 
     setStats({
-      prelaunchUsers: prelaunchResult.error ? null : (prelaunchResult.count ?? 0),
+      prelaunchUsers: !prelaunchResult.error && Array.isArray(prelaunchResult.data?.waitlist) ? prelaunchResult.data.waitlist.length : null,
       users: usersResult.count ?? 0,
       verifiedUsers: verifiedUsersResult.count ?? 0,
       newUsersLast7Days: newUsersLast7DaysResult.count ?? 0,
@@ -458,8 +458,8 @@ function AdminDashboardPage() {
                     <DashboardCard
                       label="Preiscritti"
                       value={stats.prelaunchUsers ?? 'Non disponibile'}
-                      description="Iscritti alla fase di prelancio"
-                      to="/admin/utenti?iscrizione=prelancio"
+                      description="Contatti raccolti dalla landing prima del lancio"
+                      to="/admin/pre-iscritti"
                     />
                     <DashboardCard
                       label="Utenti registrati"
@@ -733,6 +733,10 @@ function AdminDashboardPage() {
                       </div>
                     </Link>
 
+                    <Link to="/admin/pre-iscritti" className="admin-dashboard-action">
+                      <span className="admin-dashboard-action__icon">📋</span>
+                      <div><strong>Pre-iscritti</strong><p>Consulta i contatti raccolti prima del lancio.</p></div>
+                    </Link>
                     <Link
                       to="/admin/verifiche"
                       className="admin-dashboard-action"
