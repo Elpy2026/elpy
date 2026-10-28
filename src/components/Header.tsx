@@ -228,7 +228,7 @@ setIsProfessional(Boolean(professionalProfileData))
           aria-label="ELPYO — Home"
         >
           <img
-            src="/elpy-logo-header-transparent.png"
+            src="/elpy-logo-header-alpha-v2.png"
             alt="ELPYO"
             className="logo__image"
           />

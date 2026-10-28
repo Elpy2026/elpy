@@ -44,7 +44,6 @@ import VerifiedRoute from './components/VerifiedRoute'
 import CookieBanner from './components/CookieBanner'
 import TrackingConsent from './components/TrackingConsent'
 import ScrollToTop from './components/ScrollToTop'
-import StickyRegisterButton from './components/StickyRegisterButton'
 
 import './App.css'
 import './styles/brand-surface.css'
@@ -274,7 +273,6 @@ function App() {
           />
         </Routes>
 
-        <StickyRegisterButton />
         <CookieBanner />
         <TrackingConsent />
       </BrowserRouter>

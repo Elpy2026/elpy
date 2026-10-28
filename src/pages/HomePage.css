@@ -192,3 +192,27 @@
 .home-story__seal svg { width:34px; height:34px; flex:none; color:var(--home-purple); }
 @media (min-width:1200px) { .home-story,.home-register { height:580px; } .home-story__copy { padding-top:48px; } }
 @media (max-width:760px) { .home-story__seal { margin-top:24px; } .home-story__art { margin-top:22px; padding-bottom:0; } }
+
+/* Stable artwork frames crossfade without moving the heading or registration form. */
+.home-scenes { min-height:350px; }
+.home-scene { position:absolute; inset:0 0 64px; opacity:0; visibility:hidden; transition:opacity .45s ease,visibility .45s; pointer-events:none; }
+.home-scene.is-active { opacity:1; visibility:visible; }
+.home-scene > img { display:block; width:100%; height:100%; object-fit:contain; object-position:center bottom; }
+.home-scenes__controls { position:absolute; bottom:12px; left:8px; right:8px; z-index:4; display:flex; align-items:center; flex-direction:column; gap:5px; }
+.home-scenes__label { max-width:100%; padding:6px 12px; border-radius:18px; background:#fff9; color:#082235; font-size:12px; line-height:1.4; font-weight:650; text-align:center; }
+.home-scenes__buttons { display:flex; align-items:center; gap:0; background:#fffffff0; border-radius:24px; padding:0 8px; }
+.home-scenes__dot { display:grid; place-items:center; width:28px; height:28px; border:0; padding:0; background:transparent; cursor:pointer; }
+.home-scenes__dot::before { content:""; width:7px; height:7px; border-radius:50%; background:#c2b4d4; }
+.home-scenes__dot.is-active::before { background:#7c3aed; }
+.home-scenes__pause { width:28px; height:28px; padding:0; border:0; background:transparent; color:#082235; cursor:pointer; font-size:13px; }
+.home-scenes__buttons button:focus-visible { outline:2px solid #7c3aed; outline-offset:1px; border-radius:50%; }
+@media (max-width:760px) { .home-scenes { height:430px; } }
+@media (prefers-reduced-motion:reduce) { .home-scene { transition:none; } }
+
+/* Two equally sized campaign actions, echoing the coral and purple service cards. */
+.home-v2 .home-story__actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; width:100%; max-width:380px; }
+.home-v2 .home-story__actions .btn { display:flex; justify-content:space-between; align-items:center; width:100%; min-width:0; min-height:54px; box-sizing:border-box; padding:12px !important; border:1px solid transparent; border-radius:14px; gap:8px; color:#fff; font-size:12px !important; font-weight:800; box-shadow:0 4px 12px #0d1b2a12; }
+.home-v2 .home-story__actions .btn--primary { background:var(--home-coral); }
+.home-v2 .home-story__actions .btn--secondary { background:var(--home-purple); }
+.home-v2 .home-story__actions .btn > span { display:grid; place-items:center; flex:none; width:24px; height:24px; border-radius:50%; background:#ffffff26; font-size:18px; }
+@media (max-width:360px) { .home-v2 .home-story__actions { grid-template-columns:1fr; } }
