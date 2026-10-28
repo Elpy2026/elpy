@@ -18,7 +18,10 @@ function IdentityVerificationPage() {
   async function uploadFile(file: File, name: string) {
     if (!user) throw new Error('Devi effettuare il login.')
 
-    const path = `${user.id}/${Date.now()}-${name}-${file.name}`
+    const allowed = name === 'selfie' ? ['image/jpeg', 'image/png'] : ['image/jpeg', 'image/png', 'application/pdf']
+    if (!allowed.includes(file.type) || !file.size || file.size > 5 * 1024 * 1024) throw new Error('Usa JPG, PNG o PDF fino a 5 MB. Per il selfie usa JPG o PNG.')
+    const extension = file.type === 'application/pdf' ? 'pdf' : file.type === 'image/png' ? 'png' : 'jpg'
+    const path = `${user.id}/${crypto.randomUUID()}-${name}.${extension}`
 
     const { error: uploadError } = await supabase.storage
       .from('identity-documents')
@@ -97,7 +100,7 @@ function IdentityVerificationPage() {
               <p className="hero__badge">Verifica identità</p>
               <h1 className="page-title">Carica documento e selfie</h1>
               <p className="page-subtitle">
-                Per usare ELPYO in sicurezza, ogni utente deve completare la verifica identità.
+                Puoi esplorare ELPYO senza documenti. Per pubblicare una richiesta o candidarti, invia documento e selfie e attendi l’approvazione. Il conto o il metodo di pagamento serviranno alla conferma dell’incarico.
               </p>
             </div>
 
@@ -107,17 +110,17 @@ function IdentityVerificationPage() {
             <form className="request-form" onSubmit={handleSubmit}>
               <div className="form-field">
                 <label htmlFor="front">Fronte documento di identità o patente in corso di validità</label>
-                <input id="front" type="file" accept="image/*,.pdf" onChange={(e) => setFront(e.target.files?.[0] ?? null)} required disabled={loading} />
+                <input id="front" type="file" accept="image/jpeg,image/png,application/pdf" onChange={(e) => setFront(e.target.files?.[0] ?? null)} required disabled={loading} />
               </div>
 
               <div className="form-field">
                 <label htmlFor="back">Retro documento di identità o patente in corso di validità</label>
-                <input id="back" type="file" accept="image/*,.pdf" onChange={(e) => setBack(e.target.files?.[0] ?? null)} required disabled={loading} />
+                <input id="back" type="file" accept="image/jpeg,image/png,application/pdf" onChange={(e) => setBack(e.target.files?.[0] ?? null)} required disabled={loading} />
               </div>
 
               <div className="form-field">
                 <label htmlFor="selfie">Selfie che mostra chiaramente il volto e il documento</label>
-                <input id="selfie" type="file" accept="image/*" onChange={(e) => setSelfie(e.target.files?.[0] ?? null)} required disabled={loading} />
+                <input id="selfie" type="file" accept="image/jpeg,image/png" onChange={(e) => setSelfie(e.target.files?.[0] ?? null)} required disabled={loading} />
               </div>
 
               <div className="form-actions">

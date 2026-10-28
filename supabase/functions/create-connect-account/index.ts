@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
 
     const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
-      .select("id, full_name, role, stripe_account_id")
+      .select("id, full_name, role, stripe_account_id, verified")
       .eq("id", user.id)
       .single();
 
@@ -72,6 +72,14 @@ Deno.serve(async (req) => {
       );
     }
 
+    if (!profile.verified) return Response.json({error:"Completa prima la verifica identità."},{status:403,headers:corsHeaders});
+    let requestId: string | undefined;
+    try { const body = await req.json(); if (typeof body.requestId === 'string' && /^[0-9a-f-]{36}$/i.test(body.requestId)) requestId = body.requestId; } catch { /* profile link may have no body */ }
+    if (requestId) {
+      const {data: assignment} = await supabaseAdmin.from('requests').select('id').eq('id',requestId).eq('helper_id',user.id).eq('status','accettata').maybeSingle();
+      if (!assignment) return Response.json({error:"Incarico non disponibile."},{status:403,headers:corsHeaders});
+    }
+    const returnPath = requestId ? '/le-mie-attivita' : '/profilo';
     let stripeAccountId = profile.stripe_account_id as string | null;
 
     if (!stripeAccountId) {
@@ -88,7 +96,7 @@ Deno.serve(async (req) => {
           profileId: profile.id,
           source: "ELPYO",
         },
-      });
+      }, {idempotencyKey: `elpyo-connect-${user.id}`});
 
       stripeAccountId = account.id;
 
@@ -110,9 +118,10 @@ Deno.serve(async (req) => {
 
     const accountLink = await stripe.accountLinks.create({
       account: stripeAccountId,
-      refresh_url: `${siteUrl}/profilo?connect_refresh=true`,
-      return_url: `${siteUrl}/profilo?connect_return=true`,
+      refresh_url: `${siteUrl}${returnPath}?connect_refresh=true`,
+      return_url: `${siteUrl}${returnPath}?connect_return=true`,
       type: "account_onboarding",
+      collection_options: { fields: "currently_due" },
     });
 
     return Response.json(

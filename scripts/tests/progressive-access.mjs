@@ -1,0 +1,27 @@
+const {PGlite}=await import(process.env.ELPYO_PGLITE_MODULE || '@electric-sql/pglite');
+import fs from 'node:fs';import assert from 'node:assert/strict';
+const pg=new PGlite();await pg.exec(`create role anon;create role authenticated;create role service_role;create schema auth;create table auth.users(id uuid primary key);create function auth.uid() returns uuid language sql as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;create function auth.role() returns text language sql as $$select current_setting('request.jwt.claim.role',true)$$;
+create table profiles(id uuid primary key references auth.users,verified boolean default false,is_admin boolean default false,stripe_account_id text,stripe_onboarding_completed boolean default false,stripe_payouts_enabled boolean default false,stripe_charges_enabled boolean default false);
+create table requests(id uuid primary key,seeker_id uuid references profiles,helper_id uuid references profiles,status text,accepted_at timestamptz);create table request_applications(id uuid primary key,request_id uuid references requests,helper_id uuid references profiles);`);
+const A='00000000-0000-4000-8000-000000000001',B='00000000-0000-4000-8000-000000000002',R='00000000-0000-4000-8000-000000000003',X='00000000-0000-4000-8000-000000000004';
+await pg.exec(fs.readFileSync('supabase/migrations/20261028190000_progressive_onboarding.sql','utf8'));
+await pg.exec('update progressive_onboarding_settings set enabled=true');
+for(const id of[A,B,X]){await pg.query('insert into auth.users values($1)',[id]);await pg.query('insert into profiles(id) values($1)',[id]);}
+await assert.rejects(()=>pg.query("insert into requests values($1,$2,null,'aperta',null)",[R,A]),/Verifica identità/);
+await pg.query('update profiles set verified=true where id=$1',[A]);await pg.query("insert into requests values($1,$2,null,'aperta',null)",[R,A]);
+await assert.rejects(()=>pg.query('insert into request_applications values($1,$2,$3)',[X,R,B]),/Verifica identità/);
+await pg.query('update profiles set verified=true where id=$1',[B]);await pg.query('insert into request_applications values($1,$2,$3)',[X,R,B]);
+await assert.rejects(()=>pg.query("update requests set helper_id=$1,status='accettata' where id=$2",[B,R]),/metodo di pagamento/);
+await pg.query("insert into request_payment_setup values($1,$2,$3,'cus_test','cs_test',null,false)",[R,B,A]);
+await assert.rejects(()=>pg.query("update requests set helper_id=$1,status='accettata' where id=$2",[B,R]),/metodo di pagamento/);
+await pg.exec('update request_payment_setup set ready=true');await pg.query("update requests set helper_id=$1,status='accettata',accepted_at=now() where id=$2",[B,R]);
+assert.equal((await pg.query('select accepted_at from requests')).rows[0].accepted_at,null);
+await assert.rejects(()=>pg.query("update requests set status='completata' where id=$1",[R]),/conto Stripe/);
+await pg.query('update profiles set stripe_account_id=$1,stripe_onboarding_completed=true,stripe_payouts_enabled=true where id=$2',['acct_test',B]);await pg.query("update requests set status='completata' where id=$1",[R]);
+await pg.query("select set_config('request.jwt.claim.role','authenticated',false),set_config('request.jwt.claim.sub',$1,false)",[X]);
+await assert.rejects(()=>pg.query('update profiles set verified=true where id=$1',[X]),/stati sono gestiti/);
+await assert.rejects(()=>pg.query('update profiles set is_admin=true where id=$1',[X]),/stati sono gestiti/);
+await assert.rejects(()=>pg.query('update profiles set stripe_payouts_enabled=true where id=$1',[X]),/stati sono gestiti/);
+await assert.rejects(()=>pg.query('update requests set seeker_id=$1 where id=$2',[X,R]),/titolare/);
+await pg.exec('set role authenticated');await assert.rejects(()=>pg.query('select * from request_payment_setup'),/permission denied/);await assert.rejects(()=>pg.query('select * from payment_customers'),/permission denied/);
+console.log('PASS SQL: unverified publishing/applications denied; card setup required; payouts required; cancellation clock deferred; self-verification and financial flag tampering denied; private payment records inaccessible');await pg.close();

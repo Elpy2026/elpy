@@ -33,6 +33,11 @@ Deno.serve(async (req) => {
   }
 
   try {
+    if (req.method !== "POST") return Response.json({error:"Method not allowed"},{status:405,headers:corsHeaders});
+    const token = req.headers.get('Authorization')?.replace(/^Bearer /,'');
+    if (!token) return Response.json({error:"Authentication required"},{status:401,headers:corsHeaders});
+    const {data:{user},error:authError} = await supabaseAdmin.auth.getUser(token);
+    if (authError || !user) return Response.json({error:"Authentication required"},{status:401,headers:corsHeaders});
     const { requestId, description } = await req.json();
 
     if (!requestId) {
@@ -44,7 +49,7 @@ Deno.serve(async (req) => {
 
     const { data: request, error: requestError } = await supabaseAdmin
       .from("requests")
-      .select("id, title, reward, helper_id, status")
+      .select("id, title, reward, helper_id, seeker_id, status, payment_status")
       .eq("id", requestId)
       .single();
 
@@ -55,6 +60,7 @@ Deno.serve(async (req) => {
       );
     }
 
+    if (request.seeker_id !== user.id || request.payment_status === 'paid') return Response.json({error:'Request unavailable'},{status:403,headers:corsHeaders});
     if (request.status !== "completata") {
       return Response.json(
         { error: "Request is not completed" },
@@ -84,8 +90,7 @@ Deno.serve(async (req) => {
 
     if (
       !helperProfile.stripe_onboarding_completed ||
-      !helperProfile.stripe_payouts_enabled ||
-      !helperProfile.stripe_charges_enabled
+      !helperProfile.stripe_payouts_enabled
     ) {
       return Response.json(
         { error: "Helper Stripe account is not ready to receive payments" },
@@ -147,7 +152,10 @@ Deno.serve(async (req) => {
       stripeConnectedAccountId: helperProfile.stripe_account_id,
     };
 
+    const {data:payer,error:payerError} = await supabaseAdmin.from('payment_customers').select('customer_id').eq('user_id',user.id).maybeSingle();
+    if (payerError) throw payerError;
     const session = await stripe.checkout.sessions.create({
+      ...(payer?.customer_id ? {customer:payer.customer_id} : {}),
       mode: "payment",
       payment_method_types: ["card"],
       line_items: [

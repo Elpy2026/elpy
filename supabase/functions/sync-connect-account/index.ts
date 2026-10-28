@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
     const account = await stripe.accounts.retrieve(profile.stripe_account_id);
 
     const onboardingCompleted = Boolean(account.details_submitted);
-    const payoutsEnabled = Boolean(account.payouts_enabled);
+    const payoutsEnabled = Boolean(account.payouts_enabled && account.capabilities?.transfers === 'active');
     const chargesEnabled = Boolean(account.charges_enabled);
 
     const { error: updateError } = await supabaseAdmin
@@ -100,6 +100,10 @@ Deno.serve(async (req) => {
       );
     }
 
+    if (onboardingCompleted && payoutsEnabled) {
+      const {error:activationError} = await supabaseAdmin.from('requests').update({accepted_at:new Date().toISOString()}).eq('helper_id',user.id).eq('status','accettata').is('accepted_at',null);
+      if (activationError) throw activationError;
+    }
     return Response.json(
       {
         stripe_account_id: profile.stripe_account_id,

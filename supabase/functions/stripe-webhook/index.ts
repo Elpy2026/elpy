@@ -528,6 +528,8 @@ Deno.serve(async (req) => {
         const session =
           event.data.object as Stripe.Checkout.Session;
 
+        // Saving a method is not a payment and must never mark a request paid.
+        if (session.mode === "setup") break;
         if (
           session.mode === "subscription" ||
           session.metadata?.subscription_type === "professional"

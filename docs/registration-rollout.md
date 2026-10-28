@@ -1,25 +1,29 @@
-# Registration rollout
+# Progressive registration and payment rollout
 
-The form collects front/back identity documents and a selfie before submitting. The new server function validates Turnstile, size and file signatures, checks that the existing storage bucket is private, creates a new unconfirmed account, stores its documents and requests the confirmation email. Existing accounts cannot be overwritten. Failed submissions clean up newly created records and uploads.
+Registration collects essential account data and consents, with Turnstile and email confirmation. Documents and Stripe onboarding are not required to register or browse. The existing registration endpoint accepts old document-bearing forms for compatibility, while the current form sends no files. The existing consent-gated GTM registration event and opaque event ID are unchanged.
 
-The confirmation link uses Supabase's existing session detection and returns to `/registrazione?confermata=1`, where the authenticated user can open Stripe Connect to configure the bank account for payouts. The method used to pay for a service remains in checkout. Documents remain pending review; submitting them does not verify the person.
+Publishing a request or applying requires an approved identity. The request form saves a tab-local, user-scoped draft. Server triggers enforce verification and prevent ordinary users from editing verification, administrator and Stripe readiness flags.
 
-## Required before production
+Choosing a helper opens Stripe Checkout in setup mode to attach a card to the payer's Stripe customer, without charging. A server check verifies session ownership, the selected helper/request, successful SetupIntent and attached payment method. Returning or cancelling does not accept the helper. The payer returns to the application and confirms explicitly. The request update checks that it actually succeeded before sending acceptance notifications.
 
-1. The user explicitly approved `register-with-documents`; it was deployed on 2026-10-27. Live OPTIONS returns the expected www.elpyo.com origin; incomplete submissions return 400 and invalid Turnstile tokens return 403. The function intentionally accepts unauthenticated submissions and uses a server-only service key, with Turnstile verification.
-2. Check the production `SITE_URL` is `https://www.elpyo.com`, the auth redirect allowlist includes `https://www.elpyo.com/registrazione?confermata=1`, and the confirmation email template uses `{{ .ConfirmationURL }}`. Verify the link opens an authenticated session.
-3. Deploy the function before releasing the frontend. Existing `TURNSTILE_SECRET_KEY`, `SERVICE_ROLE_KEY`/`SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_ANON_KEY` are required; their presence was checked. The existing identity-documents bucket was checked as private.
-4. Perform an authorized real signup with valid documents and confirm receipt in the admin verification queue and the user's inbox. Test the link in a fresh browser session, then the Stripe account link. Do not create Stripe financial accounts automatically.
-5. In Meta Test Events verify exactly one `Lead` after a successful submission with marketing consent. Failed submissions must not emit it. Without marketing consent no conversion is emitted; later consent in the same tab flushes the pending event once. Refresh and email confirmation must not repeat it.
-6. Only after that check, change the current Elpyo campaign's ad destination to `https://www.elpyo.com/registrazione`, retaining its existing tracking parameters, pixel, budget and optimization settings. Review existing unpublished drafts separately.
+The selected helper completes Stripe Connect onboarding from My Activities. The helper must have onboarding completed, payouts enabled and transfers active before starting. Completion is blocked server-side until ready. The cancellation window begins when the helper is ready; selected helpers awaiting onboarding have no acceptance timestamp. Existing accepted work without the new setup record retains its completion behavior.
 
-## Tracking verified in source
+The service payment remains at completion, with the payer's Stripe customer passed to Checkout so the attached card can be reused. Payment still requires the user's checkout action. Setup-mode webhook events never mark a request paid. Existing commission amounts, professionals subscriptions, paid receipts and marketing tracking are unchanged.
 
-Both repositories use `GTM-NCT6F36S`. Its published container version 4 initializes Meta pixel `1034879485605487` and maps `community_signup` to Meta `Lead` and GA `generate_lead`. The new form reuses this event after the backend confirms saved documents and signup. It sends an opaque event ID and no form values. This preserves the existing Lead conversion definition; it does not add a separate CompleteRegistration event or prove live receipt by Meta.
+## Deployment order
 
-## Checks performed
+1. Apply `20261028190000_progressive_onboarding.sql` with the payment gate initially disabled in `progressive_onboarding_settings` (new private-by-RLS payment tables and triggers; no bulk updates to existing users or tasks).
+2. Deploy `setup-request-payment`, `register-with-documents`, `create-connect-account`, `sync-connect-account`, `create-checkout-session` and `stripe-webhook` together with existing JWT settings. The new setup endpoint authenticates the bearer token itself and restricts origin.
+3. Publish the frontend on ELPYO after the backend is available, verify the new bundle and then enable the payment gate in `progressive_onboarding_settings`. The disabled gate keeps old clients working during deployment; existing registrations with documents keep working.
+4. With authorized test accounts and Stripe test mode, verify signup/email confirmation, identity approval, application, setup cancellation, setup success followed by explicit confirmation, Connect return and sync, completion, payment using saved card and signed webhook. No live financial account, charge, user identity or signup is created by local tests.
 
-- Full production build (including sitemap generation) and TypeScript passed.
-- ESLint on changed frontend modules passed.
-- `node scripts/tests/registration.mjs`: success, bot rejection, spoofed files, duplicate email, private bucket, upload/database/email rollback, and consent/deduplication checks passed with mocked services.
-- No production signup, email-link login, Stripe onboarding or live Meta conversion has been tested yet. The new function is deployed. The frontend remains in PR #4 pending separate release approval requested by automatic review. The campaign has not been changed. An administrator-generated login-link test for a real account was also blocked by automatic review; no such link was generated.
+## Validation
+
+- Registration unit tests cover document-free success, email failure cleanup, old-form compatibility, anti-bot rejection and consent-gated conversion deduplication.
+- Payment setup unit tests cover owner/verification/origin/email checks, no-charge setup, Stripe receipt ownership, attached method, incomplete return and session reuse.
+- `ELPYO_PGLITE_MODULE` can point to an existing PGlite installation for the isolated SQL runner; otherwise the development dependency is used.
+- PostgreSQL isolated tests cover document gates, card setup requirement, payout requirement, deferred cancellation timestamp, private table access and forbidden verification/financial flag edits.
+- Production database migration parses and executes inside a transaction rolled back afterward.
+- TypeScript and Vite compile. Build uses placeholder public configuration locally, never production credentials. Existing page lint findings in the two activity/request pages are recorded separately; new components and registration modules pass targeted lint.
+
+A real Stripe end-to-end transaction and live conversion delivery remain to be verified using authorized test accounts. Local checks and compilation do not prove provider-side payment completion.

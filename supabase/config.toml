@@ -124,3 +124,8 @@ entrypoint = "./functions/import-events/index.ts"
 enabled = true
 verify_jwt = false
 entrypoint = "./functions/register-with-documents/index.ts"
+
+[functions.setup-request-payment]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/setup-request-payment/index.ts"

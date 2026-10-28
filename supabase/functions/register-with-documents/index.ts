@@ -73,9 +73,13 @@ Deno.serve(async req => {
     const result = await verification.json()
     if (!result.success || result.hostname !== new URL(siteUrl).hostname) return reply({ error: 'Verifica anti-bot non riuscita.' }, 403)
 
-    const files = [await validateFile(form.get('front')), await validateFile(form.get('back')), await validateFile(form.get('selfie'), true)]
-    const { data: bucket, error: bucketError } = await admin.storage.getBucket('identity-documents')
-    if (bucketError || !bucket || bucket.public) throw new Error('Archivio documenti non disponibile.')
+    // Keep older open forms working; the current registration sends no documents.
+    const hasDocuments = ['front', 'back', 'selfie'].some(key => form.get(key) instanceof File)
+    const files = hasDocuments ? [await validateFile(form.get('front')), await validateFile(form.get('back')), await validateFile(form.get('selfie'), true)] : []
+    if (hasDocuments) {
+      const { data: bucket, error: bucketError } = await admin.storage.getBucket('identity-documents')
+      if (bucketError || !bucket || bucket.public) throw new Error('Archivio documenti non disponibile.')
+    }
 
     // createUser rejects existing addresses: never attach uploads to an existing unconfirmed account.
     const { data: created, error: creationError } = await admin.auth.admin.createUser({
@@ -93,16 +97,18 @@ Deno.serve(async req => {
       if (error) throw new Error('Caricamento documenti non riuscito. Riprova.')
       paths.push(path)
     }
+    if (hasDocuments) {
     const { error: documentError } = await admin.from('identity_verifications').insert({
       user_id: createdUserId, document_front_url: paths[0], document_back_url: paths[1], selfie_url: paths[2], status: 'pending',
     })
     if (documentError) throw new Error('Salvataggio documenti non riuscito. Riprova.')
+    }
     const { error: mailError } = await auth.auth.resend({ type: 'signup', email,
       options: { emailRedirectTo: `${siteUrl}/registrazione?confermata=1` },
     })
     if (mailError) throw new Error('Invio email non riuscito. Riprova tra qualche minuto.')
     committed = true
-    await admin.from('admin_notifications').insert({ type: 'new_kyc_request', title: 'Nuovi documenti da verificare',
+    if (hasDocuments) await admin.from('admin_notifications').insert({ type: 'new_kyc_request', title: 'Nuovi documenti da verificare',
       message: 'Un nuovo utente ha inviato documento e selfie.', metadata: { user_id: createdUserId }, is_read: false })
     return reply({ success: true, registrationId: crypto.randomUUID() })
   } catch (error) {

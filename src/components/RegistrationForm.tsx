@@ -7,9 +7,6 @@ import './RegistrationForm.css'
 
 export default function RegistrationForm() {
   const [expanded, setExpanded] = useState(false)
-  const [front, setFront] = useState<File | null>(null)
-  const [back, setBack] = useState<File | null>(null)
-  const [selfie, setSelfie] = useState<File | null>(null)
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -61,18 +58,11 @@ export default function RegistrationForm() {
     setLoading(true)
 
     try {
-      if (!front || !back || !selfie) throw new Error('Carica fronte, retro del documento e selfie.')
-      if ([front, back, selfie].some(file => file.size > 5 * 1024 * 1024 || !file.size)) {
-        throw new Error('Ogni file deve avere una dimensione tra 1 byte e 5 MB.')
-      }
       const body = new FormData()
       Object.entries({ email, password, fullName, phone, turnstileToken,
         acceptedTerms: String(acceptedTerms), acceptedPrivacy: String(acceptedPrivacy),
         marketingConsent: String(marketingConsent),
       }).forEach(([key, value]) => body.append(key, value))
-      body.append('front', front)
-      body.append('back', back)
-      body.append('selfie', selfie)
       const { data, error: registrationError } = await supabase.functions.invoke('register-with-documents', { body })
       if (registrationError || !data?.success) {
         let details = data?.error
@@ -86,7 +76,7 @@ export default function RegistrationForm() {
       setPassword('')
 
       setMessage(
-        'Registrazione completata. Documenti ricevuti. Apri il link nella tua email per confermare l’account: entrerai già connesso e potrai collegare il conto per ricevere i compensi.',
+        'Registrazione completata. Apri il link nella tua email per confermare l’account e iniziare a esplorare ELPYO. Ti chiederemo i documenti solo per pubblicare una richiesta o candidarti.',
       )
 
 
@@ -192,26 +182,7 @@ export default function RegistrationForm() {
                   />
                 </div>
 
-                <fieldset disabled={loading || Boolean(message)}>
-                  <legend>Documento di riconoscimento obbligatorio</legend>
-                  <p>Carica un documento in corso di validità e un selfie per verificare la tua identità e tutelare tutti gli utilizzatori di ELPYO. JPG, PNG o PDF per il documento; JPG o PNG per il selfie. Massimo 5 MB per file.</p>
-                  <div className="form-field">
-                    <label htmlFor="document-front">Fronte del documento</label>
-                    <input id="document-front" type="file" accept="image/jpeg,image/png,application/pdf" required onChange={e => setFront(e.target.files?.[0] ?? null)} />
-                  </div>
-                  <div className="form-field">
-                    <label htmlFor="document-back">Retro del documento</label>
-                    <input id="document-back" type="file" accept="image/jpeg,image/png,application/pdf" required onChange={e => setBack(e.target.files?.[0] ?? null)} />
-                  </div>
-                  <div className="form-field">
-                    <label htmlFor="document-selfie">Selfie con volto e documento visibili</label>
-                    <input id="document-selfie" type="file" accept="image/jpeg,image/png" required onChange={e => setSelfie(e.target.files?.[0] ?? null)} />
-                  </div>
-                </fieldset>
-                <div className="form-field">
-                  <h2>Un conto valido per ricevere i compensi</h2>
-                  <p>Dopo aver confermato l’email, collega il tuo conto bancario tramite Stripe. Serve per farti pagare per gli aiuti completati. Il conto sarà attivo solo dopo le verifiche di Stripe.</p>
-                </div>
+                <p>Registrazione gratuita, senza documenti né carta. Per pubblicare o candidarti servirà la verifica identità. Alla conferma dell’incarico ti guideremo nel collegamento del metodo di pagamento o del conto per ricevere i compensi.</p>
 
                 <div className="legal-consents">
                   <label className="legal-consent">
@@ -300,7 +271,7 @@ export default function RegistrationForm() {
                       loading ||
                       !acceptedTerms ||
                       !acceptedPrivacy ||
-                      !turnstileToken || !front || !back || !selfie
+                      !turnstileToken
                     }
                   >
                     {loading

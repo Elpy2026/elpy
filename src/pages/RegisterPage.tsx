@@ -58,13 +58,9 @@ function RegisterPage() {
               </div>
 
               <div className="request-form" style={{ marginBottom: '1.5rem' }}>
-                <h2>Per iniziare a guadagnare, partiamo dalla sicurezza</h2>
-                <ol>
-                  <li><strong>Inserisci i tuoi dati e carica i documenti.</strong> Dopo l’invio riceverai un link email per accedere e completare il conto.</li>
-                  <li><strong>Carica un documento di riconoscimento valido e un selfie.</strong> La verifica dell’identità aiuta a prevenire profili falsi e abusi, per la sicurezza di chi offre e di chi cerca aiuto.</li>
-                  <li><strong>Collega un conto valido tramite Stripe.</strong> Serve per ricevere i compensi degli aiuti che completi. Per pagare un aiuto inserirai il metodo di pagamento al momento del pagamento.</li>
-                </ol>
-                <p>Carica i documenti qui sotto prima di registrarti. Dopo la conferma email potrai collegare il conto. Potrai iniziare a guadagnare quando identità e conto saranno verificati.</p>
+                <h2>Registrati e scopri ELPYO</h2>
+                <p>Crea il tuo account e conferma l’email. Nessun documento o metodo di pagamento richiesto per registrarti.</p>
+                <p>Per pubblicare una richiesta o candidarti ti chiederemo documento e selfie. Quando confermi un incarico collegherai il metodo di pagamento, oppure il conto per ricevere i compensi se sei l’helper scelto.</p>
               </div>
 
               <RegistrationForm />

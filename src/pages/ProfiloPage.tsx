@@ -249,7 +249,7 @@ function ProfiloPage() {
   }
 
   const walletReady =
-    stripeOnboardingCompleted && stripePayoutsEnabled && stripeChargesEnabled
+    stripeOnboardingCompleted && stripePayoutsEnabled
 
   return (
     <div className="landing">

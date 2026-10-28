@@ -35,7 +35,18 @@ function CercoAiutoPage() {
   const { refreshRequests } = useRequests()
   const navigate = useNavigate()
 
-  const [form, setForm] = useState<RequestFormState>(emptyForm)
+  const [form, setForm] = useState<RequestFormState>(() => {
+    if (!user) return emptyForm
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(`elpyo-request-draft-${user.id}`) || 'null')
+      if (saved && typeof saved === 'object') return { ...emptyForm, ...Object.fromEntries(Object.keys(emptyForm).filter(key => typeof saved[key] === 'string').map(key => [key, saved[key]])) }
+    } catch { /* an unavailable draft never blocks the form */ }
+    return emptyForm
+  })
+  useEffect(() => {
+    if (!user) return
+    try { sessionStorage.setItem(`elpyo-request-draft-${user.id}`, JSON.stringify(form)) } catch { /* best effort */ }
+  }, [form, user])
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [verified, setVerified] = useState(false)
@@ -266,7 +277,7 @@ function CercoAiutoPage() {
 
                   <p>
                     Per pubblicare una richiesta devi prima
-                    completare la verifica.
+                    completare la verifica. Puoi intanto compilare la richiesta: la bozza rimane salvata in questa scheda.
                   </p>
 
                   <div className="form-actions">
@@ -313,7 +324,7 @@ function CercoAiutoPage() {
                     }
                     placeholder="Es. Ho bisogno di una mano con la spesa"
                     required
-                    disabled={submitting || !verified}
+                    disabled={submitting}
                   />
                 </div>
 
@@ -334,7 +345,7 @@ function CercoAiutoPage() {
                     placeholder="Descrivi nel dettaglio la tua richiesta..."
                     rows={4}
                     required
-                    disabled={submitting || !verified}
+                    disabled={submitting}
                   />
                 </div>
 
@@ -353,7 +364,7 @@ function CercoAiutoPage() {
                       )
                     }
                     required
-                    disabled={submitting || !verified}
+                    disabled={submitting}
                   >
                     {CATEGORIES.map((category) => (
                       <option
@@ -384,7 +395,7 @@ function CercoAiutoPage() {
                       }
                       placeholder="Es. Agrigento"
                       required
-                      disabled={submitting || !verified}
+                      disabled={submitting}
                     />
                   </div>
 
@@ -404,7 +415,7 @@ function CercoAiutoPage() {
                         )
                       }
                       required
-                      disabled={submitting || !verified}
+                      disabled={submitting}
                     />
                   </div>
                 </div>
@@ -428,7 +439,7 @@ function CercoAiutoPage() {
                     }
                     placeholder="Es. 10"
                     required
-                    disabled={submitting || !verified}
+                    disabled={submitting}
                   />
 
                   <small>
@@ -464,7 +475,7 @@ function CercoAiutoPage() {
                       }
                       placeholder="Es. 40"
                       required
-                      disabled={submitting || !verified}
+                      disabled={submitting}
                     />
 
                     <small>

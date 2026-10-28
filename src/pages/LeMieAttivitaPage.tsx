@@ -8,6 +8,7 @@ import { cancelAcceptedRequest } from '../lib/cancellations'
 import { useAuth } from '../context/AuthContext'
 import PageBackButton from '../components/PageBackButton'
 import SafetyPanel from '../components/SafetyPanel'
+import PayoutReadiness from '../components/PayoutReadiness'
 
 type HelperRequest = {
   id: string
@@ -78,6 +79,8 @@ function LeMieAttivitaPage() {
   const [loading, setLoading] = useState(true)
   const [openRequestId, setOpenRequestId] = useState<string | null>(null)
 
+  const [payoutReady, setPayoutReady] = useState(false)
+  const updatePayoutReady = useCallback((ready: boolean) => setPayoutReady(ready), [])
   const [completingId, setCompletingId] = useState('')
   const [cancellingId, setCancellingId] = useState('')
   const [uploadingExpenseId, setUploadingExpenseId] = useState('')
@@ -550,6 +553,7 @@ function LeMieAttivitaPage() {
 
                           {requestIsAccepted && (
                             <>
+                              <PayoutReadiness requestId={request.id} onReady={updatePayoutReady} />
                               <div className="form-actions">
                                 <button
                                   type="button"
@@ -576,7 +580,7 @@ function LeMieAttivitaPage() {
                                   onClick={() =>
                                     void handleComplete(request.id)
                                   }
-                                  disabled={completingId === request.id}
+                                  disabled={!payoutReady || completingId === request.id}
                                 >
                                   {completingId === request.id
                                     ? 'Completamento…'

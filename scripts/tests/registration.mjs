@@ -6,7 +6,7 @@ import ts from 'typescript'
 const source = readFileSync('supabase/functions/register-with-documents/index.ts', 'utf8').replace(/^import .*\n/gm, '')
 const code = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText
 
-async function run(failure, { duplicate = false, captcha = true, invalid = false } = {}) {
+async function run(failure, { duplicate = false, captcha = true, invalid = false, documents = true } = {}) {
   const calls = []
   let handler
   const client = {
@@ -40,12 +40,23 @@ async function run(failure, { duplicate = false, captcha = true, invalid = false
   })
   const body = new FormData()
   for (const [key, value] of Object.entries({ email: 'new@example.test', password: 'validpass', fullName: 'Example User', acceptedTerms: 'true', acceptedPrivacy: 'true', turnstileToken: 'valid' })) body.set(key, value)
-  for (const key of ['front', 'back', 'selfie']) body.set(key, new File([invalid ? 'fake' : new Uint8Array([255,216,255,0])], `${key}.jpg`, { type: 'image/jpeg' }))
+  if (documents) for (const key of ['front', 'back', 'selfie']) body.set(key, new File([invalid ? 'fake' : new Uint8Array([255,216,255,0])], `${key}.jpg`, { type: 'image/jpeg' }))
   const response = await handler(new Request('https://example.test', { method: 'POST', body }))
   return { response, calls, body: await response.json() }
 }
 
-let result = await run()
+let result = await run(null, {documents:false})
+assert.equal(result.body.success,true)
+assert.ok(result.body.registrationId)
+assert.equal(result.calls.filter(c=>c[0]==='upload').length,0)
+assert.ok(!result.calls.some(c=>c[0]==='insert'&&c[1]==='identity_verifications'))
+assert.equal(result.calls.filter(c=>c[0]==='email').length,1)
+assert.equal(result.calls.find(c=>c[0]==='create')[1].email_confirm,false)
+result = await run('email', {documents:false})
+assert.ok(result.response.status>=400)
+assert.ok(result.calls.some(c=>c[0]==='delete-user'))
+console.log('PASS document-free signup, confirmation email, no verification submission, email failure cleanup')
+result = await run()
 assert.equal(result.body.success, true)
 assert.equal(result.calls.filter(c => c[0] === 'upload').length, 3)
 assert.equal(result.calls.find(c => c[0] === 'create')[1].email_confirm, false)

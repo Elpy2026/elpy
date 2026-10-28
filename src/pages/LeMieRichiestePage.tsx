@@ -96,7 +96,10 @@ function LeMieRichiestePage() {
   const [expenseUrls, setExpenseUrls] = useState<Record<string, string>>({})
   const [helpers, setHelpers] = useState<Record<string, HelperProfile>>({})
   const [loading, setLoading] = useState(true)
+  const [paymentConsents, setPaymentConsents] = useState<Record<string, boolean>>({})
   const [acceptingApplicationId, setAcceptingApplicationId] = useState('')
+  const paymentReturn = new URLSearchParams(window.location.search).has('setup_return')
+  const paymentCancelled = new URLSearchParams(window.location.search).has('setup_cancelled')
   const [rejectingApplicationId, setRejectingApplicationId] = useState('')
   const [completingRequestId, setCompletingRequestId] = useState('')
   const [approvingExpenseId, setApprovingExpenseId] = useState('')
@@ -238,9 +241,26 @@ function LeMieRichiestePage() {
   async function handleAcceptApplication(application: Application) {
     setError('')
     setMessage('')
+    if (!paymentConsents[application.id]) { setError('Conferma il salvataggio del metodo di pagamento prima di continuare.'); return }
     setAcceptingApplicationId(application.id)
 
-    const { error: requestError } = await supabase
+    // Stripe verifies the saved method before any agreement is accepted.
+    const { data: setup, error: setupError } = await supabase.functions.invoke('setup-request-payment', {
+      body: { requestId: application.request_id, helperId: application.helper_id, action: 'prepare', saveMethodConsent: true },
+    })
+    if (setupError || !setup) {
+      setError('Impossibile verificare il metodo di pagamento. Riprova.'); setAcceptingApplicationId(''); return
+    }
+    if (!setup.ready) {
+      try {
+        const url = new URL(setup.url)
+        if (url.protocol !== 'https:' || url.hostname !== 'checkout.stripe.com') throw Error()
+        window.location.assign(url.href)
+      } catch { setError('Il collegamento al pagamento non è disponibile.'); setAcceptingApplicationId('') }
+      return
+    }
+
+    const { data: acceptedRequest, error: requestError } = await supabase
       .from('requests')
       .update({
         status: 'accettata',
@@ -255,9 +275,11 @@ function LeMieRichiestePage() {
       })
       .eq('id', application.request_id)
       .eq('status', 'aperta')
+      .select('id')
+      .maybeSingle()
 
-    if (requestError) {
-      setError(requestError.message)
+    if (requestError || !acceptedRequest) {
+      setError(requestError?.message ?? 'La richiesta non è più disponibile. Aggiorna la pagina.')
       setAcceptingApplicationId('')
       return
     }
@@ -301,9 +323,9 @@ function LeMieRichiestePage() {
       user_id: application.helper_id,
       type: 'application_accepted',
       title: 'Candidatura accettata',
-      body: 'La tua candidatura è stata accettata.',
+      body: 'La tua candidatura è stata scelta. Prima di iniziare, completa il conto Stripe per ricevere il compenso.',
       is_read: false,
-      link: `/chat/${application.request_id}`,
+      link: '/le-mie-attivita',
     })
 
     if (notificationError) {
@@ -338,7 +360,7 @@ function LeMieRichiestePage() {
       .eq('request_id', application.request_id)
       .neq('id', application.id)
 
-    setMessage('Candidatura accettata con successo.')
+    setMessage('Helper selezionato. Prima di iniziare deve completare il conto per ricevere il compenso. Il pagamento sarà richiesto al termine.')
     setAcceptingApplicationId('')
     await loadMyRequests()
   }
@@ -707,7 +729,7 @@ function LeMieRichiestePage() {
             </div>
 
             <div className="request-card">
-            <h3>Candidature ricevute</h3>
+            {paymentReturn && <p role="status">Se hai completato il collegamento su Stripe, premi di nuovo Accetta per confermare l’helper: verificheremo l’esito con Stripe.</p>}{paymentCancelled && <p role="status">Collegamento annullato. La richiesta è ancora aperta e nessun helper è stato confermato.</p>}<h3>Candidature ricevute</h3><p>Quando scegli un helper colleghi il metodo di pagamento tramite Stripe. Nessun compenso viene addebitato ora. Dopo il collegamento torna qui e conferma la scelta.</p>
 
             {requestApplications.length === 0 ? (
               <p>Nessuna candidatura ricevuta.</p>
@@ -745,6 +767,7 @@ function LeMieRichiestePage() {
 
                         {application.status === 'pending' && (
                           <>
+                            <label className="legal-consent"><input type="checkbox" checked={Boolean(paymentConsents[application.id])} onChange={event => setPaymentConsents(current => ({...current, [application.id]: event.target.checked}))} /> Autorizzo Stripe a salvare il metodo per i miei pagamenti su ELPYO. Confermerò il pagamento a incarico concluso; nessun compenso viene addebitato ora.</label>
                             <button
                               type="button"
                               className="btn btn--primary"

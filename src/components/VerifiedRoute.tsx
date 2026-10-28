@@ -25,9 +25,9 @@ function VerifiedRoute({ children }: { children: React.ReactNode }) {
 
                 <p className="auth-guard__subtitle">
                   Su ELPYO ogni servizio nasce dalla fiducia. Per proteggere
-                  richiedenti e helper, prima di usare la piattaforma è necessario
-                  registrarsi e completare la verifica dell’identità con un
-                  documento in corso di validità.
+                  richiedenti e helper, registrati e conferma la tua email. Potrai
+                  esplorare le richieste senza documenti; la verifica dell’identità
+                  sarà richiesta per pubblicare o candidarti.
                 </p>
 
                 <div className="auth-guard__grid">
