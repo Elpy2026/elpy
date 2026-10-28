@@ -11,9 +11,9 @@
 .home-v2 .home-hero { background:linear-gradient(180deg,#fff7f144,#fffdfa22); }
 .home-v2 .home-trust { background:transparent; }
 .home-v2 .home-needs { background:linear-gradient(135deg,#fff1e990,#f7efff90); }
-/* Preserve the original logo pixels; multiply makes its white canvas disappear. */
+/* Original logo pixels with a transparent canvas. */
 .header .logo.logo--image { background:transparent; border:0; border-radius:0; box-shadow:none; }
-.header .logo__image { mix-blend-mode:multiply; }
+.header .logo__image { mix-blend-mode:normal; }
 .brand-register-float {
   position:fixed; right:max(24px,env(safe-area-inset-right)); top:calc(16px + env(safe-area-inset-top)); bottom:auto; z-index:120;
   display:inline-flex; align-items:center; gap:24px; padding:15px 23px; border:1px solid #ffffff80; border-radius:999px;

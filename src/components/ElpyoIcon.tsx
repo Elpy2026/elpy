@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 
 const drawings: Record<string, ReactNode> = {
+  community: <><circle cx="12" cy="6" r="3" /><circle cx="4" cy="9" r="2.5" /><circle cx="20" cy="9" r="2.5" /><path d="M6 21v-3a6 6 0 0 1 12 0v3M1 20v-3a4 4 0 0 1 4-4m18 7v-3a4 4 0 0 0-4-4" /></>,
   shield: <><path d="M12 3 4.5 6v5c0 4.5 3.1 7.7 7.5 10 4.4-2.3 7.5-5.5 7.5-10V6L12 3Z" /><path d="m8.5 12 2.3 2.3 4.7-4.8" /></>,
   help: <><path d="m3 13 4-4 3 3 4-3 7 6-6 6-8-6-2 2" /><path d="m14 9 2-2 5 4M3 7l3-3 5 2M8 17l2-2m1 4 2-2" /></>,
   work: <><rect x="3" y="7" width="18" height="14" rx="3" /><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12a20 20 0 0 0 18 0M12 11v4" /></>,

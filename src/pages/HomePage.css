@@ -157,3 +157,62 @@
   .home-register__note { align-items:flex-start; }
   .home-register__scroll .legal-consent { min-width:0; overflow-wrap:anywhere; }
 }
+
+/* Campaign hero: artwork and copy share the story; registration stays on the right. */
+.home-story__art { background:radial-gradient(ellipse at 80% 70%,#d9c2fa88,transparent 65%); }
+.home-story__art > img { object-fit:contain; object-position:center bottom; mix-blend-mode:normal; }
+.home-story__seal { z-index:3; }
+@media (min-width:1200px) {
+  .home-hero__grid { grid-template-columns:minmax(0,1.8fr) minmax(340px,1fr); gap:24px; }
+  .home-story,.home-register { height:660px; }
+  .home-story { display:block; }
+  .home-story__copy { width:60%; padding:64px 0 80px 30px; }
+  .home-story h1 { font-size:clamp(46px,4.3vw,64px) !important; }
+  .home-story__subtitle { max-width:360px; }
+  .home-story__art { position:absolute; inset:auto 0 0 auto; width:48%; height:94%; }
+  .home-story__art > img { object-fit:contain; object-position:center bottom; }
+  .home-story__seal { left:30px; bottom:28px; }
+}
+@media (max-width:1199px) {
+  .home-story__art { padding-bottom:58px; }
+  .home-story__seal { bottom:20px; }
+}
+@media (max-width:760px) {
+  .home-story__art { height:390px; flex:none; padding-bottom:48px; }
+  .home-story__art > img { height:100%; width:100%; object-fit:contain; }
+  .home-story__seal { left:18px; bottom:18px; }
+}
+
+/* Keep the campaign shapes and community signature visible above the fold. */
+.home-story__art { isolation:isolate; background:none; }
+.home-story__art::before,.home-story__art::after { content:""; position:absolute; z-index:-1; pointer-events:none; }
+.home-story__art::before { width:92%; height:78%; right:-3%; top:5%; background:#c8a7f0; border-radius:62% 38% 55% 45% / 38% 55% 45% 62%; transform:rotate(18deg); }
+.home-story__art::after { width:90%; height:41%; right:-15%; bottom:9%; background:#41c9bc; border-radius:55% 45% 65% 35%; transform:rotate(-28deg); }
+.home-story__seal { position:static; display:flex; width:fit-content; margin-top:34px; padding:0; background:transparent; border:0; box-shadow:none; border-radius:0; font-size:13px !important; font-weight:500; }
+.home-story__seal svg { width:34px; height:34px; flex:none; color:var(--home-purple); }
+@media (min-width:1200px) { .home-story,.home-register { height:580px; } .home-story__copy { padding-top:48px; } }
+@media (max-width:760px) { .home-story__seal { margin-top:24px; } .home-story__art { margin-top:22px; padding-bottom:0; } }
+
+/* Stable artwork frames crossfade without moving the heading or registration form. */
+.home-scenes { min-height:350px; }
+.home-scene { position:absolute; inset:0 0 64px; opacity:0; visibility:hidden; transition:opacity .45s ease,visibility .45s; pointer-events:none; }
+.home-scene.is-active { opacity:1; visibility:visible; }
+.home-scene > img { display:block; width:100%; height:100%; object-fit:contain; object-position:center bottom; }
+.home-scenes__controls { position:absolute; bottom:12px; left:8px; right:8px; z-index:4; display:flex; align-items:center; flex-direction:column; gap:5px; }
+.home-scenes__label { max-width:100%; padding:6px 12px; border-radius:18px; background:#fff9; color:#082235; font-size:12px; line-height:1.4; font-weight:650; text-align:center; }
+.home-scenes__buttons { display:flex; align-items:center; gap:0; background:#fffffff0; border-radius:24px; padding:0 8px; }
+.home-scenes__dot { display:grid; place-items:center; width:28px; height:28px; border:0; padding:0; background:transparent; cursor:pointer; }
+.home-scenes__dot::before { content:""; width:7px; height:7px; border-radius:50%; background:#c2b4d4; }
+.home-scenes__dot.is-active::before { background:#7c3aed; }
+.home-scenes__pause { width:28px; height:28px; padding:0; border:0; background:transparent; color:#082235; cursor:pointer; font-size:13px; }
+.home-scenes__buttons button:focus-visible { outline:2px solid #7c3aed; outline-offset:1px; border-radius:50%; }
+@media (max-width:760px) { .home-scenes { height:430px; } }
+@media (prefers-reduced-motion:reduce) { .home-scene { transition:none; } }
+
+/* Two equally sized campaign actions, echoing the coral and purple service cards. */
+.home-v2 .home-story__actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; width:100%; max-width:380px; }
+.home-v2 .home-story__actions .btn { display:flex; justify-content:space-between; align-items:center; width:100%; min-width:0; min-height:54px; box-sizing:border-box; padding:12px !important; border:1px solid transparent; border-radius:14px; gap:8px; color:#fff; font-size:12px !important; font-weight:800; box-shadow:0 4px 12px #0d1b2a12; }
+.home-v2 .home-story__actions .btn--primary { background:var(--home-coral); }
+.home-v2 .home-story__actions .btn--secondary { background:var(--home-purple); }
+.home-v2 .home-story__actions .btn > span { display:grid; place-items:center; flex:none; width:24px; height:24px; border-radius:50%; background:#ffffff26; font-size:18px; }
+@media (max-width:360px) { .home-v2 .home-story__actions { grid-template-columns:1fr; } }
