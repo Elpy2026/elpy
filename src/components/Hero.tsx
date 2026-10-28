@@ -22,8 +22,9 @@ export default function Hero() {
             <Link to="/offro-aiuto" className="btn btn--primary">Inizia ad aiutare <span aria-hidden="true">↗</span></Link>
             <Link to="/cerco-aiuto" className="btn btn--secondary">Cerco aiuto</Link>
           </div>
+          <span className="home-story__seal"><ElpyoIcon name="community" /> Persone reali. Aiuto concreto.</span>
         </div>
-        <div className="home-story__art"><img src="/home-earn-help-v1.png" alt="" /></div><span className="home-story__seal"><ElpyoIcon name="shield" /> Persone reali. Aiuto concreto.</span>
+        <div className="home-story__art"><img src="/home-earn-help-v1.png" alt="" /></div>
       </div>
       <aside className="home-register" aria-labelledby="home-registration-title">
         {loading ? <p role="status">Verifica dell’accesso in corso…</p> : user ? <div className="home-register__welcome">

@@ -182,3 +182,13 @@
   .home-story__art > img { height:100%; width:100%; object-fit:contain; }
   .home-story__seal { left:18px; bottom:18px; }
 }
+
+/* Keep the campaign shapes and community signature visible above the fold. */
+.home-story__art { isolation:isolate; background:none; }
+.home-story__art::before,.home-story__art::after { content:""; position:absolute; z-index:-1; pointer-events:none; }
+.home-story__art::before { width:92%; height:78%; right:-3%; top:5%; background:#c8a7f0; border-radius:62% 38% 55% 45% / 38% 55% 45% 62%; transform:rotate(18deg); }
+.home-story__art::after { width:90%; height:41%; right:-15%; bottom:9%; background:#41c9bc; border-radius:55% 45% 65% 35%; transform:rotate(-28deg); }
+.home-story__seal { position:static; display:flex; width:fit-content; margin-top:34px; padding:0; background:transparent; border:0; box-shadow:none; border-radius:0; font-size:13px !important; font-weight:500; }
+.home-story__seal svg { width:34px; height:34px; flex:none; color:var(--home-purple); }
+@media (min-width:1200px) { .home-story,.home-register { height:580px; } .home-story__copy { padding-top:48px; } }
+@media (max-width:760px) { .home-story__seal { margin-top:24px; } .home-story__art { margin-top:22px; padding-bottom:0; } }
