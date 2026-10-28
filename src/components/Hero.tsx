@@ -15,15 +15,15 @@ export default function Hero() {
     <div className="container home-hero__grid">
       <div className="home-story">
         <div className="home-story__copy">
-          <p className="home-eyebrow"><span /> La tua community, vicino a te</p>
-          <h1 id="hero-title">Aiuto vero,<br /><span>quando serve.</span></h1>
-          <p className="home-story__subtitle">Le persone giuste, per le cose di ogni giorno. Trova aiuto o metti a disposizione il tuo tempo nella tua città.</p>
+          <p className="home-eyebrow"><span /> Il tuo tempo ha valore</p>
+          <h1 id="hero-title">Guadagna<br /><span>aiutando.</span></h1>
+          <p className="home-story__subtitle">Il tuo tempo vale. Mettilo a disposizione delle persone nella tua città.</p>
           <div className="home-story__actions">
-            <Link to="/cerco-aiuto" className="btn btn--primary">Trova aiuto <span aria-hidden="true">↗</span></Link>
-            <Link to="/offro-aiuto" className="btn btn--secondary">Offri il tuo aiuto</Link>
+            <Link to="/offro-aiuto" className="btn btn--primary">Inizia ad aiutare <span aria-hidden="true">↗</span></Link>
+            <Link to="/cerco-aiuto" className="btn btn--secondary">Cerco aiuto</Link>
           </div>
         </div>
-        <div className="home-story__art"><img src="/elpy-phone.png" alt="" /><span className="home-story__seal"><ElpyoIcon name="shield" /> Persone reali. Aiuto concreto.</span></div>
+        <div className="home-story__art"><img src="/home-earn-help-v1.png" alt="" /></div><span className="home-story__seal"><ElpyoIcon name="shield" /> Persone reali. Aiuto concreto.</span>
       </div>
       <aside className="home-register" aria-labelledby="home-registration-title">
         {loading ? <p role="status">Verifica dell’accesso in corso…</p> : user ? <div className="home-register__welcome">
