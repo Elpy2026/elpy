@@ -1,3 +1,12 @@
+.registration-form .registration-form__note {
+  grid-column:1 / -1;
+  min-width:0;
+  margin:0;
+  font-size:13px !important;
+  line-height:1.6 !important;
+  font-weight:400;
+  color:#686270;
+}
 .registration-form__details { display:contents; }
 .registration-form__continue { display:none; }
 @media (max-width:760px) {

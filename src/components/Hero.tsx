@@ -89,7 +89,7 @@ export default function Hero() {
           <div className="home-register__scroll" tabIndex={0} role="region" aria-label="Modulo completo di registrazione">
             <RegistrationForm />
           </div>
-          <div className="home-register__note"><ElpyoIcon name="shield" /> Documento e selfie tutelano tutta la community.</div>
+          <div className="home-register__note"><ElpyoIcon name="shield" /> Verifica identità richiesta per pubblicare o candidarti.</div>
         </>}
       </aside>
     </div>

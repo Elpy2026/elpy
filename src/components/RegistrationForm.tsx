@@ -182,7 +182,7 @@ export default function RegistrationForm() {
                   />
                 </div>
 
-                <p>Registrazione gratuita, senza documenti né carta. Per pubblicare o candidarti servirà la verifica identità. Alla conferma dell’incarico ti guideremo nel collegamento del metodo di pagamento o del conto per ricevere i compensi.</p>
+                <p className="registration-form__note">Iscriviti gratis, senza documenti né carta. Verificherai l’identità per pubblicare o candidarti. Collegherai il metodo di pagamento o il conto alla conferma dell’incarico.</p>
 
                 <div className="legal-consents">
                   <label className="legal-consent">
