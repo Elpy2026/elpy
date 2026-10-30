@@ -11,7 +11,8 @@ const upcomingCities = cities.filter(city => !launchCities.includes(city)).sort(
 
 export default function RegistrationForm() {
   const [expanded, setExpanded] = useState(false)
-  const [fullName, setFullName] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [city, setCity] = useState('')
@@ -48,7 +49,7 @@ export default function RegistrationForm() {
     setError('')
     setMessage('')
 
-    if (!fullName.trim() || !email.trim()) {
+    if (!firstName.trim() || !lastName.trim() || !email.trim()) {
       setError('Compila nome e cognome ed email per registrarti.')
       return
     }
@@ -74,7 +75,7 @@ export default function RegistrationForm() {
 
     try {
       const body = new FormData()
-      Object.entries({ email: email.trim(), password, fullName: fullName.trim(), phone, city, turnstileToken,
+      Object.entries({ email: email.trim(), password, fullName: `${firstName.trim()} ${lastName.trim()}`, phone, city, turnstileToken,
         acceptedTerms: String(acceptedTerms), acceptedPrivacy: String(acceptedPrivacy),
         marketingConsent: String(marketingConsent),
       }).forEach(([key, value]) => body.append(key, value))
@@ -129,16 +130,29 @@ export default function RegistrationForm() {
                 if (event.target instanceof HTMLInputElement) setExpanded(true)
               }} onInputCapture={() => setExpanded(true)} onInvalidCapture={() => setExpanded(true)}>
                 <div className="form-field">
-                  <label htmlFor="fullName">Nome e cognome</label>
+                  <label htmlFor="firstName">Nome</label>
 
                   <input
-                    id="fullName"
+                    id="firstName"
                     type="text"
-                    value={fullName}
+                    value={firstName}
                     onChange={(event) =>
-                      setFullName(event.target.value)
+                      setFirstName(event.target.value)
                     }
-                    autoComplete="name"
+                    autoComplete="given-name"
+                    required
+                    disabled={loading}
+                  />
+                </div>
+
+                <div className="form-field">
+                  <label htmlFor="lastName">Cognome</label>
+                  <input
+                    id="lastName"
+                    type="text"
+                    value={lastName}
+                    onChange={event => setLastName(event.target.value)}
+                    autoComplete="family-name"
                     required
                     disabled={loading}
                   />
@@ -298,7 +312,7 @@ export default function RegistrationForm() {
                     disabled={
                       Boolean(message) ||
                       loading ||
-                      !fullName.trim() ||
+                      !firstName.trim() || !lastName.trim() ||
                       !email.trim() ||
                       !launchCities.includes(city) ||
                       !acceptedTerms ||
