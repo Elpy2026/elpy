@@ -48,6 +48,11 @@ export default function RegistrationForm() {
     setError('')
     setMessage('')
 
+    if (!fullName.trim() || !email.trim()) {
+      setError('Compila nome e cognome ed email per registrarti.')
+      return
+    }
+
     if (!launchCities.includes(city)) {
       setError('Seleziona una delle città disponibili al lancio.')
       return
@@ -69,7 +74,7 @@ export default function RegistrationForm() {
 
     try {
       const body = new FormData()
-      Object.entries({ email, password, fullName, phone, city, turnstileToken,
+      Object.entries({ email: email.trim(), password, fullName: fullName.trim(), phone, city, turnstileToken,
         acceptedTerms: String(acceptedTerms), acceptedPrivacy: String(acceptedPrivacy),
         marketingConsent: String(marketingConsent),
       }).forEach(([key, value]) => body.append(key, value))
@@ -294,6 +299,8 @@ export default function RegistrationForm() {
                     disabled={
                       Boolean(message) ||
                       loading ||
+                      !fullName.trim() ||
+                      !email.trim() ||
                       !launchCities.includes(city) ||
                       !acceptedTerms ||
                       !acceptedPrivacy ||
