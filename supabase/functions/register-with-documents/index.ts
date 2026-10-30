@@ -62,6 +62,10 @@ Deno.serve(async req => {
     const email = text('email')
     const password = String(form.get('password') ?? '')
     const fullName = text('fullName')
+    const city = text('city')
+    if (!['Agrigento', 'Porto Empedocle', 'Favara', 'Montallegro'].includes(city)) {
+      return reply({ error: 'Seleziona una delle città disponibili al lancio.' }, 400)
+    }
     if (!email || email.length > 254 || !fullName || fullName.length > 200 || password.length < 6 || password.length > 256 ||
         text('phone').length > 40 || text('acceptedTerms') !== 'true' || text('acceptedPrivacy') !== 'true') {
       return reply({ error: 'Controlla i dati e accetta Termini e Privacy.' }, 400)
@@ -84,7 +88,7 @@ Deno.serve(async req => {
     // createUser rejects existing addresses: never attach uploads to an existing unconfirmed account.
     const { data: created, error: creationError } = await admin.auth.admin.createUser({
       email, password, email_confirm: false,
-      user_metadata: { full_name: fullName, phone: text('phone'), role: 'both',
+      user_metadata: { full_name: fullName, phone: text('phone'), city, role: 'both',
         accepted_terms: true, accepted_privacy: true, marketing_consent: text('marketingConsent') === 'true' },
     })
     if (creationError || !created.user) return reply({ error: 'Registrazione non riuscita. Se hai già un account, accedi o recupera la password.' }, 400)

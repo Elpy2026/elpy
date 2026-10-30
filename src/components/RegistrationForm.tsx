@@ -4,12 +4,17 @@ import TurnstileWidget from './TurnstileWidget'
 import { supabase } from '../lib/supabase'
 import { trackRegistration } from '../lib/registrationTracking'
 import './RegistrationForm.css'
+import { cities } from '../data/professionisti'
+
+const launchCities = ['Agrigento', 'Porto Empedocle', 'Favara', 'Montallegro']
+const upcomingCities = cities.filter(city => !launchCities.includes(city)).sort((a, b) => a.localeCompare(b, 'it'))
 
 export default function RegistrationForm() {
   const [expanded, setExpanded] = useState(false)
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
+  const [city, setCity] = useState('')
   const [password, setPassword] = useState('')
   const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false)
@@ -43,6 +48,11 @@ export default function RegistrationForm() {
     setError('')
     setMessage('')
 
+    if (!launchCities.includes(city)) {
+      setError('Seleziona una delle città disponibili al lancio.')
+      return
+    }
+
     if (!acceptedTerms || !acceptedPrivacy) {
       setError(
         'Per registrarti devi accettare i Termini e dichiarare di aver letto la Privacy Policy.',
@@ -59,7 +69,7 @@ export default function RegistrationForm() {
 
     try {
       const body = new FormData()
-      Object.entries({ email, password, fullName, phone, turnstileToken,
+      Object.entries({ email, password, fullName, phone, city, turnstileToken,
         acceptedTerms: String(acceptedTerms), acceptedPrivacy: String(acceptedPrivacy),
         marketingConsent: String(marketingConsent),
       }).forEach(([key, value]) => body.append(key, value))
@@ -166,6 +176,21 @@ export default function RegistrationForm() {
                 </div>
 
                 <div className="form-field">
+                  <label htmlFor="city">Città</label>
+                  <select id="city" name="city" value={city} onChange={event => setCity(event.target.value)}
+                    autoComplete="address-level2" aria-describedby="city-availability" required disabled={loading}>
+                    <option value="" disabled>Seleziona la tua città</option>
+                    <optgroup label="Disponibili al lancio">
+                      {launchCities.map(name => <option key={name} value={name}>{name}</option>)}
+                    </optgroup>
+                    <optgroup label="Prossimamente">
+                      {upcomingCities.map(name => <option key={name} value={name} disabled>{name} — Prossimamente</option>)}
+                    </optgroup>
+                  </select>
+                  <small id="city-availability">Al lancio ELPYO sarà disponibile ad Agrigento, Porto Empedocle, Favara e Montallegro.</small>
+                </div>
+
+                <div className="form-field">
                   <label htmlFor="password">Password</label>
 
                   <input
@@ -269,6 +294,7 @@ export default function RegistrationForm() {
                     disabled={
                       Boolean(message) ||
                       loading ||
+                      !launchCities.includes(city) ||
                       !acceptedTerms ||
                       !acceptedPrivacy ||
                       !turnstileToken

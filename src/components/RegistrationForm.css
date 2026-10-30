@@ -20,3 +20,6 @@
   .registration-form[data-expanded='true'] .registration-form__continue { display:none; }
   .registration-form__continue:focus-visible { outline:3px solid #7c3aed; outline-offset:3px; }
 }
+
+.registration-form select option:disabled { color:#9ca3af; }
+.registration-form #city-availability { font-size:12px; line-height:1.5; color:#686270; }
