@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { supabase } from '../lib/supabase'
@@ -108,6 +109,14 @@ function IdentityVerificationPage() {
             {error && <div className="alert alert--error">{error}</div>}
 
             <form className="request-form" onSubmit={handleSubmit}>
+              <p>
+                Documento e selfie servono alla verifica dell’identità prima di pubblicare
+                una richiesta o candidarti. Non sono destinati agli altri utenti.
+                Prima di caricarli, leggi finalità, destinatari, conservazione e diritti
+                nell’<Link to="/privacy">Informativa Privacy</Link>.
+                Per informazioni o cancellazione: <a href="mailto:danieleelpyo@gmail.com">danieleelpyo@gmail.com</a>.
+                Non caricare documenti giudiziari o dati sanitari.
+              </p>
               <div className="form-field">
                 <label htmlFor="front">Fronte documento di identità o patente in corso di validità</label>
                 <input id="front" type="file" accept="image/jpeg,image/png,application/pdf" onChange={(e) => setFront(e.target.files?.[0] ?? null)} required disabled={loading} />
