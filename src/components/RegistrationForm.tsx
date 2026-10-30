@@ -183,7 +183,7 @@ export default function RegistrationForm() {
                 <div className="form-field">
                   <label htmlFor="city">Città</label>
                   <select id="city" name="city" value={city} onChange={event => setCity(event.target.value)}
-                    autoComplete="address-level2" aria-describedby="city-availability" required disabled={loading}>
+                    autoComplete="address-level2" required disabled={loading}>
                     <option value="" disabled>Seleziona la tua città</option>
                     <optgroup label="Disponibili al lancio">
                       {launchCities.map(name => <option key={name} value={name}>{name}</option>)}
@@ -192,7 +192,6 @@ export default function RegistrationForm() {
                       {upcomingCities.map(name => <option key={name} value={name} disabled>{name} — Prossimamente</option>)}
                     </optgroup>
                   </select>
-                  <small id="city-availability">Al lancio ELPYO sarà disponibile ad Agrigento, Porto Empedocle, Favara e Montallegro.</small>
                 </div>
 
                 <div className="form-field">
