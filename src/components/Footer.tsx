@@ -1,3 +1,4 @@
+import { InstallAppPanel } from './InstallApp'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
@@ -14,6 +15,8 @@ function Footer() {
   const year = new Date().getFullYear()
 
   return (
+    <>
+    <InstallAppPanel />
     <footer className="footer" id="contatti">
       <div className="container footer__inner">
         <div className="footer__brand">
@@ -94,6 +97,7 @@ function Footer() {
         </div>
       </div>
     </footer>
+    </>
   )
 }
 

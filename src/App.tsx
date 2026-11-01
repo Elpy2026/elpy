@@ -45,6 +45,7 @@ import CookieBanner from './components/CookieBanner'
 import TrackingConsent from './components/TrackingConsent'
 import ScrollToTop from './components/ScrollToTop'
 
+import InstallApp from './components/InstallApp'
 import './App.css'
 import './styles/brand-surface.css'
 
@@ -274,6 +275,7 @@ function App() {
         </Routes>
 
         <CookieBanner />
+        <InstallApp />
         <TrackingConsent />
       </BrowserRouter>
     </RequestsProvider>
