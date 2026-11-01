@@ -3,3 +3,10 @@
 .elpyo-install-example{margin:0 0 16px}.elpyo-install-example img{display:block;width:100%;height:auto;max-height:240px;object-fit:contain;border-radius:16px}.elpyo-install-example figcaption{font-size:12px;line-height:1.4;color:#575766;margin-top:6px}.elpyo-install-dialog .elpyo-install-done{margin-top:16px}.elpyo-install-dialog .elpyo-install-actions button{font-size:14px;padding:12px 15px}.elpyo-install-dialog h2{margin-top:16px}@media(max-width:600px){.elpyo-install-example img{max-height:190px}.elpyo-install-dialog h2{font-size:23px}.elpyo-install-dialog p,.elpyo-install-dialog li{font-size:15px}}
 
 .elpyo-install-actions button:first-child,.elpyo-install-done{background:#c93627;border-color:#c93627;color:white}.elpyo-install small{display:block;margin-top:12px;font-size:13px}.elpyo-install-dialog{z-index:10000}.elpyo-install-dialog h2{padding-right:20px}
+/* Keep the installation card compact despite the site's global large-type rules. */
+dialog.elpyo-install-dialog h2{font-size:26px!important;line-height:1.2!important}
+dialog.elpyo-install-dialog p,dialog.elpyo-install-dialog li{font-size:16px!important;line-height:1.5!important}
+section.elpyo-install h2{font-size:clamp(22px,3vw,30px)!important;line-height:1.2!important}
+section.elpyo-install p{font-size:16px!important;line-height:1.5!important}
+section.elpyo-install small{font-size:13px!important}
+@media(max-width:600px){dialog.elpyo-install-dialog h2{font-size:23px!important}dialog.elpyo-install-dialog p,dialog.elpyo-install-dialog li{font-size:15px!important}}
