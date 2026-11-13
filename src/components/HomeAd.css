@@ -1,0 +1,9 @@
+.home-ad-anchor{width:100%;min-width:0}
+.home-ad[hidden]{display:none!important}
+.home-ad{box-sizing:border-box;width:calc(100% - 32px);max-width:1100px;margin:32px auto;padding:12px 0;min-width:0}
+.home-ad-label{display:block;font-size:11px!important;font-weight:400;color:#62626d;margin-bottom:8px}
+.home-ad ins{min-height:100px;width:100%}
+.home-ad-preferences{display:block;background:none;border:0;padding:8px 0;margin-top:4px;color:#62626d;font-size:12px!important;text-decoration:underline;cursor:pointer}
+@media(max-width:600px){.home-ad{margin:24px auto}}
+
+.home-ad-settings{display:flex;flex-wrap:wrap;justify-content:center;gap:16px;margin:20px}.home-ad-settings button{background:none;border:0;text-decoration:underline;font-size:12px!important;color:#62626d;cursor:pointer}

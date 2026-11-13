@@ -13,7 +13,7 @@ function PrivacyPage() {
             <h1>Informativa sul trattamento dei dati personali</h1>
 
             <p>
-              Ultimo aggiornamento: 30 ottobre 2026. Questa informativa riguarda la navigazione
+              Ultimo aggiornamento: 13 novembre 2026. Questa informativa riguarda la navigazione
               e l’utilizzo di ELPYO ed è resa ai sensi degli artt. 13 e 14 del Regolamento
               (UE) 2016/679 (GDPR).
             </p>
@@ -163,6 +163,22 @@ function PrivacyPage() {
               del trattamento precedente.
             </p>
 
+            <h2>Pubblicità Google AdSense</h2>
+            <p>La home pubblica prevede due spazi Google AdSense. Dopo il consenso marketing,
+              il tag Google viene caricato con richieste di annunci sospese per mostrare
+              il messaggio di consenso Google. Gli annunci vengono richiesti solo con un
+              consenso pubblicitario valido. Rifiutando puoi continuare a usare il portale.
+              Google e i partner elencati nel messaggio possono trattare indirizzo IP,
+              identificativi, cookie e dati di navigazione per selezionare, personalizzare
+              e misurare gli annunci secondo le scelte espresse.</p>
+            <p>Puoi modificare le scelte dai comandi “Preferenze cookie” e “Preferenze
+              pubblicitarie Google” nella home. La revoca non pregiudica il trattamento
+              precedente. Le scelte Google non autorizzano automaticamente altri tag.
+              Partner, finalità e durate sono consultabili nel messaggio Google.
+              Leggi <a href="https://policies.google.com/technologies/partner-sites"
+              target="_blank" rel="noreferrer">come Google utilizza i dati dei siti partner</a>
+              e la <a href="https://policies.google.com/privacy" target="_blank"
+              rel="noreferrer">Privacy Policy Google</a>.</p>
             <h2>Automatismi e minori</h2>
             <p>Le richieste possono essere ordinate per distanza o data; i controlli applicativi
               limitano le azioni quando mancano i requisiti dell’account. Il flusso dei documenti

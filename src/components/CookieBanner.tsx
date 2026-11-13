@@ -30,6 +30,16 @@ function CookieBanner() {
     setPreferences(saved)
   }, [])
 
+  useEffect(() => {
+    const reopen = () => {
+      setPreferences(getCookiePreferences() || defaultCookiePreferences)
+      setVisible(true)
+      setModalOpen(true)
+    }
+    window.addEventListener('elpyo-open-cookie-preferences', reopen)
+    return () => window.removeEventListener('elpyo-open-cookie-preferences', reopen)
+  }, [])
+
   function closeAll() {
     setVisible(false)
     setModalOpen(false)

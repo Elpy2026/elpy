@@ -1,4 +1,5 @@
 import { Helmet } from 'react-helmet-async'
+import HomeAd, { HomeAdvertisingSettings } from '../components/HomeAd'
 import Header from '../components/Header'
 import Hero from '../components/Hero'
 import Categories from '../components/Categories'
@@ -46,9 +47,12 @@ function HomePage() {
         <main>
           <Hero />
           <Trust />
+          <HomeAd />
           <Categories />
+          <HomeAd />
         </main>
 
+        <HomeAdvertisingSettings />
         <Footer />
       </div>
     </>
